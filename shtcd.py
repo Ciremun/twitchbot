@@ -75,7 +75,7 @@ sr_url = ''
 lastlink = ''
 last_rand_img = ''
 commands_list = ['change', 'save', 'set', 'setrand', 'list', 'search', 'link', 'sr', 'srq', 'srf', 'srf+', 'srf-',
-                 'srfp', 'srfl', 'np', 'olist', 'orand', 'ren', 'del', 'cancel', 'say', 'help', 'tts:', 'info', 'pipe',
+                 'srfp', 'srfl', 'np', 'olist', 'orand', 'ren', 'del', 'cancel', 'help', 'tts:', 'info', 'pipe',
                  'notify']
 mod_commands_list = ['ban', 'unban', 'banlist', 'modlist', 'tts', 'srp', 'srs', 'srt', 'srv', 'sql', 'title', 'game']
 commands_list = [prefix + x for x in commands_list]
@@ -2063,7 +2063,6 @@ class ThreadMain(threading.Thread):
                          f'cancel [word/index] [word2/index2].. - cancel your songrequest(s), pure {prefix}cancel = '
                          f'cancel nearest to play',
                          f'sql <query> - execute sql query and get result PogChamp',
-                         f'say <msg> - bot says the message',
                          f'tts: <msg> - say message, even when tts is off',
                          f'title <query> - change stream title',
                          f'game <query> - change stream game',
