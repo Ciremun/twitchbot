@@ -1,0 +1,9 @@
+.idea/
+custom/*.png
+custom/*.gif
+*.bat
+changelog.txt
+sounds/favs/*.wav
+sounds/sr/*.wav
+special/*.txt
+log/*.txt
