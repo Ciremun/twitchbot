@@ -1,6 +1,6 @@
 # shtcd twitch bot
   
-let viewers set images on stream + songrequests  
+let viewers set images on stream + songrequests + change stream title, game  
 supports png, jpg, gif, webp, pixiv links  
 songrequests: youtube link/id/query, soundcloud links  
 
