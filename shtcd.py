@@ -21,49 +21,43 @@ import concurrent.futures
 import youtube_dl  # !sr downloader
 import vlc  # !sr player
 from math import floor
-import pygame  # meme sound player
-import logging
+
+CHANNEL = "ciremun"  # twitch channel to listen
+BOT = "shtcd"  # twtich bot username
+admin = "ciremun"  # bot admin
+screenwidth = 390
+screenheight = 990  # image window properties
+pixiv_artratio = 1.3  # max pixiv art width/height ratio
+res = 'custom/'  # init image folder
+drawfile = 'rempls.gif'  # init image
+prefix = '!'
+banned_tags = ['Pokémon', 'how to draw', 'oshinagaki', 'subarashikihokkorinosekai']  # ban pixiv tags
+clear_folders = ['sounds/sr/', 'pixiv/', 'images/']  # clear folders on !exit
+tts_voices = {'haruka': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\TTS_MS_JA-JP_HARUKA_11.0',
+              'mizuki': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\VE_Japanese_Mizuki_22kHz',
+              'yuri': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\VE_Russian_Yuri_22kHz',
+              'ivy': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\Ivy RSI Harpo 22kHz'}
+tts_default_vc = tts_voices['ivy']
+tts = False
+tts_volume = 0.35
+logs = False
+sr = True
+player_last_vol = 40  # !sr volume
+ytdl_rate = 4000000  # 4Mb/s !sr download rate
+max_duration = '10:00'  # !sr max song duration (no limit for mods)
+sad_emote = 'SadLoli'
+love_emote = 'mikuHeart'
 
 startTime = time.time()
 HOST = "irc.twitch.tv"
 PORT = 6667
-CHANNEL = "ciremun"  # twitch channel to listen
-BOT = "shtcd"  # twtich bot username
-with open('special/tokens.txt', 'r', encoding='utf8') as tokens:
-    PASS = tokens.readline().strip()  # twitch bot token
-    TOKEN_AUTH = tokens.readline().strip()  # discord token
-    px_token = tokens.readline().strip()  # pixiv token
-    channel_id = tokens.readline().strip()  # twitch channel id
-    client_id = tokens.readline().strip()  # twitch registered app id
-    client_auth = tokens.readline().strip()  # twitch app oauth key with channel_editor scope
+PASS, px_token, channel_id, client_id, client_auth = [' '.join(token.split()[1:]) for token in
+                                                      open('special/tokens.txt')]
 s = socket.socket()
 s.connect((HOST, PORT))
 s.send(bytes("PASS " + PASS + "\r\n", "UTF-8"))
 s.send(bytes("NICK " + BOT + "\r\n", "UTF-8"))
 s.send(bytes("JOIN #" + CHANNEL + " \r\n", "UTF-8"))
-admin = "ciremun"  # bot admin
-screenwidth = 390
-screenheight = 990  # image window properties
-pixiv_artratio = 1.3  # max pixiv art width/height ratio
-res = 'special/'
-drawfile = 'greenscreen.png'  # init image
-prefix = '!'
-banned_tags = ['Pokémon', 'how to draw', 'oshinagaki', 'subarashikihokkorinosekai']  # ban pixiv tags
-clear_folders = ['sounds/sr/', 'pixiv/', 'images/']  # clear folders on !exit
-tts_voices = {'Haruka': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\TTS_MS_JA-JP_HARUKA_11.0',
-              'Ivy': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\IVONA 2 Voice Ivy22',
-              'ru': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\IVONA 2 Voice Tatyana22'}
-tts_default_vc = tts_voices['Ivy']
-tts = True
-tts_volume = 0.07
-logs = True
-sr = True
-player_last_vol = 40  # !sr volume
-ytdl_rate = 4000000  # 4Mb/s !sr download rate
-max_duration = '10:00'  # !sr max song duration (no limit for mods)
-bot_ver = '0.7.8.1'
-sad_emote = 'SadLoli'
-love_emote = 'mikuHeart'
 
 artid = ''
 c = ''
@@ -74,10 +68,11 @@ numba = ''
 sr_url = ''
 lastlink = ''
 last_rand_img = ''
-commands_list = ['change', 'save', 'set', 'setrand', 'list', 'search', 'link', 'sr', 'srq', 'srf', 'srf+', 'srf-',
+commands_list = ['change', 'save', 'set', 'setrand', 'list', 'search', 'link', 'sr', 'srq', 'srf', 'srfa', 'srfd',
                  'srfp', 'srfl', 'np', 'olist', 'orand', 'ren', 'del', 'cancel', 'help', 'tts:', 'info', 'pipe',
                  'notify']
-mod_commands_list = ['ban', 'unban', 'banlist', 'modlist', 'tts', 'srp', 'srs', 'srt', 'srv', 'sql', 'title', 'game']
+mod_commands_list = ['ban', 'unban', 'banlist', 'modlist', 'tts', 'srp', 'srs', 'srt', 'src', 'srv', 'sql', 'title',
+                     'game']
 commands_list = [prefix + x for x in commands_list]
 mod_commands_list = [prefix + x for x in mod_commands_list]
 lock = threading.Lock()
@@ -87,6 +82,27 @@ PlayerInstance = vlc.Instance()
 Player = PlayerInstance.media_player_new()
 Player.audio_set_volume(player_last_vol)
 volume_await = False
+commands_dict = {}
+
+
+def bot_command(func):
+    def wrapper(username, *args, **kwargs):
+        if checkbanlist(username):
+            return
+        return func(username, *args, **kwargs)
+
+    commands_dict[func.__code__.co_name[:-8]] = wrapper
+    return wrapper
+
+
+def moderator_command(func):
+    def wrapper(username, *args, **kwargs):
+        if not checkmodlist(username):
+            return
+        return func(username, *args, **kwargs)
+
+    commands_dict[func.__code__.co_name[:-8]] = wrapper
+    return wrapper
 
 
 def send_message(message):  # bot message to twitch chat
@@ -150,27 +166,32 @@ def new_timecode(seconds, minutes, hours, duration):
         return f'{hours}:{minutes}:{seconds}'
 
 
-def new_timecode_explicit(seconds, minutes, hours, duration):
-    if duration <= 59:
-        return f'{duration}s'
-    elif duration <= 3599:
-        return f'{minutes}m, {seconds}s'
-    else:
-        return f'{hours}h, {minutes}m, {seconds}s'
-
-
-def default_player():
-    huis_player.stopmusic()
-    Player.play()
+def new_timecode_explicit(days, hours, minutes, seconds, duration):
+    if duration < 1:
+        print(duration)
+        print(duration * 1000)
+        print(floor(duration * 1000))
+        return f'{floor(duration * 1000)}ms'
+    timecode = []
+    timecode_dict = {'d': days, 'h': hours, 'm': minutes, 's': seconds}
+    for k, v in timecode_dict.items():
+        if v:
+            timecode.append(f'{v}{k}')
+    return " ".join(timecode)
 
 
 def seconds_convert(duration, explicit=False):
-    h = floor(duration / 3600)
-    m = floor(duration % 3600 / 60)
-    s = floor(duration % 3600 % 60)
+    init_duration = duration
+    days = duration // (24 * 3600)
+    duration = duration % (24 * 3600)
+    hours = duration // 3600
+    duration %= 3600
+    minutes = duration // 60
+    seconds = duration % 60
+    days, hours, minutes, seconds = [floor(x) for x in [days, hours, minutes, seconds]]
     if explicit:
-        return new_timecode_explicit(s, m, h, duration)
-    return new_timecode(s, m, h, duration)
+        return new_timecode_explicit(days, hours, minutes, seconds, init_duration)
+    return new_timecode(seconds, minutes, hours, init_duration)
 
 
 async def download_clip(url, username, user_duration=None, yt_request=True, folder='sounds/sr/', ytsearch=False):
@@ -248,7 +269,7 @@ async def download_clip(url, username, user_duration=None, yt_request=True, fold
         sr_queue.call_playmusic()
 
 
-class AsyncioLoops:
+class AsyncioLoop:
 
     def __init__(self, loop):
         self.loop = loop
@@ -280,11 +301,8 @@ async def sr_start_playing():
 
 async def playmusic():
     global np, np_duration, sr_url
-    if pygame.mixer.music.get_busy():
-        await asyncio.sleep(5)
-        default_player()
-        await sr_start_playing()
     if not playlist:
+        print('not playlist!')
         return
     file = playlist.pop(0)
     Media = PlayerInstance.media_new(file[0])
@@ -321,7 +339,6 @@ class ThreadTTS(threading.Thread):
         self.name = name
 
     def run(self):
-        global HOST, PORT, CHANNEL, BOT, PASS, admin, tts
 
         self.engine = pyttsx3.init()
         self.engine.setProperty('volume', tts_volume)
@@ -334,12 +351,11 @@ class ThreadTTS(threading.Thread):
                 message = line[0]
                 username = line[1]
                 messagesplit = message.split()
-                if message.startswith(prefix):
 
-                    if messagesplit[0][1:] == 'tts:' and not checkbanlist(username):
-                        self.say_message(messagesplit[1:])
+                if message.startswith((f'{prefix}tts:', 'tts:')) and not checkbanlist(username):
+                    self.say_message(messagesplit[1:])
 
-                elif tts and username != 'shtcd' and not checkbanlist(username):
+                elif tts and username != BOT and not message.startswith(prefix) and not checkbanlist(username):
                     self.say_message(messagesplit)
 
     def say_message(self, messagesplit):
@@ -540,24 +556,10 @@ class ThreadPic:
         if drawfile:
             if drawfile.endswith('.gif'):
                 self.drawgif(drawfile)
-                self.last = drawfile
-                drawfile = ''
-                if pygame.mixer.music.get_busy():
-                    default_player()
             elif drawfile.endswith('.png'):
-                if drawfile == 'huis.png':
-                    if str(Player.get_state()) != 'State.Paused':
-                        Player.pause()
-                    huis_player.pmusic()
-                    self.drawimg(drawfile)
-                    self.last = drawfile
-                    drawfile = ''
-                else:
-                    self.drawimg(drawfile)
-                    self.last = drawfile
-                    drawfile = ''
-                    if pygame.mixer.music.get_busy():
-                        default_player()
+                self.drawimg(drawfile)
+            self.last = drawfile
+            drawfile = ''
 
     def resizeimg(self, ri, rs, image):  # resize to fit window
         if rs > ri:
@@ -604,35 +606,6 @@ class ThreadPic:
         self.sprite.scale = sprscale
         self.move = self.window.width - self.sprite.width
         self.sprite.x += self.move
-
-
-class ThreadPlayer(threading.Thread):
-    def __init__(self, name):
-        threading.Thread.__init__(self)
-        self.name = name
-
-    def run(self):
-        self.initMixer()
-        pygame.init()
-        pygame.mixer.init()
-        pygame.mixer.music.load('sounds/huis.mp3')
-        pygame.mixer.music.set_volume(0.02)
-
-    def pmusic(self):
-        pygame.mixer.music.play()
-
-    def stopmusic(self):
-        pygame.mixer.music.stop()
-
-    def getmixerargs(self):
-        pygame.mixer.init()
-        freq, size, chan = pygame.mixer.get_init()
-        return freq, size, chan
-
-    def initMixer(self):
-        BUFFER = 3072  # audio buffer size, number of samples since pygame 1.8.
-        FREQ, SIZE, CHAN = self.getmixerargs()
-        pygame.mixer.init(FREQ, SIZE, CHAN, BUFFER)
 
 
 class ThreadMain(threading.Thread):
@@ -858,7 +831,7 @@ class ThreadMain(threading.Thread):
                 else:
                     send_message(response_str)
 
-        async def del_command(username, messagesplit):
+        async def del_chat_command(username, messagesplit):
             response_not_found, response_denied, response_deleted, remove_links, remove_owners = [], [], [], [], []
             file_deleted = False
             moderator = checkmodlist(username)
@@ -897,7 +870,7 @@ class ThreadMain(threading.Thread):
                 for i in response:
                     send_message(i)
 
-        async def link_command(username, messagesplit):
+        async def link_chat_command(username, messagesplit):
             if len(messagesplit) > 1:
                 links_filenames = [{'link': j[0], 'filename': j[1]} for j in db.get_links_and_filenames()]
                 target_not_found = []
@@ -1162,10 +1135,11 @@ class ThreadMain(threading.Thread):
             else:
                 send_message(f"{username}, no link {sad_emote}")
 
+        @moderator_command
         def die_command(username=None, messagesplit=None, message=None):
-            if message[1:] == "die" and checkmodlist(username):
-                call_draw('special/', 'greenscreen.png')
+            call_draw('special/', 'greenscreen.png')
 
+        @bot_command
         def exit_command(username=None, messagesplit=None, message=None):
             if message[1:] == "exit" and username == admin:
                 for folder in clear_folders:
@@ -1181,9 +1155,10 @@ class ThreadMain(threading.Thread):
                         pass
                 os._exit(0)
 
+        @bot_command
         def log_command(username=None, messagesplit=None, message=None):
             global logs
-            if messagesplit[0][1:] == "log" and username == admin:
+            if username == admin:
                 if logs:
                     logs = False
                     send_message('logs off')
@@ -1191,18 +1166,19 @@ class ThreadMain(threading.Thread):
                     logs = True
                     send_message('logs on')
 
+        @bot_command
         def np_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "np" and not checkbanlist(username):
-                if all(str(Player.get_state()) != x for x in ['State.Playing', 'State.Paused']):
-                    send_message(f'{username}, nothing is playing {sad_emote}')
-                elif str(Player.get_state()) == 'State.Paused':
-                    np_response('Paused')
-                else:
-                    np_response('Now playing')
+            if all(str(Player.get_state()) != x for x in ['State.Playing', 'State.Paused']):
+                send_message(f'{username}, nothing is playing {sad_emote}')
+            elif str(Player.get_state()) == 'State.Paused':
+                np_response('Paused')
+            else:
+                np_response('Now playing')
 
+        @moderator_command
         def srv_command(username=None, messagesplit=None, message=None):
             global player_last_vol
-            if sr and messagesplit[0][1:] == "srv" and checkmodlist(username):
+            if sr:
                 try:
                     value = int(messagesplit[1])
                     if 0 <= value <= 100:
@@ -1219,12 +1195,14 @@ class ThreadMain(threading.Thread):
                 except ValueError:
                     send_message(f'{username}, vol 0-100')
 
+        @bot_command
         def srq_command(username=None, messagesplit=None, message=None):
-            if sr and messagesplit[0][1:] == "srq" and not checkbanlist(username):
+            if sr:
                 sr_get_list(username)
 
+        @moderator_command
         def srs_command(username=None, messagesplit=None, message=None):
-            if sr and messagesplit[0][1:] == "srs" and checkmodlist(username):
+            if sr:
                 if all(str(Player.get_state()) != x for x in ['State.Playing', 'State.Paused']):
                     send_message(f'{username}, nothing is playing {sad_emote}')
                     return
@@ -1291,17 +1269,19 @@ class ThreadMain(threading.Thread):
                 except IndexError:
                     Player.stop()
 
+        @moderator_command
         def src_command(username=None, messagesplit=None, message=None):
             global playlist
-            if sr and messagesplit[0][1:] == "src" and checkmodlist(username):
+            if sr:
                 if not playlist:
                     send_message(f'{username} playlist is empty {sad_emote}')
                     return
                 playlist *= 0
                 send_message(f'queue wiped')
 
+        @moderator_command
         def srp_command(username=None, messagesplit=None, message=None):
-            if sr and messagesplit[0][1:] == "srp" and checkmodlist(username):
+            if sr:
                 if str(Player.get_state()) == 'State.Playing':
                     Player.pause()
                 elif str(Player.get_state()) == 'State.Paused':
@@ -1309,8 +1289,9 @@ class ThreadMain(threading.Thread):
                 else:
                     send_message(f'{username}, nothing is playing {sad_emote}')
 
+        @moderator_command
         def srt_command(username=None, messagesplit=None, message=None):
-            if sr and messagesplit[0][1:] == "srt" and checkmodlist(username):
+            if sr:
                 if all(str(Player.get_state()) != x for x in ['State.Playing', 'State.Paused']):
                     send_message(f'{username}, nothing is playing {sad_emote}')
                     return
@@ -1327,8 +1308,9 @@ class ThreadMain(threading.Thread):
                 except IndexError:
                     send_message(f'{username}, no timecode {sad_emote}')
 
-        def srf_plus_command(username=None, messagesplit=None, message=None):
-            if sr and messagesplit[0][1:] == "srf+" and not checkbanlist(username):
+        @bot_command
+        def srfa_command(username=None, messagesplit=None, message=None):
+            if sr:
                 try:
                     url_or_timecode = messagesplit[1]
                     if re.match(timecode_re, url_or_timecode):
@@ -1356,8 +1338,9 @@ class ThreadMain(threading.Thread):
                         messagesplit.append(sr_url)
                         sr_download(messagesplit, username, 'sounds/favs/', timecode_pos=3)
 
-        def srf_minus_command(username=None, messagesplit=None, message=None):
-            if sr and messagesplit[0][1:] == "srf-" and not checkbanlist(username):
+        @bot_command
+        def srfd_command(username=None, messagesplit=None, message=None):
+            if sr:
                 try:
                     if messagesplit[1]:
                         songs = get_srfavs_dictlist(username)
@@ -1366,10 +1349,11 @@ class ThreadMain(threading.Thread):
                             return
                         as_loop.create_task(sr_favs_del(username, messagesplit, songs))
                 except IndexError:
-                    send_message(f'{username}, {prefix}srf- <index1> <index2>..')
+                    send_message(f'{username}, {prefix}srfd <index1> <index2>..')
 
+        @bot_command
         def srfp_command(username=None, messagesplit=None, message=None):
-            if sr and messagesplit[0][1:] == "srfp" and not checkbanlist(username):
+            if sr:
                 try:
                     if messagesplit[1]:
                         songs = get_srfavs_dictlist(username)
@@ -1437,8 +1421,9 @@ class ThreadMain(threading.Thread):
                 except IndexError:
                     send_message(f'{username}, {prefix}srfp <word/index>')
 
+        @bot_command
         def srfl_command(username=None, messagesplit=None, message=None):
-            if sr and messagesplit[0][1:] == "srfl" and not checkbanlist(username):
+            if sr:
                 try:
                     if messagesplit[1]:
                         songs = get_srfavs_dictlist(username)
@@ -1477,8 +1462,9 @@ class ThreadMain(threading.Thread):
                 except IndexError:
                     send_message(f'{username}, {prefix}srfl <word/index>')
 
+        @bot_command
         def srf_command(username=None, messagesplit=None, message=None):
-            if sr and messagesplit[0][1:] == "srf" and not checkbanlist(username):
+            if sr:
                 songs = get_srfavs_dictlist(username)
                 if not songs:
                     send_message(f'{username}, no favorite songs found {sad_emote}')
@@ -1492,9 +1478,20 @@ class ThreadMain(threading.Thread):
                 songs_arr = divide_chunks(songs_str, 470, lst=songs_arr, joinparam=', ')
                 send_list(songs_str, songs_arr, 1, "list")
 
-        def songrequest_command(username=None, messagesplit=None, message=None):
+        @bot_command
+        def sr_command(username=None, messagesplit=None, message=None):
             global sr
-            if sr and messagesplit[0][1:] == "sr" and message != f"{prefix}sr" and not checkbanlist(username):
+            if message == f"{prefix}sr":
+                if checkmodlist(username):
+                    if sr:
+                        sr = False
+                        send_message(f'{prefix}sr off {sad_emote}')
+                    else:
+                        sr = True
+                        send_message(f'{prefix}sr on {love_emote}')
+                elif sr:
+                    np_command(username, messagesplit, message)
+            elif sr:
                 match = sr_download(messagesplit, username, timecode_pos=2)
                 if not match:
                     if re.match(timecode_re, messagesplit[-1]):
@@ -1505,151 +1502,147 @@ class ThreadMain(threading.Thread):
                         query = ' '.join(messagesplit[1:])
                         sr_download_queue.call_download_clip(
                             query, username, user_duration=None, ytsearch=True)
-            elif message == f"{prefix}sr" and not checkbanlist(username):
-                if checkmodlist(username):
-                    if sr:
-                        sr = False
-                        send_message(f'{prefix}sr off {sad_emote}')
-                    else:
-                        sr = True
-                        send_message(f'{prefix}sr on {love_emote}')
-                elif sr:
-                    send_message(f'{username}, {prefix}sr <youtube/soundcloud link> - play audio')
 
+        @moderator_command
         def sql_command(username=None, messagesplit=None, message=None, pipe=False):
-            if messagesplit[0][1:] == 'sql' and checkmodlist(username):
-                try:
-                    if messagesplit[1]:
-                        result = db.sql_query(" ".join(messagesplit[1:]))
-                        if result:
-                            result = [' - '.join(str(j) for j in i) for i in result]
-                            result_str = " , ".join(result)
-                            if pipe:
-                                return result_str.split()
-                            if len(result_str) > 480:
-                                result_arr = divide_chunks(result_str, 470, result, joinparam=' , ')
-                                for i in result_arr:
-                                    send_message(i)
-                            else:
-                                send_message(result_str)
-                        elif not result and 'select' == messagesplit[1].lower():
-                            if pipe:
-                                return f'{username}, no results {sad_emote}'.split()
-                            send_message(f'{username}, no results {sad_emote}')
-                        elif not result:
-                            if pipe:
-                                return f'{username}, done {love_emote}'.split()
-                            send_message(f'{username}, done {love_emote}')
-                except IndexError:
+            try:
+                if not messagesplit[1]:
+                    raise IndexError
+                result = db.sql_query(" ".join(messagesplit[1:]))
+                if result:
+                    result = [' - '.join(str(j) for j in i) for i in result]
+                    result_str = " , ".join(result)
                     if pipe:
-                        return f'{username}, no query {sad_emote}'.split()
-                    send_message(f'{username}, no query {sad_emote}')
+                        return result_str.split()
+                    if len(result_str) > 480:
+                        result_arr = divide_chunks(result_str, 470, result, joinparam=' , ')
+                        for i in result_arr:
+                            send_message(i)
+                    else:
+                        send_message(result_str)
+                elif not result and 'select' == messagesplit[1].lower():
+                    if pipe:
+                        return f'{username}, no results {sad_emote}'.split()
+                    send_message(f'{username}, no results {sad_emote}')
+                elif not result:
+                    if pipe:
+                        return f'{username}, done {love_emote}'.split()
+                    send_message(f'{username}, done {love_emote}')
+            except IndexError:
+                if pipe:
+                    return f'{username}, no query {sad_emote}'.split()
+                send_message(f'{username}, no query {sad_emote}')
 
+        @bot_command
         def cancel_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == 'cancel' and not checkbanlist(username):
-                if not playlist:
-                    send_message(f'{username}, playlist is empty {sad_emote}')
-                    return
-                try:
-                    if messagesplit[1]:
-                        playlist_cancelled = []
-                        playlist_to_del = []
-                        playlist_not_found = []
-                        username_in_playlist = False
-                        for i in range(1, len(messagesplit)):
-                            song_cancelled_title = False
-                            try:
-                                target = int(messagesplit[i])
-                                if not 0 < target <= len(playlist):
-                                    playlist_not_found.append(f'{target}')
-                                    continue
-                                if username in playlist[target - 1][5]:
-                                    playlist_to_del.append(playlist[target - 1])
-                                    if playlist[target - 1][3] is not None:
-                                        playlist_cancelled.append(
-                                            f'{playlist[target - 1][1]} '
-                                            f'[{seconds_convert(playlist[target - 1][3])}]'
-                                        )
+            if not playlist:
+                send_message(f'{username}, playlist is empty {sad_emote}')
+                return
+            try:
+                if messagesplit[1]:
+                    playlist_cancelled = []
+                    playlist_to_del = []
+                    playlist_not_found = []
+                    username_in_playlist = False
+                    for i in range(1, len(messagesplit)):
+                        song_cancelled_title = False
+                        try:
+                            target = int(messagesplit[i])
+                            if not 0 < target <= len(playlist):
+                                playlist_not_found.append(f'{target}')
+                                continue
+                            if username in playlist[target - 1][5]:
+                                playlist_to_del.append(playlist[target - 1])
+                                if playlist[target - 1][3] is not None:
+                                    playlist_cancelled.append(
+                                        f'{playlist[target - 1][1]} '
+                                        f'[{seconds_convert(playlist[target - 1][3])}]'
+                                    )
+                                else:
+                                    playlist_cancelled.append(playlist[target - 1][1])
+                                username_in_playlist = True
+                        except ValueError:
+                            target = messagesplit[i]
+                            for j in playlist:
+                                if any(target in x for x in [j[1], j[1].lower()]) and username == j[5]:
+                                    if j[3] is not None:
+                                        playlist_cancelled.append(f'{j[1]} [{seconds_convert(j[3])}]')
                                     else:
-                                        playlist_cancelled.append(playlist[target - 1][1])
+                                        playlist_cancelled.append(j[1])
+                                    playlist_to_del.append(j)
+                                    song_cancelled_title = True
                                     username_in_playlist = True
+                            if not song_cancelled_title:
+                                playlist_not_found.append(target)
+                    if playlist_to_del:
+                        for i in playlist_to_del:
+                            try:
+                                playlist.remove(i)
                             except ValueError:
-                                target = messagesplit[i]
-                                for j in playlist:
-                                    if any(target in x for x in [j[1], j[1].lower()]) and username == j[5]:
-                                        if j[3] is not None:
-                                            playlist_cancelled.append(f'{j[1]} [{seconds_convert(j[3])}]')
-                                        else:
-                                            playlist_cancelled.append(j[1])
-                                        playlist_to_del.append(j)
-                                        song_cancelled_title = True
-                                        username_in_playlist = True
-                                if not song_cancelled_title:
-                                    playlist_not_found.append(target)
-                        if playlist_to_del:
-                            for i in playlist_to_del:
-                                try:
-                                    playlist.remove(i)
-                                except ValueError:
-                                    playlist_cancelled = list(set(playlist_cancelled))
-                        if not username_in_playlist:
-                            send_message(f'{username}, nothing to cancel {sad_emote}')
-                            return
-                        response = []
-                        if playlist_cancelled:
-                            response.append(f'Cancelled: {", ".join(playlist_cancelled)} {love_emote}')
-                        if playlist_not_found:
-                            response.append(f'Not found: {", ".join(playlist_not_found)} {sad_emote}')
-                        if response:
-                            responsestr = " ".join(response)
-                            if len(responsestr) > 480:
-                                response *= 0
-                                if playlist_cancelled:
-                                    response.append(f'Cancelled: {len(playlist_cancelled)}')
-                                if playlist_not_found:
-                                    response.append(f'Not found: {len(playlist_not_found)} {sad_emote}')
-                                send_message(f'{username}, {" ".join(response)}')
-                            else:
-                                send_message(f'{username}, {responsestr}')
-                except IndexError:
-                    song_cancelled = False
-                    for i in playlist:
-                        if username == i[5]:
-                            if i[3] is not None:
-                                send_message(f'{username}, Cancelled: {i[1]} [{seconds_convert(i[3])}] '
-                                             f'{love_emote}')
-                            else:
-                                send_message(f'{username}, Cancelled: {i[1]} {love_emote}')
-                            song_cancelled = True
-                            playlist.remove(i)
-                            break
-                    if not song_cancelled:
+                                playlist_cancelled = list(set(playlist_cancelled))
+                    if not username_in_playlist:
                         send_message(f'{username}, nothing to cancel {sad_emote}')
+                        return
+                    response = []
+                    if playlist_cancelled:
+                        response.append(f'Cancelled: {", ".join(playlist_cancelled)} {love_emote}')
+                    if playlist_not_found:
+                        response.append(f'Not found: {", ".join(playlist_not_found)} {sad_emote}')
+                    if response:
+                        responsestr = " ".join(response)
+                        if len(responsestr) > 480:
+                            response *= 0
+                            if playlist_cancelled:
+                                response.append(f'Cancelled: {len(playlist_cancelled)}')
+                            if playlist_not_found:
+                                response.append(f'Not found: {len(playlist_not_found)} {sad_emote}')
+                            send_message(f'{username}, {" ".join(response)}')
+                        else:
+                            send_message(f'{username}, {responsestr}')
+            except IndexError:
+                song_cancelled = False
+                for i in playlist:
+                    if username == i[5]:
+                        if i[3] is not None:
+                            send_message(f'{username}, Cancelled: {i[1]} [{seconds_convert(i[3])}] '
+                                         f'{love_emote}')
+                        else:
+                            send_message(f'{username}, Cancelled: {i[1]} {love_emote}')
+                        song_cancelled = True
+                        playlist.remove(i)
+                        break
+                if not song_cancelled:
+                    send_message(f'{username}, nothing to cancel {sad_emote}')
 
-        def ban_user_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "ban" and message != f"{prefix}ban" and checkmodlist(username):
+        @moderator_command
+        def ban_command(username=None, messagesplit=None, message=None):
+            if message != f"{prefix}ban":
                 as_loop.create_task(ban_mod_commands(username, messagesplit, 'users banned', 'already banned',
                                                      checkbanlist, db.add_ban, True))
 
-        def unban_user_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "unban" and message != f"{prefix}unban" and checkmodlist(username):
+        @moderator_command
+        def unban_command(username=None, messagesplit=None, message=None):
+            if message != f"{prefix}unban":
                 as_loop.create_task(ban_mod_commands(username, messagesplit,
                                                      'users unbanned', f'not in the list {sad_emote}',
                                                      checkbanlist, db.remove_ban, False))
 
-        def mod_user_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "mod" and message != f"{prefix}mod" and username == admin:
+        @bot_command
+        def mod_command(username=None, messagesplit=None, message=None):
+            if message != f"{prefix}mod" and username == admin:
                 as_loop.create_task(ban_mod_commands(username, messagesplit, 'users modded', 'already modded',
                                                      checkmodlist, db.add_mod, True))
 
-        def unmod_user_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "unmod" and message != f"{prefix}unmod" and username == admin:
+        @bot_command
+        def unmod_command(username=None, messagesplit=None, message=None):
+            if message != f"{prefix}unmod" and username == admin:
                 as_loop.create_task(ban_mod_commands(username, messagesplit,
                                                      'users unmodded', f'not in the list {sad_emote}',
                                                      checkmodlist, db.remove_mod, False))
 
+        @bot_command
         def set_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "set" and message != f"{prefix}set" and not checkbanlist(username):
+            if message != f"{prefix}set":
                 selected = messagesplit[1].lower()
                 if selected.endswith('.png') or selected.endswith('.gif'):
                     my_file = Path("custom/" + selected)
@@ -1660,27 +1653,27 @@ class ThreadMain(threading.Thread):
                 else:
                     send_message('{}, names include extensions [png/gif]'.format(username))
 
+        @bot_command
         def setrand_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "setrand" and not checkbanlist(username):
-                try:
-                    randsrc = messagesplit[1]
-                    if not any(x == randsrc for x in ['png', 'gif', 'link', 'pixiv']):
-                        send_message(f'{username}, {prefix}setrand [png/gif/pixiv]')
-                    elif randsrc == 'gif':
-                        onlygif = [f for f in listdir('custom/') if f.endswith('.gif')]
-                        set_random_pic(onlygif, f'{username}, gif not found {sad_emote}')
-                    elif randsrc == 'png':
-                        onlypng = [f for f in listdir('custom/') if f.endswith('.png')]
-                        set_random_pic(onlypng, f'{username}, png not found {sad_emote}')
-                    elif randsrc == 'pixiv':
-                        asyncio.run_coroutine_threadsafe(Pixiv.random_pixiv_art(), as_loop)
-                except IndexError:
-                    onlyfiles = [f for f in listdir('custom/') if isfile(join('custom/', f))]
-                    set_random_pic(onlyfiles, f'{username}, {prefix}list is empty {sad_emote}')
+            try:
+                randsrc = messagesplit[1]
+                if not any(x == randsrc for x in ['png', 'gif', 'link', 'pixiv']):
+                    send_message(f'{username}, {prefix}setrand [png/gif/pixiv]')
+                elif randsrc == 'gif':
+                    onlygif = [f for f in listdir('custom/') if f.endswith('.gif')]
+                    set_random_pic(onlygif, f'{username}, gif not found {sad_emote}')
+                elif randsrc == 'png':
+                    onlypng = [f for f in listdir('custom/') if f.endswith('.png')]
+                    set_random_pic(onlypng, f'{username}, png not found {sad_emote}')
+                elif randsrc == 'pixiv':
+                    asyncio.run_coroutine_threadsafe(Pixiv.random_pixiv_art(), as_loop)
+            except IndexError:
+                onlyfiles = [f for f in listdir('custom/') if isfile(join('custom/', f))]
+                set_random_pic(onlyfiles, f'{username}, {prefix}list is empty {sad_emote}')
 
+        @bot_command
         def search_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "search" and message != f'{prefix}search' and not checkbanlist(
-                    username):
+            if message != f'{prefix}search':
                 words = checkIfNoLink('!search')
                 if messagesplit[1].startswith(("'", '"')) and messagesplit[1].endswith(("'", '"')):
                     search_words = [x for x in words if x.startswith(messagesplit[1][1:-1])]
@@ -1690,45 +1683,47 @@ class ThreadMain(threading.Thread):
                 allpages = divide_chunks(str1, 480)
                 send_list(str1, allpages, 2, "search")
 
+        @bot_command
         def list_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "list" and not checkbanlist(username):
-                words, linkwords = checkIfNoLink('!list')
-                linkstr1 = ' '.join(linkwords)
-                linkallpages = divide_chunks(linkstr1, 480)
-                str1 = ' '.join(words)
-                allpages = divide_chunks(str1, 480)
+            words, linkwords = checkIfNoLink('!list')
+            linkstr1 = ' '.join(linkwords)
+            linkallpages = divide_chunks(linkstr1, 480)
+            str1 = ' '.join(words)
+            allpages = divide_chunks(str1, 480)
+            try:
+                pagenum = int(messagesplit[2])
+                if messagesplit[0][1:] == "list" and messagesplit[1] == "links":
+                    send_list(linkstr1, linkallpages, 2, "list")
+            except IndexError:
                 try:
-                    pagenum = int(messagesplit[2])
-                    if messagesplit[0][1:] == "list" and messagesplit[1] == "links":
+                    if messagesplit[1] == "links":
                         send_list(linkstr1, linkallpages, 2, "list")
+                        return
+                    send_list(str1, allpages, 1, "list")
                 except IndexError:
-                    try:
-                        if messagesplit[0][1:] == "list" and messagesplit[1] == "links":
-                            send_list(linkstr1, linkallpages, 2, "list")
-                            return
-                        send_list(str1, allpages, 1, "list")
-                    except IndexError:
-                        send_list(str1, allpages, 1, "list")
+                    send_list(str1, allpages, 1, "list")
 
+        @moderator_command
         def banlist_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "banlist" and checkmodlist(username):
-                checklist("banlist")
+            checklist("banlist")
 
+        @moderator_command
         def modlist_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "modlist" and checkmodlist(username):
-                checklist("modlist")
+            checklist("modlist")
 
-        def link_chat_command(username=None, messagesplit=None, message=None):
-            if message == f"{prefix}link" and not checkbanlist(username):
+        @bot_command
+        def link_command(username=None, messagesplit=None, message=None):
+            if message == f"{prefix}link":
                 if lastlink:
                     send_message('{}, {} - {}'.format(username, lastlink, last_rand_img))
                 else:
                     send_message(f'nothing here {sad_emote}')
-            elif messagesplit[0][1:] == "link" and message != f"{prefix}link" and not checkbanlist(username):
-                as_loop.create_task(link_command(username, messagesplit[1:]))
+            else:
+                as_loop.create_task(link_chat_command(username, messagesplit[1:]))
 
+        @bot_command
         def save_command(username=None, messagesplit=None, message=None):
-            if message == f'{prefix}save' and not checkbanlist(username):
+            if message == f'{prefix}save':
                 if re.match(regex, lastlink):
                     messagesplit.append(lastlink)
                     messagesplit.append(''.join(random.choices(
@@ -1736,7 +1731,7 @@ class ThreadMain(threading.Thread):
                     change_save_command(username, messagesplit, do_save_response=True)
                 else:
                     send_message(f'{username}, nothing to save {sad_emote}')
-            elif messagesplit[0][1:] == "save" and message != f"{prefix}save" and not checkbanlist(username):
+            else:
                 try:
                     if messagesplit[2]:
                         change_save_command(username, messagesplit, do_save_response=True)
@@ -1745,111 +1740,115 @@ class ThreadMain(threading.Thread):
                         'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM' + '1234567890', k=10)))
                     change_save_command(username, messagesplit, do_save_response=True)
 
+        @bot_command
         def olist_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "olist" and not checkbanlist(username):
-                owner_list(username)
+            owner_list(username)
 
-        def del_chat_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "del" and message != f"{prefix}del" and not checkbanlist(username):
-                as_loop.create_task(del_command(username, messagesplit))
+        @bot_command
+        def del_command(username=None, messagesplit=None, message=None):
+            if message != f"{prefix}del":
+                as_loop.create_task(del_chat_command(username, messagesplit))
 
+        @bot_command
         def ren_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "ren" and message != f"{prefix}ren" and not checkbanlist(username):
+            if message != f"{prefix}ren":
                 as_loop.create_task(rename_command(username, messagesplit))
 
+        @bot_command
         def info_command(username=None, messagesplit=None, message=None, pipe=False):
-            if messagesplit[0][1:] == "info" and not checkbanlist(username):
-                response = f'shtcd {bot_ver}, uptime: {seconds_convert(floor(time.time() - startTime), explicit=True)}'
-                if pipe:
-                    return response.split()
-                send_message(response)
+            response = f'uptime: {seconds_convert(floor(time.time() - startTime), explicit=True)}'
+            if pipe:
+                return response.split()
+            send_message(response)
 
+        @bot_command
         def orand_command(username=None, messagesplit=None, message=None):
             global last_rand_img
-            if messagesplit[0][1:] == "orand" and not checkbanlist(username):
-                result = db.check_ownerlist(username)
-                try:
-                    if not result:
-                        send_message(f'{username}, nothing to set {sad_emote}')
-                        return
-                    result = [item[0] for item in result]
-                    randsrc = messagesplit[1]
-                    if all(randsrc != x for x in ['gif', 'png']):
-                        send_message(f'{username}, png/gif only')
-                    elif randsrc == 'gif':
-                        onlygif = [f for f in result if f.endswith('.gif')]
-                        set_random_pic(onlygif, f'{username}, gif not found {sad_emote}')
-                    elif randsrc == 'png':
-                        onlypng = [f for f in result if f.endswith('.png')]
-                        set_random_pic(onlypng, f'{username}, png not found {sad_emote}')
-                except IndexError:
-                    selected = random.choice(result)
-                    updatelastlink(selected)
-                    last_rand_img = selected
-                    call_draw('custom/', selected)
+            result = db.check_ownerlist(username)
+            try:
+                if not result:
+                    send_message(f'{username}, nothing to set {sad_emote}')
+                    return
+                result = [item[0] for item in result]
+                randsrc = messagesplit[1]
+                if all(randsrc != x for x in ['gif', 'png']):
+                    send_message(f'{username}, png/gif only')
+                elif randsrc == 'gif':
+                    onlygif = [f for f in result if f.endswith('.gif')]
+                    set_random_pic(onlygif, f'{username}, gif not found {sad_emote}')
+                elif randsrc == 'png':
+                    onlypng = [f for f in result if f.endswith('.png')]
+                    set_random_pic(onlypng, f'{username}, png not found {sad_emote}')
+            except IndexError:
+                selected = random.choice(result)
+                updatelastlink(selected)
+                last_rand_img = selected
+                call_draw('custom/', selected)
 
-        def help_chat_command(username=None, messagesplit=None, message=None, pipe=False):
-            if messagesplit[0][1:] == 'help' and not checkbanlist(username):
-                try:
-                    help_command_quoted = False
-                    help_command = " ".join(messagesplit[1:])
-                    command = messagesplit[1]
-                    if command.startswith(("'", '"')) and command.endswith(("'", '"')):
-                        command = command[1:-1]
-                    if help_command.startswith(("'", '"')) and help_command.endswith(("'", '"')):
-                        help_command = help_command[1:-1]
-                        help_command_quoted = True
-                    if not set(command.split()).intersection(commands_list + mod_commands_list +
-                                                             [i[1:] for i in commands_list] +
-                                                             [i[1:] for i in mod_commands_list]):
-                        if pipe:
-                            return f'{username}, unknown command {sad_emote}'.split()
-                        send_message(f'{username}, unknown command {sad_emote}')
-                        return
-                    response = []
-                    if help_command_quoted:
-                        for i in commands_desc:
-                            if i.startswith(help_command) or i[1:].startswith(help_command):
-                                response.append(i)
-                    else:
-                        for i in commands_desc:
-                            if help_command in i:
-                                response.append(i)
-                    if response:
-                        response_str = ", ".join(response)
-                        if pipe:
-                            return response_str.split()
-                        if len(response_str) > 480:
-                            response_arr = divide_chunks(response_str, 470, response, joinparam=', ')
-                            for i in response_arr:
-                                send_message(i)
-                        else:
-                            send_message(response_str)
-                    else:
-                        if pipe:
-                            return f'{username}, no results {sad_emote}'.split()
-                        send_message(f'{username}, no results {sad_emote}')
-                except IndexError:
+        @bot_command
+        def help_command(username=None, messagesplit=None, message=None, pipe=False):
+            try:
+                help_command_quoted = False
+                help_command = " ".join(messagesplit[1:])
+                command = messagesplit[1]
+                if command.startswith(("'", '"')) and command.endswith(("'", '"')):
+                    command = command[1:-1]
+                if help_command.startswith(("'", '"')) and help_command.endswith(("'", '"')):
+                    help_command = help_command[1:-1]
+                    help_command_quoted = True
+                if not set(command.split()).intersection(commands_list + mod_commands_list +
+                                                         [i[1:] for i in commands_list] +
+                                                         [i[1:] for i in mod_commands_list]):
                     if pipe:
-                        return f'Public command list: {", ".join(i[1:] for i in commands_list)} ; ' \
-                               f'Mod: {", ".join(i[1:] for i in mod_commands_list)}'.split()
-                    send_message(f'Public command list: {", ".join(i[1:] for i in commands_list)} ; '
-                                 f'Mod: {", ".join(i[1:] for i in mod_commands_list)}')
+                        return f'{username}, unknown command {sad_emote}'.split()
+                    send_message(f'{username}, unknown command {sad_emote}')
+                    return
+                response = []
+                if help_command_quoted:
+                    for i in commands_desc:
+                        if i.startswith(help_command) or i[1:].startswith(help_command):
+                            response.append(i)
+                else:
+                    for i in commands_desc:
+                        if help_command in i:
+                            response.append(i)
+                if response:
+                    response_str = ", ".join(response)
+                    if pipe:
+                        return response_str.split()
+                    if len(response_str) > 480:
+                        response_arr = divide_chunks(response_str, 470, response, joinparam=', ')
+                        for i in response_arr:
+                            send_message(i)
+                    else:
+                        send_message(response_str)
+                else:
+                    if pipe:
+                        return f'{username}, no results {sad_emote}'.split()
+                    send_message(f'{username}, no results {sad_emote}')
+            except IndexError:
+                if pipe:
+                    return f'Public command list: {", ".join(i[1:] for i in commands_list)} ; ' \
+                           f'Mod: {", ".join(i[1:] for i in mod_commands_list)}'.split()
+                send_message(f'Public command list: {", ".join(i[1:] for i in commands_list)} ; '
+                             f'Mod: {", ".join(i[1:] for i in mod_commands_list)}')
 
+        @moderator_command
         def title_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "title" and checkmodlist(username):
-                as_loop.create_task(change_stream_settings(username, messagesplit, 'title'))
+            as_loop.create_task(change_stream_settings(username, messagesplit, 'title'))
 
+        @moderator_command
         def game_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "game" and checkmodlist(username):
-                as_loop.create_task(change_stream_settings(username, messagesplit, 'game'))
+            as_loop.create_task(change_stream_settings(username, messagesplit, 'game'))
 
+        @bot_command
         def change_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "change" and message != f"{prefix}change" and not checkbanlist(username):
+            if message != f"{prefix}change":
                 change_save_command(username, messagesplit, do_draw=True)
 
+        @bot_command
         def pipe_command(username=None, messagesplit=None, message=None):
-            if messagesplit[0][1:] == "pipe" and message != f"{prefix}pipe" and not checkbanlist(username):
+            if message != f"{prefix}pipe":
                 pipesplit = " ".join(messagesplit[1:]).split(' | ')
                 if len(pipesplit) < 2:
                     send_message(f'{username}, you need at least two commands {sad_emote}')
@@ -1893,41 +1892,39 @@ class ThreadMain(threading.Thread):
                         send_message(f'{username}, {i[0][1:]} - unsupported command {sad_emote}')
                         return
 
-        def tts_cfg_command(username=None, messagesplit=None, message=None):
+        @moderator_command
+        def tts_command(username=None, messagesplit=None, message=None):
             global tts
-            if messagesplit[0] == f'{prefix}tts' and checkmodlist(username):
-                try:
-                    if messagesplit[1] == 'vc':
-                        call_tts.send_set_tts_vc(username, messagesplit)
-                    elif messagesplit[1] == 'vol':
-                        try:
-                            call_tts.engine.setProperty('volume', float(messagesplit[2]))
-                            send_message('{}, vol={}'.format(username, float(messagesplit[2])))
-                        except IndexError:
-                            send_message('{}, vol={}'.format(username, call_tts.engine.getProperty('volume')))
-                    elif messagesplit[1] == 'rate':
-                        try:
-                            call_tts.engine.setProperty('rate', int(messagesplit[2]))
-                            send_message('{}, rate={}'.format(username, float(messagesplit[2])))
-                        except IndexError:
-                            send_message('{}, rate={}'.format(username, call_tts.engine.getProperty('rate')))
-                    elif messagesplit[1] == 'cfg':
-                        send_message(f"vol={call_tts.engine.getProperty('volume')}, rate="
-                                     f"{call_tts.engine.getProperty('rate')}, "
-                                     f"vc={call_tts.get_tts_vc_key(call_tts.engine.getProperty('voice'))}")
-                except IndexError:
-                    if tts:
-                        tts = False
-                        send_message(f'tts off {sad_emote}')
-                    else:
-                        tts = True
-                        send_message(f'tts on {love_emote}')
+            try:
+                if messagesplit[1] == 'vc':
+                    call_tts.send_set_tts_vc(username, messagesplit)
+                elif messagesplit[1] == 'vol':
+                    try:
+                        call_tts.engine.setProperty('volume', float(messagesplit[2]))
+                        send_message('{}, vol={}'.format(username, float(messagesplit[2])))
+                    except IndexError:
+                        send_message('{}, vol={}'.format(username, call_tts.engine.getProperty('volume')))
+                elif messagesplit[1] == 'rate':
+                    try:
+                        call_tts.engine.setProperty('rate', int(messagesplit[2]))
+                        send_message('{}, rate={}'.format(username, float(messagesplit[2])))
+                    except IndexError:
+                        send_message('{}, rate={}'.format(username, call_tts.engine.getProperty('rate')))
+                elif messagesplit[1] == 'cfg':
+                    send_message(f"vol={call_tts.engine.getProperty('volume')}, rate="
+                                 f"{call_tts.engine.getProperty('rate')}, "
+                                 f"vc={call_tts.get_tts_vc_key(call_tts.engine.getProperty('voice'))}")
+            except IndexError:
+                if tts:
+                    tts = False
+                    send_message(f'tts off {sad_emote}')
+                else:
+                    tts = True
+                    send_message(f'tts on {love_emote}')
 
-        def tts_command(username=None, messagesplit=None, message=None, pipe=False):
-            call_tts.temper.append([" ".join(messagesplit), username])
-
+        @bot_command
         def notify_command(username=None, messagesplit=None, message=None, pipe=False):
-            if messagesplit[0][1:] == "notify" and message != f"{prefix}notify" and not checkbanlist(username):
+            if message != f"{prefix}notify":
                 if not 4 <= len(messagesplit[1]) <= 25:
                     send_message(f'{username}, username must be between 4 and 25 characters {sad_emote}')
                     return
@@ -1948,7 +1945,7 @@ class ThreadMain(threading.Thread):
                 for i in notify_list:
                     if i['recipient'] == username:
                         response.append(f'{i["sender"]}: {i["message"]} '
-                                        f'({seconds_convert(floor(time.time() - i["date"]), explicit=True)} ago)')
+                                        f'({seconds_convert(time.time() - i["date"], explicit=True)} ago)')
                 if response:
                     response_str = f'{username}, {"; ".join(response)}'
                     if len(response_str) > 480:
@@ -1970,52 +1967,6 @@ class ThreadMain(threading.Thread):
         username = ''
         readbuffer = ''
         chat_msg = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
-
-        commands_dict = {
-            'die': die_command,
-            'exit': exit_command,
-            'log': log_command,
-            'np': np_command,
-            'srv': srv_command,
-            'srq': srq_command,
-            'srs': srs_command,
-            'src': src_command,
-            'srp': srp_command,
-            'srt': srt_command,
-            'srf+': srf_plus_command,
-            'srf-': srf_minus_command,
-            'srfp': srfp_command,
-            'srfl': srfl_command,
-            'srf': srf_command,
-            'sr': songrequest_command,
-            'sql': sql_command,
-            'cancel': cancel_command,
-            'ban': ban_user_command,
-            'unban': unban_user_command,
-            'mod': mod_user_command,
-            'unmod': unmod_user_command,
-            'set': set_command,
-            'setrand': setrand_command,
-            'search': search_command,
-            'list': list_command,
-            'banlist': banlist_command,
-            'modlist': modlist_command,
-            'link': link_chat_command,
-            'save': save_command,
-            'olist': olist_command,
-            'del': del_chat_command,
-            'ren': ren_command,
-            'info': info_command,
-            'orand': orand_command,
-            'help': help_chat_command,
-            'title': title_command,
-            'game': game_command,
-            'change': change_command,
-            'pipe': pipe_command,
-            'tts': tts_cfg_command,
-            'tts:': tts_command,
-            'notify': notify_command
-        }
 
         commands_desc = [f'change «link» - change, {prefix}change «link» «name» - change+save',
                          f'save «link» «name» - save only',
@@ -2041,8 +1992,8 @@ class ThreadMain(threading.Thread):
                          f'soundcloud links, optional timecode(start time)',
                          f'srq [page] - current queue',
                          f'srf [page] - your favorites list',
-                         f'srf+ [url] [timecode] - favorite a song, optional timecode, np song if no url',
-                         f'srf- «index1» «index2».. - remove from favorites by list index',
+                         f'srfa [url] [timecode] - favorite a song, optional timecode, np song if no url',
+                         f'srfd «index1» «index2».. - remove from favorites by list index',
                          f'srfp «word/index» [word2/index2].. - play songs from favorites ({prefix}srf)',
                          f'srfl «index1» «index2».. - get song link',
                          f'src - clear current playlist',
@@ -2092,10 +2043,14 @@ class ThreadMain(threading.Thread):
 
                 print(f"{username}: {message}")
 
-                call_tts.temper.append([message, username])
-
                 if all(x != username for x in notify_check_inprogress):
                     as_loop.create_task(check_chat_notify(username))
+
+                if message.startswith(('!tts:', 'tts:')):
+                    call_tts.temper.append([message, username])
+                    continue
+
+                call_tts.temper.append([message, username])
 
                 if logs:
                     strdate = getCurDate()
@@ -2112,6 +2067,30 @@ class ThreadMain(threading.Thread):
 
 
 class ThreadDB(threading.Thread):
+    class conn_query(object):
+        def __init__(self, func):
+            self.func = func
+
+        def __call__(self, *args, **kwargs):
+            with conn:
+                try:
+                    lock.acquire(True)
+                    print(f'acquired lock and conn for {self.func}')
+                    return self.func(self, *args, **kwargs)
+                finally:
+                    lock.release()
+
+    class regular_query(object):
+        def __init__(self, func):
+            self.func = func
+
+        def __call__(self, *args, **kwargs):
+            try:
+                lock.acquire(True)
+                print(f'acquired lock for {self.func}')
+                return self.func(self, *args, **kwargs)
+            finally:
+                lock.release()
 
     def __init__(self, name):
         threading.Thread.__init__(self)
@@ -2121,265 +2100,159 @@ class ThreadDB(threading.Thread):
         conn = sqlite3.connect('db/picturebot.db', check_same_thread=False)
         c = conn.cursor()
 
+    @conn_query
     def add_owner(self, filename, owner):
-        with conn:
-            try:
-                lock.acquire(True)
-                c.execute('INSERT INTO owners (filename, owner) VALUES (:filename, :owner)',
-                          {'filename': filename, 'owner': owner})
-            finally:
-                lock.release()
+        c.execute('INSERT INTO owners (filename, owner) VALUES (:filename, :owner)',
+                  {'filename': filename, 'owner': owner})
 
+    @conn_query
     def remove_owner(self, filename):
-        with conn:
-            try:
-                lock.acquire(True)
-                c.executemany('DELETE FROM owners WHERE filename = ?', filename)
-            finally:
-                lock.release()
+        c.executemany('DELETE FROM owners WHERE filename = ?', filename)
 
+    @conn_query
     def add_srfavs(self, song, owner, filename, user_duration, link, duration):
-        with conn:
-            try:
-                lock.acquire(True)
-                c.execute('INSERT INTO srfavs (song, owner, filename, user_duration, link, duration) '
-                          'VALUES (:song, :owner, :filename, :user_duration, :link, :duration)',
-                          {'song': song, 'owner': owner, 'filename': filename, 'user_duration': user_duration,
-                           'link': link, 'duration': duration})
-            finally:
-                lock.release()
+        c.execute('INSERT INTO srfavs (song, owner, filename, user_duration, link, duration) '
+                  'VALUES (:song, :owner, :filename, :user_duration, :link, :duration)',
+                  {'song': song, 'owner': owner, 'filename': filename, 'user_duration': user_duration,
+                   'link': link, 'duration': duration})
 
+    @conn_query
     def remove_srfavs(self, data):
-        with conn:
-            try:
-                lock.acquire(True)
-                c.executemany("DELETE FROM srfavs WHERE song = ? and owner = ? and filename = ? and "
-                              "user_duration = ? and link = ? and duration = ?", data)
-            finally:
-                lock.release()
+        c.executemany("DELETE FROM srfavs WHERE song = ? and owner = ? and filename = ? and "
+                      "user_duration = ? and link = ? and duration = ?", data)
 
+    @regular_query
     def check_srfavs_list(self, owner):
-        try:
-            lock.acquire(True)
-            c.execute('SELECT song, filename, user_duration, link, duration FROM srfavs WHERE owner = :owner',
-                      {'owner': owner})
-            return c.fetchall()
-        finally:
-            lock.release()
+        c.execute('SELECT song, filename, user_duration, link, duration FROM srfavs WHERE owner = :owner',
+                  {'owner': owner})
+        return c.fetchall()
 
+    @regular_query
     def get_srfavs_filenames(self):
-        try:
-            lock.acquire(True)
-            c.execute('SELECT filename FROM srfavs')
-            return c.fetchall()
-        finally:
-            lock.release()
+        c.execute('SELECT filename FROM srfavs')
+        return c.fetchall()
 
+    @regular_query
     def check_owner(self, filename, owner):
-        try:
-            lock.acquire(True)
-            c.execute('SELECT owner FROM owners WHERE filename = :filename AND owner = :owner', {'filename': filename,
-                                                                                                 'owner': owner})
-            return c.fetchall()
-        finally:
-            lock.release()
+        c.execute('SELECT owner FROM owners WHERE filename = :filename AND owner = :owner', {'filename': filename,
+                                                                                             'owner': owner})
+        return c.fetchall()
 
+    @regular_query
     def check_ownerlist(self, owner):
-        try:
-            lock.acquire(True)
-            c.execute('SELECT filename FROM owners WHERE owner = :owner', {'owner': owner})
-            return c.fetchall()
-        finally:
-            lock.release()
+        c.execute('SELECT filename FROM owners WHERE owner = :owner', {'owner': owner})
+        return c.fetchall()
 
+    @conn_query
     def update_owner_filename(self, filename, new_filename):
-        with conn:
-            try:
-                lock.acquire(True)
-                c.execute('UPDATE owners SET filename = :new_filename WHERE filename = :filename',
-                          {'filename': filename,
-                           'new_filename':
-                               new_filename})
-            finally:
-                lock.release()
+        c.execute('UPDATE owners SET filename = :new_filename WHERE filename = :filename',
+                  {'filename': filename,
+                   'new_filename':
+                       new_filename})
 
+    @conn_query
     def add_link(self, link, filename):
-        with conn:
-            try:
-                lock.acquire(True)
-                c.execute('INSERT INTO links (link, filename) VALUES (:link, :filename)',
-                          {'link': link, 'filename': filename})
-            finally:
-                lock.release()
+        c.execute('INSERT INTO links (link, filename) VALUES (:link, :filename)',
+                  {'link': link, 'filename': filename})
 
+    @conn_query
     def remove_link(self, filename):
-        with conn:
-            try:
-                lock.acquire(True)
-                c.executemany('DELETE FROM links WHERE filename = ?', filename)
-            finally:
-                lock.release()
+        c.executemany('DELETE FROM links WHERE filename = ?', filename)
 
+    @conn_query
     def update_link_filename(self, filename, new_filename):
-        with conn:
-            try:
-                lock.acquire(True)
-                c.execute('UPDATE links SET filename = :new_filename WHERE filename = :filename', {'filename': filename,
-                                                                                                   'new_filename':
-                                                                                                       new_filename})
-            finally:
-                lock.release()
+        c.execute('UPDATE links SET filename = :new_filename WHERE filename = :filename', {'filename': filename,
+                                                                                           'new_filename':
+                                                                                               new_filename})
 
+    @regular_query
     def check_filename_has_link(self, filename):
-        try:
-            lock.acquire(True)
-            c.execute('SELECT filename FROM links WHERE filename = :filename', {'filename': filename})
-            return c.fetchall()
-        finally:
-            lock.release()
+        c.execute('SELECT filename FROM links WHERE filename = :filename', {'filename': filename})
+        return c.fetchall()
 
+    @regular_query
     def get_links_filenames(self):
-        try:
-            lock.acquire(True)
-            c.execute('SELECT filename FROM links')
-            return c.fetchall()
-        finally:
-            lock.release()
+        c.execute('SELECT filename FROM links')
+        return c.fetchall()
 
+    @regular_query
     def get_links_and_filenames(self):
-        try:
-            lock.acquire(True)
-            c.execute('SELECT link, filename FROM links')
-            return c.fetchall()
-        finally:
-            lock.release()
+        c.execute('SELECT link, filename FROM links')
+        return c.fetchall()
 
+    @regular_query
     def get_link(self, filename):
-        try:
-            lock.acquire(True)
-            c.execute('SELECT link FROM links WHERE filename = :filename', {'filename': filename})
-            return c.fetchall()
-        finally:
-            lock.release()
+        c.execute('SELECT link FROM links WHERE filename = :filename', {'filename': filename})
+        return c.fetchall()
 
+    @regular_query
     def get_imgcount(self):
-        try:
-            lock.acquire(True)
-            c.execute('SELECT count FROM imgcount')
-            return c.fetchall()
-        finally:
-            lock.release()
+        c.execute('SELECT count FROM imgcount')
+        return c.fetchall()
 
+    @conn_query
     def update_imgcount(self, count):
         global numba
         numba = int(numba) + 1
         numba = str(numba)
-        with conn:
-            try:
-                lock.acquire(True)
-                c.execute('UPDATE imgcount SET count = :count', {'count': count})
-            finally:
-                lock.release()
+        c.execute('UPDATE imgcount SET count = :count', {'count': count})
 
+    @regular_query
     def check_if_mod(self, username):
-        try:
-            lock.acquire(True)
-            c.execute('SELECT username FROM moderators WHERE username = :username', {'username': username})
-            return c.fetchall()
-        finally:
-            lock.release()
+        c.execute('SELECT username FROM moderators WHERE username = :username', {'username': username})
+        return c.fetchall()
 
+    @regular_query
     def check_moderators(self):
-        try:
-            lock.acquire(True)
-            c.execute('SELECT username FROM moderators')
-            return c.fetchall()
-        finally:
-            lock.release()
+        c.execute('SELECT username FROM moderators')
+        return c.fetchall()
 
+    @conn_query
     def add_mod(self, username):
-        with conn:
-            try:
-                lock.acquire(True)
-                c.executemany("INSERT INTO moderators (username) VALUES (?)", username)
-            finally:
-                lock.release()
+        c.executemany("INSERT INTO moderators (username) VALUES (?)", username)
 
+    @conn_query
     def remove_mod(self, username):
-        with conn:
-            try:
-                lock.acquire(True)
-                c.executemany("DELETE FROM moderators WHERE username = ?", username)
-            finally:
-                lock.release()
+        c.executemany("DELETE FROM moderators WHERE username = ?", username)
 
+    @regular_query
     def check_if_banned(self, username):
-        try:
-            lock.acquire(True)
-            c.execute('SELECT username FROM banned WHERE username = :username', {'username': username})
-            return c.fetchall()
-        finally:
-            lock.release()
+        c.execute('SELECT username FROM banned WHERE username = :username', {'username': username})
+        return c.fetchall()
 
+    @regular_query
     def check_banned(self):
-        try:
-            lock.acquire(True)
-            c.execute('SELECT username FROM banned')
-            return c.fetchall()
-        finally:
-            lock.release()
+        c.execute('SELECT username FROM banned')
+        return c.fetchall()
 
+    @conn_query
     def add_ban(self, username):
-        with conn:
-            try:
-                lock.acquire(True)
-                c.executemany("INSERT INTO banned (username) VALUES (?)", username)
-            finally:
-                lock.release()
+        c.executemany("INSERT INTO banned (username) VALUES (?)", username)
 
+    @conn_query
     def remove_ban(self, username):
-        with conn:
-            try:
-                lock.acquire(True)
-                c.executemany("DELETE FROM banned WHERE username = ?", username)
-            finally:
-                lock.release()
+        c.executemany("DELETE FROM banned WHERE username = ?", username)
 
+    @conn_query
     def sql_query(self, query):
-        with conn:
-            try:
-                lock.acquire(True)
-                try:
-                    c.execute(query)
-                except Exception as e:
-                    return [(str(e),)]
-                return c.fetchall()
-            finally:
-                lock.release()
+        try:
+            c.execute(query)
+        except Exception as e:
+            return [(str(e),)]
+        return c.fetchall()
 
 
 Main = ThreadMain("ThreadMain")
 Drawing = threading.Thread(target=ThreadPic)
 Pixiv = ThreadPixiv("ThreadPixiv")
-AsyncioLoop = AsyncioLoops(as_loop)
 call_tts = ThreadTTS("calltts")
 db = ThreadDB("ThreadDB")
-huis_player = ThreadPlayer('ThreadPlayer')
-sr_queue_loop = asyncio.new_event_loop()
-sr_queue = AsyncioLoops(sr_queue_loop)
-sr_download_loop = asyncio.new_event_loop()
-sr_download_queue = AsyncioLoops(sr_download_loop)
+my_loop = AsyncioLoop(as_loop)
+sr_queue = AsyncioLoop(asyncio.new_event_loop())
+sr_download_queue = AsyncioLoop(asyncio.new_event_loop())
 
 Main.start()
 Drawing.start()
 Pixiv.start()
 call_tts.start()
 db.start()
-huis_player.start()
-
-Main.join()
-Drawing.join()
-Pixiv.join()
-call_tts.join()
-db.join()
-huis_player.join()
