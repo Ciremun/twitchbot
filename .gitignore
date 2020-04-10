@@ -5,5 +5,7 @@ custom/*.gif
 changelog.txt
 sounds/favs/*.wav
 sounds/sr/*.wav
+pixiv/*.png
+pixiv/*.jpg
 special/*.txt
 log/*.txt
