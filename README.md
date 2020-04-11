@@ -53,6 +53,7 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 
 # commands
 
+### everyone
 `change <link> [name]` - change display pic, add name to save  
 `save <link> [name]` - save only  
 `set <name>` - set saved pic  
@@ -79,7 +80,7 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 `pipe` - run commands in chain, transfer result from one command to another,  
 last command gives complete result, supported commands: sql, info, help, tts, notify usage: `pipe <command1> | <command2>..`  
 `help [command]` - view bot commands help, no args - commands list, wrap command in qutoes for startswith search  
-bot moderators:  
+### bot moderators
 `ban <name> [name2]..` - add user(s) to ignore-list  
 `unban <name> [name2]..` - remove user(s) from ignore-list  
 `banlist` - get bot ignore-list  
@@ -97,7 +98,7 @@ bot moderators:
 `srv [value]` - get/change volume  
 `srp` - play/pause  
 `die` - set greenscreen.png  
-bot admin:  
+### bot admin
 `log` - enable/disable chat logging  
 `mod/unmod` - remove/add user to bot modlist  
 `exit` - clear folders, exit bot  
