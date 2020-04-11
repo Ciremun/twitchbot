@@ -23,7 +23,16 @@ youtube-dl>=2020.1.24
 requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 
 ## tokens
-`special/tokens` - tokens file  
+`special/tokens` - tokens file 
+ 
+```
+twitch_bot_token <token here>
+pixiv_token <token here>
+twitch_channel_id <channel id here>
+twitch_app_client_id <client id here>
+twitch_app_oauth[channel_editor] <app oauth here>
+```
+
 `twitch bot token` - read chat commands, tts  
 `pixiv token` - set/download random pixiv arts  
 `twitch channel id`, `client id`, `client OAuth with channel_editor scope` - edit stream title/game  
@@ -71,10 +80,10 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 `srf [page]` - your favorites list  
 `srfa [url] [timecode]` - favorite a song, optional timecode, no url - add now playing song  
 `srfd <index1> [index2]..` - remove from favorites by list index  
-`srfp <word/index> [word2/index2]..` - play songs from favorites (srf)  
+`srfp <name/index> [name2/index2]..` - play songs from favorites (srf)  
 `srfl <index1> [index2]..` - get song link(s)  
 `np` - get current song link, name, time, duration  
-`cancel [word/index] [word2/index2]..` - cancel your songrequest(s)  
+`cancel [name/index] [name2/index2]..` - cancel your songrequest(s)  
 `tts: <msg>` - say message, even when tts is off  
 `info` - bot uptime  
 `pipe <command1> | <command2>..` - run commands in chain, transfer result from one command to another, last command gives complete result, supported commands: sql, info, help, tts, notify  
@@ -93,7 +102,7 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 `sr` - enable/disable songrequests  
 `src` - clear current playlist  
 `srt` - set time for current song  
-`srs [word/index] [word2/index2]..` - skip queue song by name/index, no args - skip now playing song  
+`srs [name/index] [name2/index2]..` - skip queue song by name/index, no args - skip now playing song  
 `srv [value]` - get/change volume  
 `srp` - play/pause  
 `die` - set greenscreen.png  
