@@ -62,7 +62,7 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 `olist` - list of your saved pics  
 `orand [png/gif]` - set random image from olist  
 `setrand [gif/png/pixiv]` - set random saved pic or pixiv art  
-`search <name> [page]` - find image in list [e.g. gif png] wrap in qutoes for startswith search  
+`search <name> [page]` - find image in list (e.g. gif, png) wrap in qutoes for startswith search  
 `link [name] [name2]...` - get saved pic link, no args - last random pic link, filename  
 `ren <name> <new name>` - change saved pic filename  
 `del <name> [name2]..` - delete saved pic(s)  
