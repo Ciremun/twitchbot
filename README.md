@@ -47,7 +47,7 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 `banned_tags`(list of strings) - exclude pixiv tags you dont want to see  
 `pixiv_artratio`(numeric) - max pixiv art width/height ratio  
 `clear_folders`(list of strings) - clear folders on !exit  
-`player_last_vol`(int) - startup songrequests volume, 0 - 100
+`player_last_vol`(int) - startup songrequests volume, 0 - 100  
 `ytdl_rate`(int) - songrequests download speed in bytes/s  
 `max_duration`(string) - songrequests max duration, no limit for bot moderators, timecode string (e.g. 10:00 - ten minutes)  
 
@@ -77,7 +77,8 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 `tts: <msg>` - say message, even when tts is off  
 `info` - bot uptime  
 `pipe` - run commands in chain, transfer result from one command to another,  
-last command gives complete result, supported commands: sql, info, help, tts, notify; usage: pipe <command1> | <command2>..  
+last command gives complete result, supported commands: sql, info, help, tts, notify  
+usage: pipe <command1> | <command2>..  
 `help [command]` - view bot commands help, no args - commands list, wrap command in qutoes for startswith search  
 bot moderators:  
 `ban <name> <name2>..` - add user to ignore-list  
