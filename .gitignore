@@ -7,5 +7,6 @@ sounds/favs/*.wav
 sounds/sr/*.wav
 pixiv/*.png
 pixiv/*.jpg
-special/*.txt
+special/cookies.txt
+special/tokens
 log/*.txt
