@@ -356,14 +356,10 @@ class ThreadTTS(threading.Thread):
                     self.say_message(messagesplit)
 
     def say_message(self, messagesplit):
-        nolinkmsg = ''
         for i in messagesplit:
             if re.match(self.regex, i):
-                continue
-            else:
-                nolinkmsg += i + ' '
-                continue
-        self.engine.say(nolinkmsg)
+                messagesplit.remove(i)
+        self.engine.say(' '.join(messagesplit))
         self.engine.runAndWait()
 
     def get_tts_vc_key(self, vc):
