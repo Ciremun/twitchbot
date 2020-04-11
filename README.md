@@ -77,8 +77,7 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 `cancel [word/index] [word2/index2]..` - cancel your songrequest(s)  
 `tts: <msg>` - say message, even when tts is off  
 `info` - bot uptime  
-`pipe` - run commands in chain, transfer result from one command to another,  
-last command gives complete result, supported commands: sql, info, help, tts, notify usage: `pipe <command1> | <command2>..`  
+`pipe <command1> | <command2>..` - run commands in chain, transfer result from one command to another, last command gives complete result, supported commands: sql, info, help, tts, notify  
 `help [command]` - view bot commands help, no args - commands list, wrap command in qutoes for startswith search  
 ### bot moderators
 `ban <name> [name2]..` - add user(s) to ignore-list  
