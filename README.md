@@ -30,26 +30,26 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 
 ## global variables
 
-`CHANNEL`(string) - twitch channel to listen  
-`BOT`(string) - twtich bot username  
-`admin`(string) - bot admin, twitch username  
-`tts`(boolean) - enable/disable tts  
-`tts_voices`(dict) - dictionary of tts voices, keys are names, values are voice registry keys  
-`tts_default_vc`(string) - startup tts voice (e.g. tts_voices[key])  
-`tts_volume`(numeric) - startup tts volume in percent (e.g. 0.35 - 35%)  
-`logs`(boolean) - enable/disable chat logging  
-`sr`(boolean) - enable/disable songrequests  
-`screenwidth`(int) = pic window width in px  
-`screenheight`(int) =  pic window height in px  
-`res`(string) - init image folder  
-`drawfile`(string) = init image  
-`prefix`(string) - chat command prefix  
-`banned_tags`(list of strings) - exclude pixiv tags you dont want to see  
-`pixiv_artratio`(numeric) - max pixiv art width/height ratio  
-`clear_folders`(list of strings) - clear folders on !exit  
-`player_last_vol`(int) - startup songrequests volume, 0 - 100  
-`ytdl_rate`(int) - songrequests download speed in bytes/s  
-`max_duration`(string) - songrequests max duration, no limit for bot moderators, timecode string (e.g. 10:00 - ten minutes)  
+`CHANNEL` (string) - twitch channel to listen  
+`BOT` (string) - twtich bot username  
+`admin` (string) - bot admin, twitch username  
+`tts` (boolean) - enable/disable tts  
+`tts_voices` (dict) - dictionary of tts voices, keys are names, values are voice registry keys  
+`tts_default_vc` (string) - startup tts voice (e.g. tts_voices[key])  
+`tts_volume` (numeric) - startup tts volume in percent (e.g. 0.35 - 35%)  
+`logs` (boolean) - enable/disable chat logging  
+`sr` (boolean) - enable/disable songrequests  
+`screenwidth` (int) = pic window width in px  
+`screenheight` (int) =  pic window height in px  
+`res` (string) - init image folder  
+`drawfile` (string) = init image  
+`prefix` (string) - chat command prefix  
+`banned_tags` (list of strings) - exclude pixiv tags you dont want to see  
+`pixiv_artratio` (numeric) - max pixiv art width/height ratio  
+`clear_folders` (list of strings) - clear folders on !exit  
+`player_last_vol` (int) - startup songrequests volume, 0 - 100  
+`ytdl_rate` (int) - songrequests download speed in bytes/s  
+`max_duration` (string) - songrequests max duration, no limit for bot moderators, timecode string (e.g. 10:00 - ten minutes)  
 
 # commands
 
