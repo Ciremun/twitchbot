@@ -39,7 +39,7 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 `tts_volume` (numeric) - startup tts volume in percent (e.g. 0.35 - 35%)  
 `logs` (boolean) - enable/disable chat logging  
 `sr` (boolean) - enable/disable songrequests  
-`screenwidth` (int) = pic window width in px  
+`screenwidth` (int) - pic window width in px  
 `screenheight` (int) - pic window height in px  
 `res` (string) - init image folder  
 `drawfile` (string) - init image  
