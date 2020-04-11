@@ -12,7 +12,6 @@ songrequests: youtube link/id/query, soundcloud links
 ffmpeg>=1.4
 Pillow>=7.0.0
 pixiv-api>=0.3.1
-pygame>=1.9.6
 pyglet>=1.4.10
 python-vlc>=3.0.7110
 pyttsx3>=2.81
