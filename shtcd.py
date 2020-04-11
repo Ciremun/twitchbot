@@ -52,7 +52,7 @@ startTime = time.time()
 HOST = "irc.twitch.tv"
 PORT = 6667
 PASS, px_token, channel_id, client_id, client_auth = [' '.join(token.split()[1:]) for token in
-                                                      open('special/tokens.txt')]
+                                                      open('special/tokens')]
 s = socket.socket()
 s.connect((HOST, PORT))
 s.send(bytes("PASS " + PASS + "\r\n", "UTF-8"))
@@ -1650,7 +1650,7 @@ class ThreadMain(threading.Thread):
         def setrand_command(username=None, messagesplit=None, message=None):
             try:
                 randsrc = messagesplit[1]
-                if not any(x == randsrc for x in ['png', 'gif', 'link', 'pixiv']):
+                if not any(x == randsrc for x in ['png', 'gif', 'pixiv']):
                     send_message(f'{username}, {prefix}setrand [png/gif/pixiv]')
                 elif randsrc == 'gif':
                     onlygif = [f for f in listdir('custom/') if f.endswith('.gif')]
@@ -2086,8 +2086,7 @@ class ThreadDB(threading.Thread):
     def __init__(self, name):
         threading.Thread.__init__(self)
         self.name = name
-        global c
-        global conn
+        global c, conn
         conn = sqlite3.connect('db/picturebot.db', check_same_thread=False)
         c = conn.cursor()
 
