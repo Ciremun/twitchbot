@@ -80,17 +80,17 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 last command gives complete result, supported commands: sql, info, help, tts, notify usage: `pipe <command1> | <command2>..`  
 `help [command]` - view bot commands help, no args - commands list, wrap command in qutoes for startswith search  
 bot moderators:  
-`ban <name> <name2>..` - add user to ignore-list  
-`unban <name> <name2>..` - remove user from ignore-list  
+`ban <name> [name2]..` - add user(s) to ignore-list  
+`unban <name> [name2]..` - remove user(s) from ignore-list  
 `banlist` - get bot ignore-list  
-`sql <query>` - execute sql query and get result  
-`title <query>` - change stream title  
-`game <query>` - change stream game  
 `modlist` - get bot moderators list  
+`sql <query>` - execute sql query and get result  
+`title [query]` - change stream title, no args - get current title  
+`game [query]` - change stream game, no args - get current game  
 `tts` - enable/disable tts  
 `tts cfg` - current tts config  
 `tts vol/rate/vc [value]` - get/change tts volume/speech rate/voice  
-`sr` - enable/disable songrequests
+`sr` - enable/disable songrequests  
 `src` - clear current playlist  
 `srt` - set time for current song  
 `srs [word/index] [word2/index2]..` - skip queue song by name/index, no args - skip now playing song  
