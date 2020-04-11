@@ -168,9 +168,6 @@ def new_timecode(seconds, minutes, hours, duration):
 
 def new_timecode_explicit(days, hours, minutes, seconds, duration):
     if duration < 1:
-        print(duration)
-        print(duration * 1000)
-        print(floor(duration * 1000))
         return f'{floor(duration * 1000)}ms'
     timecode = []
     timecode_dict = {'d': days, 'h': hours, 'm': minutes, 's': seconds}
@@ -352,7 +349,7 @@ class ThreadTTS(threading.Thread):
                 username = line[1]
                 messagesplit = message.split()
 
-                if message.startswith((f'{prefix}tts:', 'tts:')) and not checkbanlist(username):
+                if message.startswith('tts:') and not checkbanlist(username):
                     self.say_message(messagesplit[1:])
 
                 elif tts and username != BOT and not message.startswith(prefix) and not checkbanlist(username):
@@ -1874,7 +1871,7 @@ class ThreadMain(threading.Thread):
                     if last_item:
                         pipe = False
                         if i[0][1:] == 'tts':
-                            i[0] += ':'
+                            i[0] += '_colon'
                         if i[1:]:
                             result.insert(0, " ".join(i[1:]))
                             #  insert last command args to specify users, append to tts
@@ -1891,6 +1888,11 @@ class ThreadMain(threading.Thread):
                     except TypeError:
                         send_message(f'{username}, {i[0][1:]} - unsupported command {sad_emote}')
                         return
+
+        @bot_command
+        def tts_colon_command(username=None, messagesplit=None, message=None, pipe=False):
+            messagesplit[0] = 'tts:'
+            call_tts.temper.append([" ".join(messagesplit), username])
 
         @moderator_command
         def tts_command(username=None, messagesplit=None, message=None):
@@ -2019,8 +2021,7 @@ class ThreadMain(threading.Thread):
                          f'game <query> - change stream game',
                          f'info - get bot version, uptime',
                          f'pipe - run commands in chain, transfer result from one command to another, '
-                         f'last command gives complete result, supported commands: '
-                         f'{", ".join([k for k, v in commands_dict.items() if k != "pipe" and "pipe" in v.__code__.co_varnames])}; '
+                         f'last command gives complete result, supported commands: sql, info, help, tts, notify; '
                          f'usage: {prefix}pipe <command1> | <command2>..']
 
         commands_desc = [prefix + x for x in commands_desc]
@@ -2045,10 +2046,6 @@ class ThreadMain(threading.Thread):
 
                 if all(x != username for x in notify_check_inprogress):
                     as_loop.create_task(check_chat_notify(username))
-
-                if message.startswith(('!tts:', 'tts:')):
-                    call_tts.temper.append([message, username])
-                    continue
 
                 call_tts.temper.append([message, username])
 
@@ -2075,7 +2072,6 @@ class ThreadDB(threading.Thread):
             with conn:
                 try:
                     lock.acquire(True)
-                    print(f'acquired lock and conn for {self.func}')
                     return self.func(self, *args, **kwargs)
                 finally:
                     lock.release()
@@ -2087,7 +2083,6 @@ class ThreadDB(threading.Thread):
         def __call__(self, *args, **kwargs):
             try:
                 lock.acquire(True)
-                print(f'acquired lock for {self.func}')
                 return self.func(self, *args, **kwargs)
             finally:
                 lock.release()
