@@ -39,7 +39,7 @@ twitch_app_oauth[channel_editor] <app oauth here>
 ## global variables
 
 `CHANNEL` (string): twitch channel to listen  
-`BOT` (string): twtich bot username  
+`BOT` (string): twitch bot username  
 `admin` (string): bot admin, twitch username  
 `tts` (boolean): enable/disable tts  
 `tts_voices` (dict): dictionary of tts voices, keys are names, values are voice registry keys  
@@ -70,7 +70,7 @@ twitch_app_oauth[channel_editor] <app oauth here>
 `olist` - list of your saved pics  
 `orand [png/gif]` - set random image from olist  
 `setrand [gif/png/pixiv]` - set random saved pic or pixiv art  
-`search <name> [page]` - find image in list (e.g. gif, png) wrap in qutoes for startswith search  
+`search <name> [page]` - find image in list (e.g. gif, png) wrap in quotes for startswith search  
 `link [name] [name2]...` - get saved pic link, no args - last random pic link, filename  
 `ren <name> <new name>` - change saved pic filename  
 `del <name> [name2]..` - delete saved pic(s)  
@@ -86,7 +86,7 @@ twitch_app_oauth[channel_editor] <app oauth here>
 `tts: <msg>` - say message, even when tts is off  
 `info` - bot uptime  
 `pipe <command1> | <command2>..` - run commands in chain, transfer result from one command to another, last command gives complete result, supported commands: sql, info, help, tts, notify  
-`help [command]` - view bot commands help, no args - commands list, wrap command in qutoes for startswith search  
+`help [command]` - view bot commands help, no args - commands list, wrap command in quotes for startswith search  
 ### bot moderators
 `ban <name> [name2]..` - add user(s) to ignore-list  
 `unban <name> [name2]..` - remove user(s) from ignore-list  
