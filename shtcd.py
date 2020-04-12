@@ -60,21 +60,19 @@ s.send(bytes("NICK " + BOT + "\r\n", "UTF-8"))
 s.send(bytes("JOIN #" + CHANNEL + " \r\n", "UTF-8"))
 
 artid = ''
-c = ''
-conn = ''
 np = ''
 np_duration = ''
 numba = ''
 sr_url = ''
 lastlink = ''
 last_rand_img = ''
-commands_list = ['change', 'save', 'set', 'setrand', 'list', 'search', 'link', 'sr', 'srq', 'srf', 'srfa', 'srfd',
-                 'srfp', 'srfl', 'np', 'olist', 'orand', 'ren', 'del', 'cancel', 'help', 'tts:', 'info', 'pipe',
-                 'notify']
-mod_commands_list = ['ban', 'unban', 'banlist', 'modlist', 'tts', 'srp', 'srs', 'srt', 'src', 'srv', 'sql', 'title',
-                     'game']
-commands_list = [prefix + x for x in commands_list]
-mod_commands_list = [prefix + x for x in mod_commands_list]
+commands_list = [prefix + x for x in
+                 ['change', 'save', 'set', 'setrand', 'list', 'search', 'link', 'sr', 'srq', 'srf', 'srfa', 'srfd',
+                  'srfp', 'srfl', 'np', 'olist', 'orand', 'ren', 'del', 'cancel', 'help', 'tts:', 'info', 'pipe',
+                  'notify']]
+mod_commands_list = [prefix + x for x in
+                     ['ban', 'unban', 'banlist', 'modlist', 'tts', 'srp', 'srs', 'srt', 'src', 'srv', 'sql', 'title',
+                      'game']]
 lock = threading.Lock()
 as_loop = asyncio.get_event_loop()
 playlist = []
@@ -642,7 +640,7 @@ class ThreadMain(threading.Thread):
                 imagename = messagesplit[1].lower()
                 newimagename = fixname(messagesplit[2].lower())
                 moderator = checkmodlist(username)
-                if not checkOwner(username, imagename) and not moderator:
+                if not moderator and not checkOwner(username, imagename):
                     onlyfiles = [f for f in listdir('custom/') if isfile(join('custom/', f))]
                     words = onlyfiles
                     if imagename not in words:
@@ -1749,7 +1747,7 @@ class ThreadMain(threading.Thread):
 
         @bot_command
         def info_command(username=None, messagesplit=None, message=None, pipe=False):
-            response = f'uptime: {seconds_convert(floor(time.time() - startTime), explicit=True)}'
+            response = f'uptime: {seconds_convert(time.time() - startTime, explicit=True)}'
             if pipe:
                 return response.split()
             send_message(response)
@@ -1943,7 +1941,7 @@ class ThreadMain(threading.Thread):
                 for i in notify_list:
                     if i['recipient'] == username:
                         response.append(f'{i["sender"]}: {i["message"]} '
-                                        f'({seconds_convert(time.time() - i["date"], explicit=True)} ago)')
+                                        f'[{seconds_convert(time.time() - i["date"], explicit=True)} ago]')
                 if response:
                     response_str = f'{username}, {"; ".join(response)}'
                     if len(response_str) > 480:
@@ -2065,9 +2063,10 @@ class ThreadDB(threading.Thread):
             self.func = func
 
         def __call__(self, *args, **kwargs):
-            with conn:
+            with db.conn:
                 try:
                     lock.acquire(True)
+                    self.c = db.c
                     return self.func(self, *args, **kwargs)
                 finally:
                     lock.release()
@@ -2079,6 +2078,7 @@ class ThreadDB(threading.Thread):
         def __call__(self, *args, **kwargs):
             try:
                 lock.acquire(True)
+                self.c = db.c
                 return self.func(self, *args, **kwargs)
             finally:
                 lock.release()
@@ -2086,150 +2086,149 @@ class ThreadDB(threading.Thread):
     def __init__(self, name):
         threading.Thread.__init__(self)
         self.name = name
-        global c, conn
-        conn = sqlite3.connect('db/picturebot.db', check_same_thread=False)
-        c = conn.cursor()
+        self.conn = sqlite3.connect('db/picturebot.db', check_same_thread=False)
+        self.c = self.conn.cursor()
 
     @conn_query
     def add_owner(self, filename, owner):
-        c.execute('INSERT INTO owners (filename, owner) VALUES (:filename, :owner)',
-                  {'filename': filename, 'owner': owner})
+        self.c.execute('INSERT INTO owners (filename, owner) VALUES (:filename, :owner)',
+                       {'filename': filename, 'owner': owner})
 
     @conn_query
     def remove_owner(self, filename):
-        c.executemany('DELETE FROM owners WHERE filename = ?', filename)
+        self.c.executemany('DELETE FROM owners WHERE filename = ?', filename)
 
     @conn_query
     def add_srfavs(self, song, owner, filename, user_duration, link, duration):
-        c.execute('INSERT INTO srfavs (song, owner, filename, user_duration, link, duration) '
-                  'VALUES (:song, :owner, :filename, :user_duration, :link, :duration)',
-                  {'song': song, 'owner': owner, 'filename': filename, 'user_duration': user_duration,
-                   'link': link, 'duration': duration})
+        self.c.execute('INSERT INTO srfavs (song, owner, filename, user_duration, link, duration) '
+                       'VALUES (:song, :owner, :filename, :user_duration, :link, :duration)',
+                       {'song': song, 'owner': owner, 'filename': filename, 'user_duration': user_duration,
+                        'link': link, 'duration': duration})
 
     @conn_query
     def remove_srfavs(self, data):
-        c.executemany("DELETE FROM srfavs WHERE song = ? and owner = ? and filename = ? and "
-                      "user_duration = ? and link = ? and duration = ?", data)
+        self.c.executemany("DELETE FROM srfavs WHERE song = ? and owner = ? and filename = ? and "
+                           "user_duration = ? and link = ? and duration = ?", data)
 
     @regular_query
     def check_srfavs_list(self, owner):
-        c.execute('SELECT song, filename, user_duration, link, duration FROM srfavs WHERE owner = :owner',
-                  {'owner': owner})
-        return c.fetchall()
+        self.c.execute('SELECT song, filename, user_duration, link, duration FROM srfavs WHERE owner = :owner',
+                       {'owner': owner})
+        return self.c.fetchall()
 
     @regular_query
     def get_srfavs_filenames(self):
-        c.execute('SELECT filename FROM srfavs')
-        return c.fetchall()
+        self.c.execute('SELECT filename FROM srfavs')
+        return self.c.fetchall()
 
     @regular_query
     def check_owner(self, filename, owner):
-        c.execute('SELECT owner FROM owners WHERE filename = :filename AND owner = :owner', {'filename': filename,
-                                                                                             'owner': owner})
-        return c.fetchall()
+        self.c.execute('SELECT owner FROM owners WHERE filename = :filename AND owner = :owner', {'filename': filename,
+                                                                                                  'owner': owner})
+        return self.c.fetchall()
 
     @regular_query
     def check_ownerlist(self, owner):
-        c.execute('SELECT filename FROM owners WHERE owner = :owner', {'owner': owner})
-        return c.fetchall()
+        self.c.execute('SELECT filename FROM owners WHERE owner = :owner', {'owner': owner})
+        return self.c.fetchall()
 
     @conn_query
     def update_owner_filename(self, filename, new_filename):
-        c.execute('UPDATE owners SET filename = :new_filename WHERE filename = :filename',
-                  {'filename': filename,
-                   'new_filename':
-                       new_filename})
+        self.c.execute('UPDATE owners SET filename = :new_filename WHERE filename = :filename',
+                       {'filename': filename,
+                        'new_filename':
+                            new_filename})
 
     @conn_query
     def add_link(self, link, filename):
-        c.execute('INSERT INTO links (link, filename) VALUES (:link, :filename)',
-                  {'link': link, 'filename': filename})
+        self.c.execute('INSERT INTO links (link, filename) VALUES (:link, :filename)',
+                       {'link': link, 'filename': filename})
 
     @conn_query
     def remove_link(self, filename):
-        c.executemany('DELETE FROM links WHERE filename = ?', filename)
+        self.c.executemany('DELETE FROM links WHERE filename = ?', filename)
 
     @conn_query
     def update_link_filename(self, filename, new_filename):
-        c.execute('UPDATE links SET filename = :new_filename WHERE filename = :filename', {'filename': filename,
-                                                                                           'new_filename':
-                                                                                               new_filename})
+        self.c.execute('UPDATE links SET filename = :new_filename WHERE filename = :filename', {'filename': filename,
+                                                                                                'new_filename':
+                                                                                                    new_filename})
 
     @regular_query
     def check_filename_has_link(self, filename):
-        c.execute('SELECT filename FROM links WHERE filename = :filename', {'filename': filename})
-        return c.fetchall()
+        self.c.execute('SELECT filename FROM links WHERE filename = :filename', {'filename': filename})
+        return self.c.fetchall()
 
     @regular_query
     def get_links_filenames(self):
-        c.execute('SELECT filename FROM links')
-        return c.fetchall()
+        self.c.execute('SELECT filename FROM links')
+        return self.c.fetchall()
 
     @regular_query
     def get_links_and_filenames(self):
-        c.execute('SELECT link, filename FROM links')
-        return c.fetchall()
+        self.c.execute('SELECT link, filename FROM links')
+        return self.c.fetchall()
 
     @regular_query
     def get_link(self, filename):
-        c.execute('SELECT link FROM links WHERE filename = :filename', {'filename': filename})
-        return c.fetchall()
+        self.c.execute('SELECT link FROM links WHERE filename = :filename', {'filename': filename})
+        return self.c.fetchall()
 
     @regular_query
     def get_imgcount(self):
-        c.execute('SELECT count FROM imgcount')
-        return c.fetchall()
+        self.c.execute('SELECT count FROM imgcount')
+        return self.c.fetchall()
 
     @conn_query
     def update_imgcount(self, count):
         global numba
         numba = int(numba) + 1
         numba = str(numba)
-        c.execute('UPDATE imgcount SET count = :count', {'count': count})
+        self.c.execute('UPDATE imgcount SET count = :count', {'count': count})
 
     @regular_query
     def check_if_mod(self, username):
-        c.execute('SELECT username FROM moderators WHERE username = :username', {'username': username})
-        return c.fetchall()
+        self.c.execute('SELECT username FROM moderators WHERE username = :username', {'username': username})
+        return self.c.fetchall()
 
     @regular_query
     def check_moderators(self):
-        c.execute('SELECT username FROM moderators')
-        return c.fetchall()
+        self.c.execute('SELECT username FROM moderators')
+        return self.c.fetchall()
 
     @conn_query
     def add_mod(self, username):
-        c.executemany("INSERT INTO moderators (username) VALUES (?)", username)
+        self.c.executemany("INSERT INTO moderators (username) VALUES (?)", username)
 
     @conn_query
     def remove_mod(self, username):
-        c.executemany("DELETE FROM moderators WHERE username = ?", username)
+        self.c.executemany("DELETE FROM moderators WHERE username = ?", username)
 
     @regular_query
     def check_if_banned(self, username):
-        c.execute('SELECT username FROM banned WHERE username = :username', {'username': username})
-        return c.fetchall()
+        self.c.execute('SELECT username FROM banned WHERE username = :username', {'username': username})
+        return self.c.fetchall()
 
     @regular_query
     def check_banned(self):
-        c.execute('SELECT username FROM banned')
-        return c.fetchall()
+        self.c.execute('SELECT username FROM banned')
+        return self.c.fetchall()
 
     @conn_query
     def add_ban(self, username):
-        c.executemany("INSERT INTO banned (username) VALUES (?)", username)
+        self.c.executemany("INSERT INTO banned (username) VALUES (?)", username)
 
     @conn_query
     def remove_ban(self, username):
-        c.executemany("DELETE FROM banned WHERE username = ?", username)
+        self.c.executemany("DELETE FROM banned WHERE username = ?", username)
 
     @conn_query
     def sql_query(self, query):
         try:
-            c.execute(query)
+            self.c.execute(query)
         except Exception as e:
             return [(str(e),)]
-        return c.fetchall()
+        return self.c.fetchall()
 
 
 Main = ThreadMain("ThreadMain")
