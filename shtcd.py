@@ -46,8 +46,6 @@ sr = True
 player_last_vol = 40  # !sr volume
 ytdl_rate = 4000000  # 4Mb/s !sr download rate
 max_duration = '10:00'  # !sr max song duration (no limit for mods)
-sad_emote = 'SadLoli'
-love_emote = 'mikuHeart'
 
 startTime = time.time()
 HOST = "irc.twitch.tv"
@@ -234,26 +232,26 @@ async def download_clip(url, username, user_duration=None, yt_request=True, fold
         if user_duration is not None:
             user_duration = timecode_convert(user_duration)
             if user_duration > duration:
-                send_message(f'{username}, time exceeds duration! [{seconds_convert(duration)}] {sad_emote}')
+                send_message(f'{username}, time exceeds duration! [{seconds_convert(duration)}]')
                 return
             if duration - user_duration > max_duration and not checkmodlist(username):
                 send_message(f'{username}, {seconds_convert(user_duration)} > '
-                             f'max duration[{seconds_convert(max_duration)}] {sad_emote}')
+                             f'max duration[{seconds_convert(max_duration)}]')
                 return
         elif duration > max_duration and not checkmodlist(username):
             send_message(f'{username}, '
-                         f'{seconds_convert(duration)} > max duration[{seconds_convert(max_duration)}] {sad_emote}')
+                         f'{seconds_convert(duration)} > max duration[{seconds_convert(max_duration)}]')
             return
         ydl.prepare_filename(info_dict)
         ydl.download([url])
         if folder == 'sounds/favs/':
             if user_duration is None:
                 db.add_srfavs(title, username, name + '.wav', 0, sr_url, duration)
-                send_message(f'{username}, {title} - {sr_url} - added to favorites {love_emote}')
+                send_message(f'{username}, {title} - {sr_url} - added to favorites')
             else:
                 db.add_srfavs(title, username, name + '.wav', user_duration, sr_url, duration)
                 send_message(
-                    f'{username}, {title} [{seconds_convert(user_duration)}] - {sr_url} - added to favorites {love_emote}')
+                    f'{username}, {title} [{seconds_convert(user_duration)}] - {sr_url} - added to favorites')
             return
         duration = seconds_convert(duration)
         playlist.append((home, title, duration, user_duration, sr_url, username))
@@ -297,7 +295,6 @@ async def sr_start_playing():
 async def playmusic():
     global np, np_duration, sr_url
     if not playlist:
-        print('not playlist!')
         return
     file = playlist.pop(0)
     Media = PlayerInstance.media_new(file[0])
@@ -373,8 +370,7 @@ class ThreadTTS(threading.Thread):
                     self.engine.setProperty('voice', v)
                     send_message(f'vc={k}')
                     return
-            send_message(f'{username}, [{messagesplit[2]}] not found {sad_emote} , '
-                         f'available: {", ".join(tts_voices.keys())}')
+            send_message(f'{username}, [{messagesplit[2]}] not found, available: {", ".join(tts_voices.keys())}')
         except IndexError:
             send_message(f'{username}, vc={self.get_tts_vc_key(self.engine.getProperty("voice"))} available: '
                          f'{", ".join(tts_voices.keys())}')
@@ -455,7 +451,7 @@ class ThreadPixiv(threading.Thread):
                         time.sleep(1.5)
                 os.rmdir(f'pixiv/{namesave}')
                 if act == 'save':
-                    send_message(f'{owner}, {namesave}.png saved {love_emote}')
+                    send_message(f'{owner}, {namesave}.png saved')
                 return
             art = Path(f'pixiv/{namesave}.png')
             filepath = f'pixiv/{namesave}.png'
@@ -468,10 +464,10 @@ class ThreadPixiv(threading.Thread):
             if act != 'save':
                 call_draw(folder, f'{namesave}.png')
             else:
-                send_message(f'{owner}, {namesave}.png saved {love_emote}')
+                send_message(f'{owner}, {namesave}.png saved')
         except BadApiResponse as pixiv_exception:  # reconnect
             if 'Status code: 404' in str(pixiv_exception):
-                send_message(f'{owner}, {artid} not found {sad_emote}')
+                send_message(f'{owner}, {artid} not found')
                 return
             if 'Status code: 400' in str(pixiv_exception):
                 self.run()
@@ -638,18 +634,18 @@ class ThreadMain(threading.Thread):
                     onlyfiles = [f for f in listdir('custom/') if isfile(join('custom/', f))]
                     words = onlyfiles
                     if imagename not in words:
-                        send_message(f'{username}, file not found {sad_emote}')
+                        send_message(f'{username}, file not found')
                         return
                     for element in words:
                         if element == imagename:
-                            send_message(f'{username}, access denied {sad_emote}')
+                            send_message(f'{username}, access denied')
                 else:
                     my_file = Path("custom/" + newimagename)
                     if my_file.is_file():
                         send_message("{}, {} already exists".format(username, newimagename))
                         return
                     if imagename[-4:] != newimagename[-4:] and not moderator:
-                        send_message(f"{username}, sowwy, format change isn't allowed {sad_emote}")
+                        send_message(f"{username}, sowwy, format change isn't allowed")
                         return
                     try:
                         os.rename('custom/' + imagename, 'custom/' + newimagename)
@@ -657,7 +653,7 @@ class ThreadMain(threading.Thread):
                         db.update_owner_filename(imagename, newimagename)
                         send_message('{}, {} --> {}'.format(username, imagename, newimagename))
                     except:
-                        send_message(f'{username}, file not found {sad_emote}')
+                        send_message(f'{username}, file not found')
             except IndexError:
                 send_message(f'{username}, {prefix}ren <filename> <new filename>')
 
@@ -667,15 +663,15 @@ class ThreadMain(threading.Thread):
                 return
             if len(list_str) == 0:
                 if list_type == "search":
-                    send_message(f'{username}, no results {sad_emote}')
+                    send_message(f'{username}, no results')
                     return
                 else:
-                    send_message(f'{username}, list is empty {sad_emote}')
+                    send_message(f'{username}, list is empty')
                     return
             try:
                 pagenum = int(messagesplit[list_page_pos])
                 if pagenum <= 0 or pagenum > len(list_arr):
-                    send_message(f'{username}, page not found {sad_emote}')
+                    send_message(f'{username}, page not found')
                     return
                 send_message("{} {}/{}".format(list_arr[pagenum - 1], pagenum, len(list_arr)))
             except (IndexError, ValueError):
@@ -760,7 +756,7 @@ class ThreadMain(threading.Thread):
             if result:
                 lastlink = result
                 return
-            lastlink = f'no link saved {sad_emote}'
+            lastlink = f'no link saved'
             return
 
         async def sr_favs_del(username, messagesplit, songs):
@@ -792,19 +788,19 @@ class ThreadMain(threading.Thread):
                     pass
             db.remove_srfavs(remove_song)
             if song_removed_response:
-                response.append(f'Favorites removed: {", ".join(song_removed_response)} {love_emote}')
+                response.append(f'Favorites removed: {", ".join(song_removed_response)}')
             if target_not_found:
-                response.append(f'Not found: {", ".join(target_not_found)} {sad_emote}')
+                response.append(f'Not found: {", ".join(target_not_found)}')
             if index_not_integer:
-                response.append(f'Not integer: {", ".join(index_not_integer)} {sad_emote}')
+                response.append(f'Not integer: {", ".join(index_not_integer)}')
             if response:
                 response_str = ' '.join(response)
                 if len(response_str) > 470:
                     response *= 0
                     if song_removed_response:
-                        response.append(f'Favorites removed: {len(song_removed_response)} {love_emote}')
+                        response.append(f'Favorites removed: {len(song_removed_response)}')
                     if target_not_found:
-                        response.append(f'Not found: {len(target_not_found)} {sad_emote}')
+                        response.append(f'Not found: {len(target_not_found)}')
                     send_message(f'{username}, {" ".join(response)}')
                 else:
                     send_message(response_str)
@@ -835,11 +831,11 @@ class ThreadMain(threading.Thread):
             if file_deleted:
                 db.remove_link(remove_links)
                 db.remove_owner(remove_owners)
-                response.append(f"Deleted: {', '.join(response_deleted)} {love_emote}")
+                response.append(f"Deleted: {', '.join(response_deleted)}")
             if response_denied:
-                response.append(f"Access denied: {', '.join(response_denied)} {sad_emote}")
+                response.append(f"Access denied: {', '.join(response_denied)}")
             if response_not_found:
-                response.append(f"Not found: {', '.join(response_not_found)} {sad_emote}")
+                response.append(f"Not found: {', '.join(response_not_found)}")
             response = f"{username}, {'; '.join(response)}"
             if len(response) <= 490:
                 send_message(response)
@@ -864,7 +860,7 @@ class ThreadMain(threading.Thread):
                     else:
                         response.append(f'{link} - {i}')
                 if target_not_found:
-                    response.append(f'Not found: {", ".join(target_not_found)} {sad_emote}')
+                    response.append(f'Not found: {", ".join(target_not_found)}')
                 if response:
                     response_str = ', '.join(response)
                     if len(response_str) > 480:
@@ -878,7 +874,7 @@ class ThreadMain(threading.Thread):
                 if link:
                     send_message(f'{" , ".join([i[0] for i in link])} - {messagesplit[0]}')
                 else:
-                    send_message(f"{username}, {messagesplit[0]} not found {sad_emote}")
+                    send_message(f"{username}, {messagesplit[0]} not found")
 
         async def delete_ban_mod(response, boolean, str1, str2, username):
             if response:
@@ -912,7 +908,7 @@ class ThreadMain(threading.Thread):
 
         def sr_get_list(username):
             if not playlist:
-                send_message(f'{username}, playlist is empty {sad_emote}')
+                send_message(f'{username}, playlist is empty')
                 return
             sr_list = [f'{x[1]} [{seconds_convert(x[3])}] #{i}' if x[3] is not None else f'{x[1]} #{i}' for i, x in
                        enumerate(playlist, start=1)]
@@ -952,7 +948,7 @@ class ThreadMain(threading.Thread):
                                   "Authorization": client_auth},
                          data={"channel[status]": channel_status,
                                "channel[game]": channel_game})
-            send_message(f'{username}, done {love_emote}')
+            send_message(f'{username}, done')
 
         def np_response(mode):
             current_time_ms = Player.get_time()
@@ -970,7 +966,7 @@ class ThreadMain(threading.Thread):
                     sr_download_queue.call_download_clip(url, username, user_duration=timecode, yt_request=yt_request,
                                                          folder=folder, ytsearch=ytsearch)
                 else:
-                    send_message(f'{username}, timecode error {sad_emote}')
+                    send_message(f'{username}, timecode error')
             except IndexError:
                 sr_download_queue.call_download_clip(url, username, yt_request=yt_request, folder=folder,
                                                      ytsearch=ytsearch)
@@ -1080,7 +1076,7 @@ class ThreadMain(threading.Thread):
                 content_type = requests.head(url, allow_redirects=True).headers.get('content-type').split(
                     '/')
                 if content_type[0] != 'image':
-                    send_message(f'{username}, unknown format {sad_emote}')
+                    send_message(f'{username}, unknown format')
                     return
                 if content_type[1] != 'gif':
                     file_format = '.png'
@@ -1107,11 +1103,11 @@ class ThreadMain(threading.Thread):
                         db.add_link(url, f'{imagename}{file_format}')
                         db.add_owner(f'{imagename}{file_format}', username)
                     if do_save_response:
-                        send_message(f'{username}, {imagename}{file_format} saved {love_emote}')
+                        send_message(f'{username}, {imagename}{file_format} saved')
                 else:
-                    send_message(f'{username}, download error {sad_emote}')
+                    send_message(f'{username}, download error')
             else:
-                send_message(f"{username}, no link {sad_emote}")
+                send_message(f"{username}, no link")
 
         @moderator_command
         def die_command(username=None, messagesplit=None, message=None):
@@ -1147,7 +1143,7 @@ class ThreadMain(threading.Thread):
         @bot_command
         def np_command(username=None, messagesplit=None, message=None):
             if all(str(Player.get_state()) != x for x in ['State.Playing', 'State.Paused']):
-                send_message(f'{username}, nothing is playing {sad_emote}')
+                send_message(f'{username}, nothing is playing')
             elif str(Player.get_state()) == 'State.Paused':
                 np_response('Paused')
             else:
@@ -1182,12 +1178,12 @@ class ThreadMain(threading.Thread):
         def srs_command(username=None, messagesplit=None, message=None):
             if sr:
                 if all(str(Player.get_state()) != x for x in ['State.Playing', 'State.Paused']):
-                    send_message(f'{username}, nothing is playing {sad_emote}')
+                    send_message(f'{username}, nothing is playing')
                     return
                 try:
                     if messagesplit[1]:
                         if not playlist:
-                            send_message(f'{username}, playlist is empty {sad_emote}')
+                            send_message(f'{username}, playlist is empty')
                             return
                         skipped_response = []
                         skip_songs = []
@@ -1252,7 +1248,7 @@ class ThreadMain(threading.Thread):
             global playlist
             if sr:
                 if not playlist:
-                    send_message(f'{username} playlist is empty {sad_emote}')
+                    send_message(f'{username} playlist is empty')
                     return
                 playlist *= 0
                 send_message(f'queue wiped')
@@ -1265,13 +1261,13 @@ class ThreadMain(threading.Thread):
                 elif str(Player.get_state()) == 'State.Paused':
                     Player.play()
                 else:
-                    send_message(f'{username}, nothing is playing {sad_emote}')
+                    send_message(f'{username}, nothing is playing')
 
         @moderator_command
         def srt_command(username=None, messagesplit=None, message=None):
             if sr:
                 if all(str(Player.get_state()) != x for x in ['State.Playing', 'State.Paused']):
-                    send_message(f'{username}, nothing is playing {sad_emote}')
+                    send_message(f'{username}, nothing is playing')
                     return
                 try:
                     timecode = messagesplit[1]
@@ -1282,9 +1278,9 @@ class ThreadMain(threading.Thread):
                         else:
                             Player.set_time(seconds * 1000)
                     else:
-                        send_message(f'{username}, timecode error {sad_emote}')
+                        send_message(f'{username}, timecode error')
                 except IndexError:
-                    send_message(f'{username}, no timecode {sad_emote}')
+                    send_message(f'{username}, no timecode')
 
         @bot_command
         def srfa_command(username=None, messagesplit=None, message=None):
@@ -1311,7 +1307,7 @@ class ThreadMain(threading.Thread):
                 except IndexError:
                     if all(str(Player.get_state()) != x for x in
                            ['State.Playing', 'State.Paused']):
-                        send_message(f'{username}, nothing is playing {sad_emote}')
+                        send_message(f'{username}, nothing is playing')
                     else:
                         messagesplit.append(sr_url)
                         sr_download(messagesplit, username, 'sounds/favs/', timecode_pos=3)
@@ -1323,7 +1319,7 @@ class ThreadMain(threading.Thread):
                     if messagesplit[1]:
                         songs = get_srfavs_dictlist(username)
                         if not songs:
-                            send_message(f'{username}, no favorite songs found {sad_emote}')
+                            send_message(f'{username}, no favorite songs found')
                             return
                         as_loop.create_task(sr_favs_del(username, messagesplit, songs))
                 except IndexError:
@@ -1336,7 +1332,7 @@ class ThreadMain(threading.Thread):
                     if messagesplit[1]:
                         songs = get_srfavs_dictlist(username)
                         if not songs:
-                            send_message(f'{username}, no favorite songs found {sad_emote}')
+                            send_message(f'{username}, no favorite songs found')
                             return
                         response = []
                         target_not_found = []
@@ -1406,7 +1402,7 @@ class ThreadMain(threading.Thread):
                     if messagesplit[1]:
                         songs = get_srfavs_dictlist(username)
                         if not songs:
-                            send_message(f'{username}, no favorite songs found {sad_emote}')
+                            send_message(f'{username}, no favorite songs found')
                             return
                         target_not_found = []
                         response = []
@@ -1414,7 +1410,7 @@ class ThreadMain(threading.Thread):
                             try:
                                 index = int(messagesplit[i])
                                 if not 0 < index <= len(songs):
-                                    send_message(f'{username}, invalid index [{index}] {sad_emote}')
+                                    send_message(f'{username}, invalid index [{index}]')
                                     continue
                                 response.append(f'{username}, {songs[index - 1].get("title")} - '
                                                 f'{songs[index - 1].get("link")}')
@@ -1428,7 +1424,7 @@ class ThreadMain(threading.Thread):
                                 if not title_found:
                                     target_not_found.append(title)
                         if target_not_found:
-                            response.append(f'Not found: {", ".join(target_not_found)} {sad_emote}')
+                            response.append(f'Not found: {", ".join(target_not_found)}')
                         if response:
                             response_str = ' ; '.join(response)
                             if len(response_str) > 470:
@@ -1445,7 +1441,7 @@ class ThreadMain(threading.Thread):
             if sr:
                 songs = get_srfavs_dictlist(username)
                 if not songs:
-                    send_message(f'{username}, no favorite songs found {sad_emote}')
+                    send_message(f'{username}, no favorite songs found')
                     return
                 songs_arr = [f'{songs[i - 1].get("title")} '
                              f'[{seconds_convert(songs[i - 1].get("user_duration"))}] - #{i}'
@@ -1463,10 +1459,10 @@ class ThreadMain(threading.Thread):
                 if checkmodlist(username):
                     if sr:
                         sr = False
-                        send_message(f'{prefix}sr off {sad_emote}')
+                        send_message(f'{prefix}sr off')
                     else:
                         sr = True
-                        send_message(f'{prefix}sr on {love_emote}')
+                        send_message(f'{prefix}sr on')
                 elif sr:
                     np_command(username, messagesplit, message)
             elif sr:
@@ -1500,21 +1496,21 @@ class ThreadMain(threading.Thread):
                         send_message(result_str)
                 elif not result and 'select' == messagesplit[1].lower():
                     if pipe:
-                        return f'{username}, no results {sad_emote}'.split()
-                    send_message(f'{username}, no results {sad_emote}')
+                        return f'{username}, no results'.split()
+                    send_message(f'{username}, no results')
                 elif not result:
                     if pipe:
-                        return f'{username}, done {love_emote}'.split()
-                    send_message(f'{username}, done {love_emote}')
+                        return f'{username}, done'.split()
+                    send_message(f'{username}, done')
             except IndexError:
                 if pipe:
-                    return f'{username}, no query {sad_emote}'.split()
-                send_message(f'{username}, no query {sad_emote}')
+                    return f'{username}, no query'.split()
+                send_message(f'{username}, no query')
 
         @bot_command
         def cancel_command(username=None, messagesplit=None, message=None):
             if not playlist:
-                send_message(f'{username}, playlist is empty {sad_emote}')
+                send_message(f'{username}, playlist is empty')
                 return
             try:
                 if messagesplit[1]:
@@ -1559,13 +1555,13 @@ class ThreadMain(threading.Thread):
                             except ValueError:
                                 playlist_cancelled = list(set(playlist_cancelled))
                     if not username_in_playlist:
-                        send_message(f'{username}, nothing to cancel {sad_emote}')
+                        send_message(f'{username}, nothing to cancel')
                         return
                     response = []
                     if playlist_cancelled:
-                        response.append(f'Cancelled: {", ".join(playlist_cancelled)} {love_emote}')
+                        response.append(f'Cancelled: {", ".join(playlist_cancelled)}')
                     if playlist_not_found:
-                        response.append(f'Not found: {", ".join(playlist_not_found)} {sad_emote}')
+                        response.append(f'Not found: {", ".join(playlist_not_found)}')
                     if response:
                         responsestr = " ".join(response)
                         if len(responsestr) > 480:
@@ -1573,7 +1569,7 @@ class ThreadMain(threading.Thread):
                             if playlist_cancelled:
                                 response.append(f'Cancelled: {len(playlist_cancelled)}')
                             if playlist_not_found:
-                                response.append(f'Not found: {len(playlist_not_found)} {sad_emote}')
+                                response.append(f'Not found: {len(playlist_not_found)}')
                             send_message(f'{username}, {" ".join(response)}')
                         else:
                             send_message(f'{username}, {responsestr}')
@@ -1582,15 +1578,14 @@ class ThreadMain(threading.Thread):
                 for i in playlist:
                     if username == i[5]:
                         if i[3] is not None:
-                            send_message(f'{username}, Cancelled: {i[1]} [{seconds_convert(i[3])}] '
-                                         f'{love_emote}')
+                            send_message(f'{username}, Cancelled: {i[1]} [{seconds_convert(i[3])}]')
                         else:
-                            send_message(f'{username}, Cancelled: {i[1]} {love_emote}')
+                            send_message(f'{username}, Cancelled: {i[1]}')
                         song_cancelled = True
                         playlist.remove(i)
                         break
                 if not song_cancelled:
-                    send_message(f'{username}, nothing to cancel {sad_emote}')
+                    send_message(f'{username}, nothing to cancel')
 
         @moderator_command
         def ban_command(username=None, messagesplit=None, message=None):
@@ -1602,7 +1597,7 @@ class ThreadMain(threading.Thread):
         def unban_command(username=None, messagesplit=None, message=None):
             if message != f"{prefix}unban":
                 as_loop.create_task(ban_mod_commands(username, messagesplit,
-                                                     'users unbanned', f'not in the list {sad_emote}',
+                                                     'users unbanned', f'not in the list',
                                                      checkbanlist, db.remove_ban, False))
 
         @bot_command
@@ -1615,7 +1610,7 @@ class ThreadMain(threading.Thread):
         def unmod_command(username=None, messagesplit=None, message=None):
             if message != f"{prefix}unmod" and username == admin:
                 as_loop.create_task(ban_mod_commands(username, messagesplit,
-                                                     'users unmodded', f'not in the list {sad_emote}',
+                                                     'users unmodded', f'not in the list',
                                                      checkmodlist, db.remove_mod, False))
 
         @bot_command
@@ -1627,7 +1622,7 @@ class ThreadMain(threading.Thread):
                     if my_file.is_file():
                         call_draw('custom/', selected)
                     else:
-                        send_message(f'{username}, {selected} not found {sad_emote} ')
+                        send_message(f'{username}, {selected} not found ')
                 else:
                     send_message('{}, names include extensions [png/gif]'.format(username))
 
@@ -1639,15 +1634,15 @@ class ThreadMain(threading.Thread):
                     send_message(f'{username}, {prefix}setrand [png/gif/pixiv]')
                 elif randsrc == 'gif':
                     onlygif = [f for f in listdir('custom/') if f.endswith('.gif')]
-                    set_random_pic(onlygif, f'{username}, gif not found {sad_emote}')
+                    set_random_pic(onlygif, f'{username}, gif not found')
                 elif randsrc == 'png':
                     onlypng = [f for f in listdir('custom/') if f.endswith('.png')]
-                    set_random_pic(onlypng, f'{username}, png not found {sad_emote}')
+                    set_random_pic(onlypng, f'{username}, png not found')
                 elif randsrc == 'pixiv':
                     asyncio.run_coroutine_threadsafe(Pixiv.random_pixiv_art(), as_loop)
             except IndexError:
                 onlyfiles = [f for f in listdir('custom/') if isfile(join('custom/', f))]
-                set_random_pic(onlyfiles, f'{username}, {prefix}list is empty {sad_emote}')
+                set_random_pic(onlyfiles, f'{username}, {prefix}list is empty')
 
         @bot_command
         def search_command(username=None, messagesplit=None, message=None):
@@ -1695,7 +1690,7 @@ class ThreadMain(threading.Thread):
                 if lastlink:
                     send_message('{}, {} - {}'.format(username, lastlink, last_rand_img))
                 else:
-                    send_message(f'nothing here {sad_emote}')
+                    send_message(f'nothing here')
             else:
                 as_loop.create_task(link_chat_command(username, messagesplit[1:]))
 
@@ -1708,7 +1703,7 @@ class ThreadMain(threading.Thread):
                         'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM' + '1234567890', k=10)))
                     change_save_command(username, messagesplit, do_save_response=True)
                 else:
-                    send_message(f'{username}, nothing to save {sad_emote}')
+                    send_message(f'{username}, nothing to save')
             else:
                 try:
                     if messagesplit[2]:
@@ -1745,7 +1740,7 @@ class ThreadMain(threading.Thread):
             result = db.check_ownerlist(username)
             try:
                 if not result:
-                    send_message(f'{username}, nothing to set {sad_emote}')
+                    send_message(f'{username}, nothing to set')
                     return
                 result = [item[0] for item in result]
                 randsrc = messagesplit[1]
@@ -1753,10 +1748,10 @@ class ThreadMain(threading.Thread):
                     send_message(f'{username}, png/gif only')
                 elif randsrc == 'gif':
                     onlygif = [f for f in result if f.endswith('.gif')]
-                    set_random_pic(onlygif, f'{username}, gif not found {sad_emote}')
+                    set_random_pic(onlygif, f'{username}, gif not found')
                 elif randsrc == 'png':
                     onlypng = [f for f in result if f.endswith('.png')]
-                    set_random_pic(onlypng, f'{username}, png not found {sad_emote}')
+                    set_random_pic(onlypng, f'{username}, png not found')
             except IndexError:
                 selected = random.choice(result)
                 updatelastlink(selected)
@@ -1778,8 +1773,8 @@ class ThreadMain(threading.Thread):
                                                          [i[1:] for i in commands_list] +
                                                          [i[1:] for i in mod_commands_list]):
                     if pipe:
-                        return f'{username}, unknown command {sad_emote}'.split()
-                    send_message(f'{username}, unknown command {sad_emote}')
+                        return f'{username}, unknown command'.split()
+                    send_message(f'{username}, unknown command')
                     return
                 response = []
                 if help_command_quoted:
@@ -1802,8 +1797,8 @@ class ThreadMain(threading.Thread):
                         send_message(response_str)
                 else:
                     if pipe:
-                        return f'{username}, no results {sad_emote}'.split()
-                    send_message(f'{username}, no results {sad_emote}')
+                        return f'{username}, no results'.split()
+                    send_message(f'{username}, no results')
             except IndexError:
                 if pipe:
                     return f'Public command list: {", ".join(i[1:] for i in commands_list)} ; ' \
@@ -1829,7 +1824,7 @@ class ThreadMain(threading.Thread):
             if message != f"{prefix}pipe":
                 pipesplit = " ".join(messagesplit[1:]).split(' | ')
                 if len(pipesplit) < 2:
-                    send_message(f'{username}, you need at least two commands {sad_emote}')
+                    send_message(f'{username}, you need at least two commands')
                     return
                 pipesplit = [f'{prefix}{i}' for i in pipesplit]
                 result = pipesplit[0].split()[1:]
@@ -1858,16 +1853,16 @@ class ThreadMain(threading.Thread):
                             #  insert last command args to specify users, append to tts
                     command = commands_dict.get(i[0][1:], None)
                     if command is None:
-                        send_message(f'{username}, {i[0][1:]} - unknown command {sad_emote}')
+                        send_message(f'{username}, {i[0][1:]} - unknown command')
                         return
                     try:
                         result.insert(0, i[0])  # insert command string at the beginning, so it looks like chat message
                         result = command(username, result, " ".join(result), pipe=pipe)
                         if result is None and not last_item:
-                            send_message(f'{username}, {i[0][1:]} - mod command {sad_emote}')
+                            send_message(f'{username}, {i[0][1:]} - mod command')
                             return
                     except TypeError:
-                        send_message(f'{username}, {i[0][1:]} - unsupported command {sad_emote}')
+                        send_message(f'{username}, {i[0][1:]} - unsupported command')
                         return
 
         @bot_command
@@ -1900,20 +1895,20 @@ class ThreadMain(threading.Thread):
             except IndexError:
                 if tts:
                     tts = False
-                    send_message(f'tts off {sad_emote}')
+                    send_message(f'tts off')
                 else:
                     tts = True
-                    send_message(f'tts on {love_emote}')
+                    send_message(f'tts on')
 
         @bot_command
         def notify_command(username=None, messagesplit=None, message=None, pipe=False):
             if message != f"{prefix}notify":
                 if not 4 <= len(messagesplit[1]) <= 25:
-                    send_message(f'{username}, username must be between 4 and 25 characters {sad_emote}')
+                    send_message(f'{username}, username must be between 4 and 25 characters')
                     return
                 notify_message = " ".join(messagesplit[2:])
                 if not notify_message:
-                    send_message(f'{username}, no notify message {sad_emote}')
+                    send_message(f'{username}, no notify message')
                     return
                 notify_list.append({'recipient': messagesplit[1].lower(),
                                     'message': notify_message,
