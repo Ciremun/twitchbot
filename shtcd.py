@@ -32,6 +32,7 @@ res = 'custom/'  # init image folder
 drawfile = 'rempls.gif'  # init image
 prefix = '!'
 banned_tags = ['Pokémon', 'how to draw', 'oshinagaki', 'subarashikihokkorinosekai']  # ban pixiv tags
+pixiv_size = Size.MEDIUM
 clear_folders = ['sounds/sr/', 'pixiv/', 'images/']  # clear folders on !exit
 tts_voices = {'haruka': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\TTS_MS_JA-JP_HARUKA_11.0',
               'mizuki': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\VE_Japanese_Mizuki_22kHz',
@@ -59,7 +60,6 @@ s.send(bytes("PASS " + PASS + "\r\n", "UTF-8"))
 s.send(bytes("NICK " + BOT + "\r\n", "UTF-8"))
 s.send(bytes("JOIN #" + CHANNEL + " \r\n", "UTF-8"))
 
-artid = ''
 np = ''
 np_duration = ''
 numba = ''
@@ -405,7 +405,7 @@ class ThreadPixiv(threading.Thread):
         return result_list
 
     def random_setup(self):
-        global artid, lastlink, last_rand_img
+        global lastlink, last_rand_img
         try:
             ranking = random.choice(self.allranking)
             fetchmode = random.random()  # ranked or ranked related art 20/80
@@ -421,58 +421,52 @@ class ThreadPixiv(threading.Thread):
             else:
                 illustration = ranking
             print(f'art id: {illustration.id}')
-            artid = str(illustration.id)
-            lastlink = 'https://www.pixiv.net/en/artworks/{}'.format(artid)
-            last_rand_img = artid + '.png'
-            art = Path('pixiv/' + artid + '.png')
+            artid = illustration.id
+            lastlink = f'https://www.pixiv.net/en/artworks/{artid}'
+            last_rand_img = f'{artid}.png'
+            art = Path(f'pixiv/{artid}.png')
             if not art.is_file():
-                self.download_art(illustration, Size.LARGE, artid)
+                self.download_art(illustration, pixiv_size, artid)
                 if not art.is_file():
-                    os.rename('pixiv/' + artid + '.jpg', 'pixiv/' + artid + '.png')
-            call_draw('pixiv/', artid + '.png')
+                    os.rename(f'pixiv/{artid}.jpg', f'pixiv/{artid}.png')
+            call_draw('pixiv/', f'{artid}.png')
         except BadApiResponse as pixiv_exception:  # reconnect
-            print(pixiv_exception)
             if 'Status code: 400' in str(pixiv_exception):
                 self.run()
             as_loop.create_task(self.random_pixiv_art())
 
     def save_setup(self, act, namesave, owner, artid, folder='custom/'):
         try:
-            artid = str(artid)
             print(f'art id: {artid}')
             namesave = while_is_file(folder, namesave, '.png')
             namesave = while_is_file(folder, namesave, '_p0.png')
             savedart = self.client.fetch_illustration(int(artid))
-            self.download_art(savedart, Size.ORIGINAL, namesave)
+            self.download_art(savedart, pixiv_size, namesave)
             if os.path.isdir('pixiv/' + namesave):
                 mypath2 = 'pixiv/' + namesave
                 onlyfiles = [f for f in listdir(mypath2) if isfile(join(mypath2, f))]
-                i = 0
-                while i <= len(onlyfiles) - 1:
-                    os.rename('pixiv/' + namesave + '/' + str(onlyfiles[i]),
-                              folder + namesave + str(onlyfiles[i])[:-4][-3:] + '.png')
+                for i in onlyfiles:
+                    os.rename(f'pixiv/{namesave}/{i}', f'{folder}{namesave}{i[8:-4]}.png')
                     if act != 'set':
-                        db.add_link('https://www.pixiv.net/en/artworks/' + artid, namesave +
-                                    onlyfiles[i][:-4][-3:] + '.png')
-                        db.add_owner(namesave + onlyfiles[i][:-4][-3:] + '.png', owner)
+                        db.add_link(f'https://www.pixiv.net/en/artworks/{artid}', f'{namesave}{i[8:-4]}.png')
+                        db.add_owner(f'{namesave}{i[8:-4]}.png', owner)
                     if any(act == x for x in ['set', 'set+save+name']):
-                        call_draw(folder, namesave + str(onlyfiles[i])[:-4][-3:] + '.png')
+                        call_draw(folder, f'{namesave}{i[8:-4]}.png')
                         time.sleep(1.5)
-                    i += 1
-                os.rmdir('pixiv/' + namesave)
+                os.rmdir(f'pixiv/{namesave}')
                 if act == 'save':
                     send_message(f'{owner}, {namesave}.png saved {love_emote}')
                 return
-            art = Path('pixiv/' + namesave + '.png')
-            filepath = 'pixiv/' + namesave + '.png'
+            art = Path(f'pixiv/{namesave}.png')
+            filepath = f'pixiv/{namesave}.png'
             if not art.is_file():
-                filepath = 'pixiv/' + namesave + '.jpg'
-            os.rename(filepath, folder + namesave + '.png')
+                filepath = f'pixiv/{namesave}.jpg'
+            os.rename(filepath, f'{folder}{namesave}.png')
             if act != 'set':
-                db.add_link('https://www.pixiv.net/en/artworks/' + artid, namesave + '.png')
-                db.add_owner(namesave + '.png', owner)
+                db.add_link(f'https://www.pixiv.net/en/artworks/{artid}', f'{namesave}.png')
+                db.add_owner(f'{namesave}.png', owner)
             if act != 'save':
-                call_draw(folder, namesave + '.png')
+                call_draw(folder, f'{namesave}.png')
             else:
                 send_message(f'{owner}, {namesave}.png saved {love_emote}')
         except BadApiResponse as pixiv_exception:  # reconnect
@@ -605,7 +599,7 @@ class ThreadMain(threading.Thread):
         self.name = name
 
     def run(self):
-        global HOST, PORT, CHANNEL, BOT, PASS, admin, artid, lastlink, last_rand_img, logs, playlist, \
+        global HOST, PORT, CHANNEL, BOT, PASS, admin, lastlink, last_rand_img, logs, playlist, \
             player_last_vol, sr, numba, sr_url, volume_await
 
         regex = re.compile(
