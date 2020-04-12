@@ -94,6 +94,7 @@ get account cookies using `cookies.txt` browser extension
 `info` - bot uptime  
 `pipe <command1> | <command2>..` - run commands in chain, transfer result from one command to another, last command gives complete result, supported commands: sql, info, help, tts, notify  
 `help [command]` - view bot commands help, no args - commands list, wrap command in quotes for startswith search  
+`notify <username> <message>` - notify twitch user when they next type in chat  
 ### bot moderators
 `ban <name> [name2]..` - add user(s) to ignore-list  
 `unban <name> [name2]..` - remove user(s) from ignore-list  
