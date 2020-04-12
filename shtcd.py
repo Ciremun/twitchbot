@@ -2010,7 +2010,8 @@ class ThreadMain(threading.Thread):
                          f'info - get bot version, uptime',
                          f'pipe - run commands in chain, transfer result from one command to another, '
                          f'last command gives complete result, supported commands: sql, info, help, tts, notify; '
-                         f'usage: {prefix}pipe <command1> | <command2>..']
+                         f'usage: {prefix}pipe <command1> | <command2>..',
+                         f'notify <username> <message> - notify twitch user when they next type in chat']
 
         commands_desc = [prefix + x for x in commands_desc]
 
