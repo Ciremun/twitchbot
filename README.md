@@ -36,6 +36,12 @@ twitch_app_oauth[channel_editor] <app oauth here>
 `pixiv token` - set/download random pixiv arts  
 `twitch channel id`, `client id`, `client OAuth with channel_editor scope` - edit stream title/game  
 
+## youtube cookies for songrequests
+
+`special/cookies.txt` - youtube cookies file  
+youtube songrequests may stop working after a while, cookies solved it for me  
+get account cookies using `cookies.txt` browser extension  
+
 ## global variables
 
 `CHANNEL` (string): twitch channel to listen  
