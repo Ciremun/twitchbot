@@ -634,7 +634,7 @@ class ThreadMain(threading.Thread):
                 imagename = messagesplit[1].lower()
                 newimagename = fixname(messagesplit[2].lower())
                 moderator = checkmodlist(username)
-                if not moderator and not checkOwner(username, imagename):
+                if not moderator and not check_owner(username, imagename):
                     onlyfiles = [f for f in listdir('custom/') if isfile(join('custom/', f))]
                     words = onlyfiles
                     if imagename not in words:
@@ -724,18 +724,12 @@ class ThreadMain(threading.Thread):
         def fixname(name):
             if name.startswith('.'):
                 name = '•' + name[1:]
-            name = name.replace('\\', '❤')
-            name = name.replace('/', '❤')
-            name = name.replace(':', ';')
-            name = name.replace('*', '★')
-            name = name.replace('?', '❓')
-            name = name.replace('"', "'")
-            name = name.replace('<', '«')
-            name = name.replace('>', '»')
-            name = name.replace('|', '│')
+            name = \
+                name.replace('\\', '❤').replace('/', '❤').replace(':', ';').replace('*', '★').replace('?', '❓').replace(
+                    '"', "'").replace('<', '«').replace('>', '»').replace('|', '│')
             return name
 
-        def checkIfNoLink(act):
+        def checkifnolink(act):
             mypath = 'custom/'
             onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
             result = db.get_links_filenames()
@@ -746,14 +740,14 @@ class ThreadMain(threading.Thread):
             linkwords = [x for x in words if '*' not in x]
             return words, linkwords
 
-        def getCurDate():
+        def get_current_date():
             nowdate = datetime.datetime.now()
             return nowdate
 
-        nowdate = getCurDate()
+        nowdate = get_current_date()
         date = str(nowdate).replace(':', '.', 3)
 
-        def checkOwner(username, imagename):  # check if user owns image
+        def check_owner(username, imagename):  # check if user owns image
             result = db.check_owner(imagename, username)
             if result:
                 return True
@@ -770,16 +764,13 @@ class ThreadMain(threading.Thread):
             return
 
         async def sr_favs_del(username, messagesplit, songs):
-            response = []
-            remove_song = []
-            target_not_found = []
-            song_removed_response = []
+            response, remove_song, target_not_found, index_not_integer, song_removed_response = [], [], [], [], []
             for i in range(1, len(messagesplit)):
                 await asyncio.sleep(0)
                 try:
                     index = int(messagesplit[i]) - 1
                 except ValueError:
-                    target_not_found.append(messagesplit[i])
+                    index_not_integer.append(messagesplit[i])
                     continue
                 if not 0 <= index <= len(songs) - 1:
                     target_not_found.append(messagesplit[i])
@@ -804,6 +795,8 @@ class ThreadMain(threading.Thread):
                 response.append(f'Favorites removed: {", ".join(song_removed_response)} {love_emote}')
             if target_not_found:
                 response.append(f'Not found: {", ".join(target_not_found)} {sad_emote}')
+            if index_not_integer:
+                response.append(f'Not integer: {", ".join(index_not_integer)} {sad_emote}')
             if response:
                 response_str = ' '.join(response)
                 if len(response_str) > 470:
@@ -822,7 +815,7 @@ class ThreadMain(threading.Thread):
             moderator = checkmodlist(username)
             for i in messagesplit[1:]:
                 imagename = i.lower()
-                if not checkOwner(username, imagename) and not moderator:
+                if not check_owner(username, imagename) and not moderator:
                     words = [f for f in listdir('custom/') if isfile(join('custom/', f))]
                     if not set(imagename.split()).intersection(words):
                         response_not_found.append(imagename)
@@ -1659,7 +1652,7 @@ class ThreadMain(threading.Thread):
         @bot_command
         def search_command(username=None, messagesplit=None, message=None):
             if message != f'{prefix}search':
-                words = checkIfNoLink('!search')
+                words = checkifnolink('!search')
                 if messagesplit[1].startswith(("'", '"')) and messagesplit[1].endswith(("'", '"')):
                     search_words = [x for x in words if x.startswith(messagesplit[1][1:-1])]
                 else:
@@ -1670,7 +1663,7 @@ class ThreadMain(threading.Thread):
 
         @bot_command
         def list_command(username=None, messagesplit=None, message=None):
-            words, linkwords = checkIfNoLink('!list')
+            words, linkwords = checkifnolink('!list')
             linkstr1 = ' '.join(linkwords)
             linkallpages = divide_chunks(linkstr1, 480)
             str1 = ' '.join(words)
@@ -2039,7 +2032,7 @@ class ThreadMain(threading.Thread):
                 call_tts.temper.append([message, username])
 
                 if logs:
-                    strdate = getCurDate()
+                    strdate = get_current_date()
                     strdate = str(strdate).replace(':', '.', 3)
                     with open('log/' + date + '.txt', 'a+', encoding='utf8') as log:
                         log.write('\n')
