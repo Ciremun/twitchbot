@@ -59,6 +59,7 @@ get account cookies using `cookies.txt` browser extension
 `drawfile` (string): init image  
 `prefix` (string): chat command prefix  
 `banned_tags` (list of strings): exclude pixiv tags you dont want to see  
+`pixiv_size` (pixivapi.Size): pixiv download size  
 `pixiv_artratio` (numeric): max pixiv art width/height ratio  
 `clear_folders` (list of strings): clear folders on !exit  
 `player_last_vol` (int): startup songrequests volume, 0 - 100  
