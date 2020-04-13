@@ -811,7 +811,7 @@ class ThreadMain(threading.Thread):
             moderator = checkmodlist(username)
             for i in messagesplit[1:]:
                 imagename = i.lower()
-                if not check_owner(username, imagename) and not moderator:
+                if not moderator and not check_owner(username, imagename):
                     words = [f for f in listdir('custom/') if isfile(join('custom/', f))]
                     if not set(imagename.split()).intersection(words):
                         response_not_found.append(imagename)
@@ -2040,31 +2040,30 @@ class ThreadMain(threading.Thread):
                     command(username=username, messagesplit=messagesplit, message=message)
 
 
-class ThreadDB(threading.Thread):
-    class conn_query(object):
-        def __init__(self, func):
-            self.func = func
-
-        def __call__(self, *args, **kwargs):
-            with db.conn:
-                try:
-                    lock.acquire(True)
-                    self.c = db.c
-                    return self.func(self, *args, **kwargs)
-                finally:
-                    lock.release()
-
-    class regular_query(object):
-        def __init__(self, func):
-            self.func = func
-
-        def __call__(self, *args, **kwargs):
+def conn_query(func):
+    def wrapper(self, *args, **kwargs):
+        with self.conn:
             try:
                 lock.acquire(True)
-                self.c = db.c
-                return self.func(self, *args, **kwargs)
+                return func(self, *args, **kwargs)
             finally:
                 lock.release()
+
+    return wrapper
+
+
+def regular_query(func):
+    def wrapper(self, *args, **kwargs):
+        try:
+            lock.acquire(True)
+            return func(self, *args, **kwargs)
+        finally:
+            lock.release()
+
+    return wrapper
+
+
+class ThreadDB(threading.Thread):
 
     def __init__(self, name):
         threading.Thread.__init__(self)
