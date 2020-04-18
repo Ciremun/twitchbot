@@ -82,20 +82,20 @@ commands_dict = {}
 
 
 def bot_command(func):
-    def wrapper(username, *args, **kwargs):
-        if checkbanlist(username):
+    def wrapper(**kwargs):
+        if checkbanlist(kwargs['username']):
             return
-        return func(username, *args, **kwargs)
+        return func(**kwargs)
 
     commands_dict[func.__code__.co_name[:-8]] = wrapper
     return wrapper
 
 
 def moderator_command(func):
-    def wrapper(username, *args, **kwargs):
-        if not checkmodlist(username):
+    def wrapper(**kwargs):
+        if not checkmodlist(kwargs['username']):
             return
-        return func(username, *args, **kwargs)
+        return func(**kwargs)
 
     commands_dict[func.__code__.co_name[:-8]] = wrapper
     return wrapper
@@ -1110,11 +1110,11 @@ class ThreadMain(threading.Thread):
                 send_message(f"{username}, no link")
 
         @moderator_command
-        def die_command(username=None, messagesplit=None, message=None):
+        def die_command(**kwargs):
             call_draw('special/', 'greenscreen.png')
 
         @bot_command
-        def exit_command(username=None, messagesplit=None, message=None):
+        def exit_command(*, username, message, **kwargs):
             if message[1:] == "exit" and username == admin:
                 for folder in clear_folders:
                     clear_folder(folder)
@@ -1130,7 +1130,7 @@ class ThreadMain(threading.Thread):
                 os._exit(0)
 
         @bot_command
-        def log_command(username=None, messagesplit=None, message=None):
+        def log_command(*, username, **kwargs):
             global logs
             if username == admin:
                 if logs:
@@ -1141,7 +1141,7 @@ class ThreadMain(threading.Thread):
                     send_message('logs on')
 
         @bot_command
-        def np_command(username=None, messagesplit=None, message=None):
+        def np_command(*, username, **kwargs):
             if all(str(Player.get_state()) != x for x in ['State.Playing', 'State.Paused']):
                 send_message(f'{username}, nothing is playing')
             elif str(Player.get_state()) == 'State.Paused':
@@ -1150,7 +1150,7 @@ class ThreadMain(threading.Thread):
                 np_response('Now playing')
 
         @moderator_command
-        def srv_command(username=None, messagesplit=None, message=None):
+        def srv_command(*, username, messagesplit, **kwargs):
             global player_last_vol
             if sr:
                 try:
@@ -1170,12 +1170,12 @@ class ThreadMain(threading.Thread):
                     send_message(f'{username}, vol 0-100')
 
         @bot_command
-        def srq_command(username=None, messagesplit=None, message=None):
+        def srq_command(*, username, **kwargs):
             if sr:
                 sr_get_list(username)
 
         @moderator_command
-        def srs_command(username=None, messagesplit=None, message=None):
+        def srs_command(*, username, messagesplit, **kwargs):
             if sr:
                 if all(str(Player.get_state()) != x for x in ['State.Playing', 'State.Paused']):
                     send_message(f'{username}, nothing is playing')
@@ -1244,7 +1244,7 @@ class ThreadMain(threading.Thread):
                     Player.stop()
 
         @moderator_command
-        def src_command(username=None, messagesplit=None, message=None):
+        def src_command(*, username, **kwargs):
             global playlist
             if sr:
                 if not playlist:
@@ -1254,7 +1254,7 @@ class ThreadMain(threading.Thread):
                 send_message(f'queue wiped')
 
         @moderator_command
-        def srp_command(username=None, messagesplit=None, message=None):
+        def srp_command(*, username, **kwargs):
             if sr:
                 if str(Player.get_state()) == 'State.Playing':
                     Player.pause()
@@ -1264,7 +1264,7 @@ class ThreadMain(threading.Thread):
                     send_message(f'{username}, nothing is playing')
 
         @moderator_command
-        def srt_command(username=None, messagesplit=None, message=None):
+        def srt_command(*, username, messagesplit, **kwargs):
             if sr:
                 if all(str(Player.get_state()) != x for x in ['State.Playing', 'State.Paused']):
                     send_message(f'{username}, nothing is playing')
@@ -1283,7 +1283,7 @@ class ThreadMain(threading.Thread):
                     send_message(f'{username}, no timecode')
 
         @bot_command
-        def srfa_command(username=None, messagesplit=None, message=None):
+        def srfa_command(*, username, messagesplit, **kwargs):
             if sr:
                 try:
                     url_or_timecode = messagesplit[1]
@@ -1313,7 +1313,7 @@ class ThreadMain(threading.Thread):
                         sr_download(messagesplit, username, 'sounds/favs/', timecode_pos=3)
 
         @bot_command
-        def srfd_command(username=None, messagesplit=None, message=None):
+        def srfd_command(*, username, messagesplit, **kwargs):
             if sr:
                 try:
                     if messagesplit[1]:
@@ -1326,7 +1326,7 @@ class ThreadMain(threading.Thread):
                     send_message(f'{username}, {prefix}srfd <index1> <index2>..')
 
         @bot_command
-        def srfp_command(username=None, messagesplit=None, message=None):
+        def srfp_command(*, username, messagesplit, **kwargs):
             if sr:
                 try:
                     if messagesplit[1]:
@@ -1396,7 +1396,7 @@ class ThreadMain(threading.Thread):
                     send_message(f'{username}, {prefix}srfp <word/index>')
 
         @bot_command
-        def srfl_command(username=None, messagesplit=None, message=None):
+        def srfl_command(*, username, messagesplit, **kwargs):
             if sr:
                 try:
                     if messagesplit[1]:
@@ -1437,7 +1437,7 @@ class ThreadMain(threading.Thread):
                     send_message(f'{username}, {prefix}srfl <word/index>')
 
         @bot_command
-        def srf_command(username=None, messagesplit=None, message=None):
+        def srf_command(*, username, **kwargs):
             if sr:
                 songs = get_srfavs_dictlist(username)
                 if not songs:
@@ -1453,7 +1453,7 @@ class ThreadMain(threading.Thread):
                 send_list(songs_str, songs_arr, 1, "list")
 
         @bot_command
-        def sr_command(username=None, messagesplit=None, message=None):
+        def sr_command(*, username, messagesplit, message):
             global sr
             if message == f"{prefix}sr":
                 if checkmodlist(username):
@@ -1478,7 +1478,7 @@ class ThreadMain(threading.Thread):
                             query, username, user_duration=None, ytsearch=True)
 
         @moderator_command
-        def sql_command(username=None, messagesplit=None, message=None, pipe=False):
+        def sql_command(*, username, messagesplit, pipe=False, **kwargs):
             try:
                 if not messagesplit[1]:
                     raise IndexError
@@ -1508,7 +1508,7 @@ class ThreadMain(threading.Thread):
                 send_message(f'{username}, no query')
 
         @bot_command
-        def cancel_command(username=None, messagesplit=None, message=None):
+        def cancel_command(*, username, messagesplit, **kwargs):
             if not playlist:
                 send_message(f'{username}, playlist is empty')
                 return
@@ -1588,33 +1588,33 @@ class ThreadMain(threading.Thread):
                     send_message(f'{username}, nothing to cancel')
 
         @moderator_command
-        def ban_command(username=None, messagesplit=None, message=None):
+        def ban_command(*, username, messagesplit, message):
             if message != f"{prefix}ban":
                 as_loop.create_task(ban_mod_commands(username, messagesplit, 'users banned', 'already banned',
                                                      checkbanlist, db.add_ban, True))
 
         @moderator_command
-        def unban_command(username=None, messagesplit=None, message=None):
+        def unban_command(*, username, messagesplit, message):
             if message != f"{prefix}unban":
                 as_loop.create_task(ban_mod_commands(username, messagesplit,
                                                      'users unbanned', f'not in the list',
                                                      checkbanlist, db.remove_ban, False))
 
         @bot_command
-        def mod_command(username=None, messagesplit=None, message=None):
+        def mod_command(*, username, messagesplit, message):
             if message != f"{prefix}mod" and username == admin:
                 as_loop.create_task(ban_mod_commands(username, messagesplit, 'users modded', 'already modded',
                                                      checkmodlist, db.add_mod, True))
 
         @bot_command
-        def unmod_command(username=None, messagesplit=None, message=None):
+        def unmod_command(*, username, messagesplit, message):
             if message != f"{prefix}unmod" and username == admin:
                 as_loop.create_task(ban_mod_commands(username, messagesplit,
                                                      'users unmodded', f'not in the list',
                                                      checkmodlist, db.remove_mod, False))
 
         @bot_command
-        def set_command(username=None, messagesplit=None, message=None):
+        def set_command(*, username, messagesplit, message):
             if message != f"{prefix}set":
                 selected = messagesplit[1].lower()
                 if selected.endswith('.png') or selected.endswith('.gif'):
@@ -1627,7 +1627,7 @@ class ThreadMain(threading.Thread):
                     send_message('{}, names include extensions [png/gif]'.format(username))
 
         @bot_command
-        def setrand_command(username=None, messagesplit=None, message=None):
+        def setrand_command(*, username, messagesplit, **kwargs):
             try:
                 randsrc = messagesplit[1]
                 if not any(x == randsrc for x in ['png', 'gif', 'pixiv']):
@@ -1645,7 +1645,7 @@ class ThreadMain(threading.Thread):
                 set_random_pic(onlyfiles, f'{username}, {prefix}list is empty')
 
         @bot_command
-        def search_command(username=None, messagesplit=None, message=None):
+        def search_command(*, messagesplit, message, **kwargs):
             if message != f'{prefix}search':
                 words = checkifnolink('!search')
                 if messagesplit[1].startswith(("'", '"')) and messagesplit[1].endswith(("'", '"')):
@@ -1657,14 +1657,14 @@ class ThreadMain(threading.Thread):
                 send_list(str1, allpages, 2, "search")
 
         @bot_command
-        def list_command(username=None, messagesplit=None, message=None):
+        def list_command(*, messagesplit, **kwargs):
             words, linkwords = checkifnolink('!list')
             linkstr1 = ' '.join(linkwords)
             linkallpages = divide_chunks(linkstr1, 480)
             str1 = ' '.join(words)
             allpages = divide_chunks(str1, 480)
             try:
-                pagenum = int(messagesplit[2])
+                int(messagesplit[2])
                 if messagesplit[0][1:] == "list" and messagesplit[1] == "links":
                     send_list(linkstr1, linkallpages, 2, "list")
             except IndexError:
@@ -1677,15 +1677,15 @@ class ThreadMain(threading.Thread):
                     send_list(str1, allpages, 1, "list")
 
         @moderator_command
-        def banlist_command(username=None, messagesplit=None, message=None):
+        def banlist_command(**kwargs):
             checklist("banlist")
 
         @moderator_command
-        def modlist_command(username=None, messagesplit=None, message=None):
+        def modlist_command(**kwargs):
             checklist("modlist")
 
         @bot_command
-        def link_command(username=None, messagesplit=None, message=None):
+        def link_command(*, username, messagesplit, message):
             if message == f"{prefix}link":
                 if lastlink:
                     send_message('{}, {} - {}'.format(username, lastlink, last_rand_img))
@@ -1695,7 +1695,7 @@ class ThreadMain(threading.Thread):
                 as_loop.create_task(link_chat_command(username, messagesplit[1:]))
 
         @bot_command
-        def save_command(username=None, messagesplit=None, message=None):
+        def save_command(*, username, messagesplit, message):
             if message == f'{prefix}save':
                 if re.match(regex, lastlink):
                     messagesplit.append(lastlink)
@@ -1714,28 +1714,28 @@ class ThreadMain(threading.Thread):
                     change_save_command(username, messagesplit, do_save_response=True)
 
         @bot_command
-        def olist_command(username=None, messagesplit=None, message=None):
+        def olist_command(*, username, **kwargs):
             owner_list(username)
 
         @bot_command
-        def del_command(username=None, messagesplit=None, message=None):
+        def del_command(*, username, messagesplit, message):
             if message != f"{prefix}del":
                 as_loop.create_task(del_chat_command(username, messagesplit))
 
         @bot_command
-        def ren_command(username=None, messagesplit=None, message=None):
+        def ren_command(*, username, messagesplit, message):
             if message != f"{prefix}ren":
                 as_loop.create_task(rename_command(username, messagesplit))
 
         @bot_command
-        def info_command(username=None, messagesplit=None, message=None, pipe=False):
+        def info_command(pipe=False, **kwargs):
             response = f'uptime: {seconds_convert(time.time() - startTime, explicit=True)}'
             if pipe:
                 return response.split()
             send_message(response)
 
         @bot_command
-        def orand_command(username=None, messagesplit=None, message=None):
+        def orand_command(*, username, messagesplit, **kwargs):
             global last_rand_img
             result = db.check_ownerlist(username)
             try:
@@ -1759,7 +1759,7 @@ class ThreadMain(threading.Thread):
                 call_draw('custom/', selected)
 
         @bot_command
-        def help_command(username=None, messagesplit=None, message=None, pipe=False):
+        def help_command(*, username, messagesplit, pipe=False, **kwargs):
             try:
                 help_command_quoted = False
                 help_command = " ".join(messagesplit[1:])
@@ -1807,20 +1807,20 @@ class ThreadMain(threading.Thread):
                              f'Mod: {", ".join(i[1:] for i in mod_commands_list)}')
 
         @moderator_command
-        def title_command(username=None, messagesplit=None, message=None):
+        def title_command(*, username, messagesplit, **kwargs):
             as_loop.create_task(change_stream_settings(username, messagesplit, 'title'))
 
         @moderator_command
-        def game_command(username=None, messagesplit=None, message=None):
+        def game_command(*, username, messagesplit, **kwargs):
             as_loop.create_task(change_stream_settings(username, messagesplit, 'game'))
 
         @bot_command
-        def change_command(username=None, messagesplit=None, message=None):
+        def change_command(*, username, messagesplit, message):
             if message != f"{prefix}change":
                 change_save_command(username, messagesplit, do_draw=True)
 
         @bot_command
-        def pipe_command(username=None, messagesplit=None, message=None):
+        def pipe_command(*, username, messagesplit, message):
             if message != f"{prefix}pipe":
                 pipesplit = " ".join(messagesplit[1:]).split(' | ')
                 if len(pipesplit) < 2:
@@ -1851,27 +1851,29 @@ class ThreadMain(threading.Thread):
                         if i[1:]:
                             result.insert(0, " ".join(i[1:]))
                             #  insert last command args to specify users, append to tts
-                    command = commands_dict.get(i[0][1:], None)
-                    if command is None:
-                        send_message(f'{username}, {i[0][1:]} - unknown command')
-                        return
                     try:
+                        if all(i[0][1:] != x for x in pipe_commands):
+                            raise TypeError
+                        command = commands_dict[i[0][1:]]
                         result.insert(0, i[0])  # insert command string at the beginning, so it looks like chat message
-                        result = command(username, result, " ".join(result), pipe=pipe)
+                        result = command(username=username, messagesplit=result, message=" ".join(result), pipe=pipe)
                         if result is None and not last_item:
                             send_message(f'{username}, {i[0][1:]} - mod command')
                             return
                     except TypeError:
                         send_message(f'{username}, {i[0][1:]} - unsupported command')
                         return
+                    except KeyError:
+                        send_message(f'{username}, {i[0][1:]} - unknown command')
+                        return
 
         @bot_command
-        def tts_colon_command(username=None, messagesplit=None, message=None, pipe=False):
+        def tts_colon_command(*, username, messagesplit, **kwargs):
             messagesplit[0] = 'tts:'
             call_tts.temper.append([" ".join(messagesplit), username])
 
         @moderator_command
-        def tts_command(username=None, messagesplit=None, message=None):
+        def tts_command(*, username, messagesplit, **kwargs):
             global tts
             try:
                 if messagesplit[1] == 'vc':
@@ -1901,7 +1903,7 @@ class ThreadMain(threading.Thread):
                     send_message(f'tts on')
 
         @bot_command
-        def notify_command(username=None, messagesplit=None, message=None, pipe=False):
+        def notify_command(*, username, messagesplit, message, **kwargs):
             if message != f"{prefix}notify":
                 if not 4 <= len(messagesplit[1]) <= 25:
                     send_message(f'{username}, username must be between 4 and 25 characters')
@@ -1946,22 +1948,22 @@ class ThreadMain(threading.Thread):
         readbuffer = ''
         chat_msg = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
 
-        commands_desc = [f'change «link» - change, {prefix}change «link» «name» - change+save',
-                         f'save «link» «name» - save only',
-                         f'set «name» - set downloaded pic',
-                         f'setrand [gif/png] - set random saved pic',
-                         f'setrand pixiv - set random pixiv art',
+        pipe_commands = ['sql', 'info', 'help', 'tts', 'notify', 'tts_colon']
+
+        commands_desc = [f'change <link> - change display pic, add name to save',
+                         f'save <link> [name] - save only',
+                         f'set <name> - set saved pic',
+                         f'setrand [gif/png/pixiv] - set random saved pic or pixiv art',
                          f'list [page] - check saved pics',
                          f'list links [page] - check pics with saved link',
-                         f'search «name» [page] - find image in {prefix}list [e.g. gif, png], wrap query in '
-                         f'quotes to search using "startswith()"',
-                         f'link «name» «name2»... - get saved pic link',
-                         f'link - last {prefix}setrand/{prefix}o random pic link+name',
-                         f'ban «name» «name2».. - add user to ignore-list',
-                         f'unban «name» «name2».. - remove user from ignore-list',
+                         f'search <name> [page] - find image in list (e.g. gif, png) '
+                         f'wrap in quotes for startswith search',
+                         f'link [name] [name2]... - get saved pic link, no args - last random pic link, filename',
+                         f'ban <name> [name2].. - add user to ignore-list',
+                         f'unban <name> [name2].. - remove user from ignore-list',
                          f'banlist - get bot ignore-list',
-                         f'ren - change saved pic filename',
-                         f'del - delete saved pic(s)',
+                         f'ren <name> <new name> - change saved pic filename',
+                         f'del <name> [name2].. - delete saved pic(s)',
                          f'modlist - get bot mod-list',
                          f'tts - enable/disable tts',
                          f'tts cfg - current tts config',
@@ -1971,13 +1973,13 @@ class ThreadMain(threading.Thread):
                          f'srq [page] - current queue',
                          f'srf [page] - your favorites list',
                          f'srfa [url] [timecode] - favorite a song, optional timecode, np song if no url',
-                         f'srfd «index1» «index2».. - remove from favorites by list index',
-                         f'srfp «word/index» [word2/index2].. - play songs from favorites ({prefix}srf)',
-                         f'srfl «index1» «index2».. - get song link',
+                         f'srfd <index1> <index2>.. - remove from favorites by list index',
+                         f'srfp <word/index> [word2/index2].. - play songs from favorites ({prefix}srf)',
+                         f'srfl <index1> <index2>.. - get song link',
                          f'src - clear current playlist',
                          f'srt - set time for current song',
-                         f'srs [word/index] [word2/index2].. - pure {prefix}srs = skip current song, word/index = '
-                         f'queue song',
+                         f'srs [name/index] [name2/index2].. - '
+                         f'skip queue song by name/index, no args - skip now playing song',
                          f'srv [value] - get/change volume',
                          f'srp - play/pause',
                          f'olist - list of your saved pics',
@@ -1985,20 +1987,19 @@ class ThreadMain(threading.Thread):
                          f'die - set greenscreen.png, mod command',
                          f'log - enable/disable chat logging, admin command',
                          f'mod/unmod - add user to mod-list, admin command',
-                         f'exit - clear image/sr folders, taskkill bot',
-                         f'help [command] - view bot commands help, pure {prefix}help = commands list, wrap command in '
-                         f'quotes to search using "startswith()"',
+                         f'exit - clear folders, exit bot',
+                         f'help [command] - view bot commands help, no args - commands list, '
+                         f'wrap command in quotes for startswith search',
                          f'np - get current song link, name, time, duration',
-                         f'cancel [word/index] [word2/index2].. - cancel your songrequest(s), pure {prefix}cancel = '
-                         f'cancel nearest to play',
-                         f'sql <query> - execute sql query and get result PogChamp',
+                         f'cancel [name/index] [name2/index2].. - cancel your songrequest(s)',
+                         f'sql <query> - execute sql query and get result',
                          f'tts: <msg> - say message, even when tts is off',
                          f'title <query> - change stream title',
                          f'game <query> - change stream game',
                          f'info - get bot version, uptime',
-                         f'pipe - run commands in chain, transfer result from one command to another, '
-                         f'last command gives complete result, supported commands: sql, info, help, tts, notify; '
-                         f'usage: {prefix}pipe <command1> | <command2>..',
+                         f'pipe <command1> | <command2>.. - run commands in chain, '
+                         f'transfer result from one command to another, last command gives complete result, '
+                         f'supported commands: {", ".join([x for x in pipe_commands if x != "tts_colon"])}',
                          f'notify <username> <message> - notify twitch user when they next type in chat']
 
         commands_desc = [prefix + x for x in commands_desc]
