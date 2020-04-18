@@ -1,32 +1,32 @@
-import socket  # twitch chat
+import socket
 import random
-import re  # check string for link
-import requests  # get image from link
-import os  # manage files
-import datetime  # get date for logs
+import re
+import requests
+import os
+import datetime
 import time
 import threading
-import pyglet  # images in window
-import pyttsx3  # tts
+import pyglet
+import pyttsx3
 from os import listdir
 from os.path import isfile, join
-from pixivapi import Client  # random pixiv arts
+from pixivapi import Client
 from pathlib import Path
 from pixivapi import Size
 from pixivapi import RankingMode
 from pixivapi import BadApiResponse
 import asyncio
-import sqlite3  # database
+import sqlite3
 import concurrent.futures
-import youtube_dl  # !sr downloader
-import vlc  # !sr player
+import youtube_dl
+import vlc
 from math import floor
 
 CHANNEL = "ciremun"  # twitch channel to listen
 BOT = "shtcd"  # twtich bot username
 admin = "ciremun"  # bot admin
 screenwidth = 390
-screenheight = 990  # image window properties
+screenheight = 990  # image window width/height in px
 pixiv_artratio = 1.3  # max pixiv art width/height ratio
 res = 'custom/'  # init image folder
 drawfile = 'rempls.gif'  # init image
@@ -47,7 +47,7 @@ player_last_vol = 40  # !sr volume
 ytdl_rate = 4000000  # 4Mb/s !sr download rate
 max_duration = '10:00'  # !sr max song duration (no limit for mods)
 
-startTime = time.time()
+startTime = time.time()  # uptime
 HOST = "irc.twitch.tv"
 PORT = 6667
 PASS, px_token, channel_id, client_id, client_auth = [' '.join(token.split()[1:]) for token in
@@ -60,7 +60,6 @@ s.send(bytes("JOIN #" + CHANNEL + " \r\n", "UTF-8"))
 
 np = ''
 np_duration = ''
-numba = ''
 sr_url = ''
 lastlink = ''
 last_rand_img = ''
@@ -80,8 +79,16 @@ Player.audio_set_volume(player_last_vol)
 volume_await = False
 commands_dict = {}
 
+regex = re.compile(
+    r'^(?:http|ftp)s?://'
+    r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'
+    r'localhost|'  # localhost...
+    r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
+    r'(?::\d+)?'
+    r'(?:/?|[/?]\S+)$', re.IGNORECASE)  # check string for link
 
-def bot_command(func):
+
+def bot_command(func):  # add command functions to commands dict, check if user is mod/banned on call
     def wrapper(**kwargs):
         if checkbanlist(kwargs['username']):
             return
@@ -105,7 +112,7 @@ def send_message(message):  # bot message to twitch chat
     s.send(bytes("PRIVMSG #" + CHANNEL + " :" + message + "\r\n", "UTF-8"))
 
 
-def call_draw(folder, selected):
+def call_draw(folder, selected):  # update global var for pyglet update method, changes image
     global res, drawfile
     res = folder
     drawfile = selected
@@ -144,7 +151,7 @@ def timecode_convert(timecode):
         return int(h) * 3600 + int(m) * 60 + int(s)
 
 
-max_duration = timecode_convert(max_duration)
+max_duration = timecode_convert(max_duration)  # global var to seconds
 
 
 def new_timecode(seconds, minutes, hours, duration):
@@ -188,6 +195,15 @@ def seconds_convert(duration, explicit=False):
 
 
 async def download_clip(url, username, user_duration=None, yt_request=True, folder='sounds/sr/', ytsearch=False):
+    """
+    download .wav song file, add song to favorites, add song to playlist
+    :param url: youtube/soundcloud link or youtube search query
+    :param username: twitch username
+    :param user_duration: timecode (song start time)
+    :param yt_request: if url is youtube
+    :param folder: .wav file folder
+    :param ytsearch: if youtube search query
+    """
     name = ''.join(random.choices('qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM' + '1234567890', k=10))
     name = while_is_file(folder, name, '.wav')
     home = folder + name + '.wav'
@@ -263,6 +279,10 @@ async def download_clip(url, username, user_duration=None, yt_request=True, fold
 
 
 class AsyncioLoop:
+    """
+    Put asyncio loop in a thread (?)
+    used for songrequest queue - blocking tasks while song playing/paused
+    """
 
     def __init__(self, loop):
         self.loop = loop
@@ -287,12 +307,12 @@ class AsyncioLoop:
         self.loop.create_task(download_clip(url, username, user_duration, yt_request, folder, ytsearch))
 
 
-async def sr_start_playing():
+async def sr_start_playing():  # wait for vlc player to start
     while not any(str(Player.get_state()) == x for x in ['State.Playing', 'State.Paused']):
         time.sleep(0.01)
 
 
-async def playmusic():
+async def playmusic():  # play song from playlist
     global np, np_duration, sr_url
     if not playlist:
         return
@@ -309,7 +329,7 @@ async def playmusic():
         time.sleep(2)
 
 
-def while_is_file(folder, filename, form):
+def while_is_file(folder, filename, form):  # change filename if path exists
     path = Path(folder + filename + form)
     while path.is_file():
         filename = ''.join(random.choices('qwertyuiopasdfghjklzxcvbnm' + '1234567890', k=10))
@@ -317,17 +337,28 @@ def while_is_file(folder, filename, form):
     return filename
 
 
+def get_tts_vc_key(vc):  # get voice name by registry key
+    for k, v in tts_voices.items():
+        if v == vc:
+            return k
+    return None
+
+
+def sort_pixiv_arts(arts_list, result_list):
+    for i in arts_list:
+        artratio = i.width / i.height
+        if i.page_count > 1 or 'ContentType.MANGA' in str(
+                i.type) or artratio > pixiv_artratio or \
+                any(x in str(i.tags) for x in banned_tags):
+            continue
+        result_list.append(i)
+    return result_list
+
+
 class ThreadTTS(threading.Thread):
     def __init__(self, name):
         threading.Thread.__init__(self)
         self.temper = []
-        self.regex = re.compile(
-            r'^(?:http|ftp)s?://'  # http:// or https://
-            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
-            r'localhost|'  # localhost...
-            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-            r'(?::\d+)?'  # optional port
-            r'(?:/?|[/?]\S+)$', re.IGNORECASE)  # check string for link
         self.name = name
 
     def run(self):
@@ -352,16 +383,10 @@ class ThreadTTS(threading.Thread):
 
     def say_message(self, messagesplit):
         for i in messagesplit:
-            if re.match(self.regex, i):
+            if re.match(regex, i):
                 messagesplit.remove(i)
         self.engine.say(' '.join(messagesplit))
         self.engine.runAndWait()
-
-    def get_tts_vc_key(self, vc):
-        for k, v in tts_voices.items():
-            if v == vc:
-                return k
-        return None
 
     def send_set_tts_vc(self, username, messagesplit):
         try:
@@ -372,7 +397,7 @@ class ThreadTTS(threading.Thread):
                     return
             send_message(f'{username}, [{messagesplit[2]}] not found, available: {", ".join(tts_voices.keys())}')
         except IndexError:
-            send_message(f'{username}, vc={self.get_tts_vc_key(self.engine.getProperty("voice"))} available: '
+            send_message(f'{username}, vc={get_tts_vc_key(self.engine.getProperty("voice"))} available: '
                          f'{", ".join(tts_voices.keys())}')
 
 
@@ -387,20 +412,9 @@ class ThreadPixiv(threading.Thread):
 
     def download_art(self, obj, size, filename):
         obj.download(directory=self.artpath,
-                     size=size, filename=filename
-                     )
+                     size=size, filename=filename)
 
-    def sort_pixiv_arts(self, arts_list, result_list):
-        for i in arts_list:
-            artratio = i.width / i.height
-            if i.page_count > 1 or 'ContentType.MANGA' in str(
-                    i.type) or artratio > pixiv_artratio or \
-                    any(x in str(i.tags) for x in banned_tags):
-                continue
-            result_list.append(i)
-        return result_list
-
-    def random_setup(self):
+    def random_setup(self):  # download and set random pixiv art
         global lastlink, last_rand_img
         try:
             ranking = random.choice(self.allranking)
@@ -411,7 +425,7 @@ class ThreadPixiv(threading.Thread):
                 for _ in range(4):
                     related = self.client.fetch_illustration_related(ranking.id,
                                                                      offset=related_offset).get('illustrations')
-                    allrelated = self.sort_pixiv_arts(related, allrelated)
+                    allrelated = sort_pixiv_arts(related, allrelated)
                     related_offset += 30
                 illustration = random.choice(list(allrelated))
             else:
@@ -432,6 +446,14 @@ class ThreadPixiv(threading.Thread):
             as_loop.create_task(self.random_pixiv_art())
 
     def save_setup(self, act, namesave, owner, artid, folder='custom/'):
+        """
+        save pixiv art by art id
+        :param act: just set, just save or set+save
+        :param namesave: filename
+        :param owner: twitch username
+        :param artid: pixiv art id
+        :param folder: save folder
+        """
         try:
             print(f'art id: {artid}')
             namesave = while_is_file(folder, namesave, '.png')
@@ -493,12 +515,12 @@ class ThreadPixiv(threading.Thread):
             rank_offset = 30
             ranking1 = self.client.fetch_illustrations_ranking(
                 mode=RankingMode.DAY).get('illustrations')  # check 500 arts, filter by tags and ratio
-            self.allranking = self.sort_pixiv_arts(ranking1, self.allranking)
+            self.allranking = sort_pixiv_arts(ranking1, self.allranking)
             for i in range(16):
                 print(f'\rpixiv load={int(i / 16 * 100) + 7}%', end='')
                 ranking = self.client.fetch_illustrations_ranking(mode=RankingMode.DAY,
                                                                   offset=rank_offset).get('illustrations')
-                self.allranking = self.sort_pixiv_arts(ranking, self.allranking)
+                self.allranking = sort_pixiv_arts(ranking, self.allranking)
                 rank_offset += 30
             print()
         except BadApiResponse:
@@ -595,16 +617,6 @@ class ThreadMain(threading.Thread):
         self.name = name
 
     def run(self):
-        global HOST, PORT, CHANNEL, BOT, PASS, admin, lastlink, last_rand_img, logs, playlist, \
-            player_last_vol, sr, numba, sr_url, volume_await
-
-        regex = re.compile(
-            r'^(?:http|ftp)s?://'  # http:// or https://
-            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
-            r'localhost|'  # localhost...
-            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-            r'(?::\d+)?'  # optional port
-            r'(?:/?|[/?]\S+)$', re.IGNORECASE)  # check string for link
 
         timecode_re = re.compile(r'^(?:(?:(\d+):)?(\d+):)?(\d+)$')
 
@@ -707,17 +719,14 @@ class ThreadMain(threading.Thread):
             all_chunks = list(filter(None, all_chunks))
             return all_chunks
 
-        def checklist(mode):  # check ban/mod list
-            if mode == "modlist":
-                result = db.check_moderators()
-            else:
-                result = db.check_banned()
+        def checklist(db_call):  # check ban/mod list
+            result = db_call()
             result = [item[0] for item in result]
             result = " ".join(result)
             allpages = divide_chunks(result, 480)
             send_list(result, allpages, 1, "list")
 
-        def fixname(name):
+        def fixname(name):  # fix filename for windows
             if name.startswith('.'):
                 name = '•' + name[1:]
             name = \
@@ -980,7 +989,7 @@ class ThreadMain(threading.Thread):
                     pass
 
         def change_pixiv(pattern, group, group2, url, messagesplit, username):
-            global numba
+            nonlocal numba
             try:
                 imagename = fixname(messagesplit[2].lower())
                 try:
@@ -1678,11 +1687,11 @@ class ThreadMain(threading.Thread):
 
         @moderator_command
         def banlist_command(**kwargs):
-            checklist("banlist")
+            checklist(db.check_banned)
 
         @moderator_command
         def modlist_command(**kwargs):
-            checklist("modlist")
+            checklist(db.check_moderators)
 
         @bot_command
         def link_command(*, username, messagesplit, message):
@@ -1893,7 +1902,7 @@ class ThreadMain(threading.Thread):
                 elif messagesplit[1] == 'cfg':
                     send_message(f"vol={call_tts.engine.getProperty('volume')}, rate="
                                  f"{call_tts.engine.getProperty('rate')}, "
-                                 f"vc={call_tts.get_tts_vc_key(call_tts.engine.getProperty('voice'))}")
+                                 f"vc={get_tts_vc_key(call_tts.engine.getProperty('voice'))}")
             except IndexError:
                 if tts:
                     tts = False
@@ -2032,7 +2041,7 @@ class ThreadMain(threading.Thread):
                     strdate = str(strdate).replace(':', '.', 3)
                     with open('log/' + date + '.txt', 'a+', encoding='utf8') as log:
                         log.write('\n')
-                        log.write('[' + strdate + '] ' + username + ": " + message)
+                        log.write(f'[{strdate}] {username}: {message}')
 
                 if message.startswith(prefix):
                     command = commands_dict.get(messagesplit[0][1:], None)
