@@ -78,6 +78,7 @@ Player = PlayerInstance.media_player_new()
 Player.audio_set_volume(player_last_vol)
 volume_await = False
 commands_dict = {}
+numba = 0
 
 regex = re.compile(
     r'^(?:http|ftp)s?://'
@@ -317,9 +318,9 @@ async def playmusic():  # play song from playlist
     if not playlist:
         return
     file = playlist.pop(0)
-    Media = PlayerInstance.media_new(file[0])
-    Media.get_mrl()
-    Player.set_media(Media)
+    media = PlayerInstance.media_new(file[0])
+    media.get_mrl()
+    Player.set_media(media)
     Player.play()
     np, np_duration, sr_url = file[1], file[2], file[4]
     if file[3] is not None:
@@ -353,6 +354,20 @@ def sort_pixiv_arts(arts_list, result_list):
             continue
         result_list.append(i)
     return result_list
+
+
+def resizeimg(ri, rs, image):  # resize to fit window
+    if rs > ri:
+        resized = image.width * screenheight / image.height, screenheight
+        return resized[0], resized[1]
+    elif rs < ri:
+        resized = screenwidth, image.height * screenwidth / image.width
+        return resized[0], resized[1]
+    else:
+        imagescale = screenwidth / image.width
+        image.width *= imagescale
+        image.height *= imagescale
+        return image.width, image.height
 
 
 class ThreadTTS(threading.Thread):
@@ -564,19 +579,6 @@ class ThreadPic:
             self.last = drawfile
             drawfile = ''
 
-    def resizeimg(self, ri, rs, image):  # resize to fit window
-        if rs > ri:
-            resized = image.width * screenheight / image.height, screenheight
-            return resized[0], resized[1]
-        elif rs < ri:
-            resized = screenwidth, image.height * screenwidth / image.width
-            return resized[0], resized[1]
-        else:
-            imagescale = screenwidth / image.width
-            image.width *= imagescale
-            image.height *= imagescale
-            return image.width, image.height
-
     def drawimg(self, selected):
         try:
             self.image = pyglet.resource.image(f'{res}{selected}')
@@ -585,7 +587,7 @@ class ThreadPic:
             self.image = pyglet.resource.image(f'{res}{selected}')
         rs = screenwidth / screenheight
         ri = self.image.width / self.image.height
-        self.image.width, self.image.height = self.resizeimg(ri, rs, self.image)
+        self.image.width, self.image.height = resizeimg(ri, rs, self.image)
         self.move = self.window.width - self.image.width  # move to the right corner
 
     def drawgif(self, selected):
@@ -617,6 +619,7 @@ class ThreadMain(threading.Thread):
         self.name = name
 
     def run(self):
+        global logs
 
         timecode_re = re.compile(r'^(?:(?:(\d+):)?(\d+):)?(\d+)$')
 
@@ -634,8 +637,68 @@ class ThreadMain(threading.Thread):
         pixiv_src_re = re.compile(r'^(https://)?(www.)?i\.pximg\.net/[\w\-]+/\w+/\d+/\d+/\d+/\d+/\d+/\d+/(('
                                   r'\d+)_p\d+\w+\.\w+)?((\d+)_p\d+\.\w+)?$')
 
+        chat_msg = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
+
         notify_check_inprogress = []
         notify_list = []
+
+        pipe_commands = ['sql', 'info', 'help', 'tts', 'notify', 'tts_colon']
+
+        commands_desc = [f'change <link> - change display pic, add name to save',
+                         f'save <link> [name] - save only',
+                         f'set <name> - set saved pic',
+                         f'setrand [gif/png/pixiv] - set random saved pic or pixiv art',
+                         f'list [page] - check saved pics',
+                         f'list links [page] - check pics with saved link',
+                         f'search <name> [page] - find image in list (e.g. gif, png) '
+                         f'wrap in quotes for startswith search',
+                         f'link [name] [name2]... - get saved pic link, no args - last random pic link, filename',
+                         f'ban <name> [name2].. - add user to ignore-list',
+                         f'unban <name> [name2].. - remove user from ignore-list',
+                         f'banlist - get bot ignore-list',
+                         f'ren <name> <new name> - change saved pic filename',
+                         f'del <name> [name2].. - delete saved pic(s)',
+                         f'modlist - get bot mod-list',
+                         f'tts - enable/disable tts',
+                         f'tts cfg - current tts config',
+                         f'tts vol/rate/vc [value] - get/change tts volume/speech rate/voice',
+                         f'sr <yt/scld> [timecode] - play music with youtube link/id/search, '
+                         f'soundcloud links, optional timecode(start time)',
+                         f'srq [page] - current queue',
+                         f'srf [page] - your favorites list',
+                         f'srfa [url] [timecode] - favorite a song, optional timecode, np song if no url',
+                         f'srfd <index1> <index2>.. - remove from favorites by list index',
+                         f'srfp <word/index> [word2/index2].. - play songs from favorites ({prefix}srf)',
+                         f'srfl <index1> <index2>.. - get song link',
+                         f'src - clear current playlist',
+                         f'srt - set time for current song',
+                         f'srs [name/index] [name2/index2].. - '
+                         f'skip queue song by name/index, no args - skip now playing song',
+                         f'srv [value] - get/change volume',
+                         f'srp - play/pause',
+                         f'olist - list of your saved pics',
+                         f'orand [png/gif] - set random image from {prefix}olist',
+                         f'die - set greenscreen.png, mod command',
+                         f'log - enable/disable chat logging, admin command',
+                         f'mod/unmod - add user to mod-list, admin command',
+                         f'exit - clear folders, exit bot',
+                         f'help [command] - view bot commands help, no args - commands list, '
+                         f'wrap command in quotes for startswith search',
+                         f'np - get current song link, name, time, duration',
+                         f'cancel [name/index] [name2/index2].. - cancel your songrequest(s)',
+                         f'sql <query> - execute sql query and get result',
+                         f'tts: <msg> - say message, even when tts is off',
+                         f'title <query> - change stream title',
+                         f'game <query> - change stream game',
+                         f'info - get bot version, uptime',
+                         f'pipe <command1> | <command2>.. - run commands in chain, '
+                         f'transfer result from one command to another, last command gives complete result, '
+                         f'supported commands: {", ".join([x for x in pipe_commands if x != "tts_colon"])}',
+                         f'notify <username> <message> - notify twitch user when they next type in chat']
+
+        commands_desc = [prefix + x for x in commands_desc]
+
+        readbuffer = ''
 
         async def rename_command(username, messagesplit):  # rename function for image owners
             try:
@@ -989,7 +1052,7 @@ class ThreadMain(threading.Thread):
                     pass
 
         def change_pixiv(pattern, group, group2, url, messagesplit, username):
-            nonlocal numba
+            global numba
             try:
                 imagename = fixname(messagesplit[2].lower())
                 try:
@@ -1946,72 +2009,10 @@ class ThreadMain(threading.Thread):
                 notify_list = [d for d in notify_list if d['recipient'] != username]
                 notify_check_inprogress.remove(username)
 
-        numba = str(db.get_imgcount()[0][0])
-
         while True:
             line = str(s.recv(1024))
             if "End of /NAMES list" in line:
                 break
-
-        username = ''
-        readbuffer = ''
-        chat_msg = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
-
-        pipe_commands = ['sql', 'info', 'help', 'tts', 'notify', 'tts_colon']
-
-        commands_desc = [f'change <link> - change display pic, add name to save',
-                         f'save <link> [name] - save only',
-                         f'set <name> - set saved pic',
-                         f'setrand [gif/png/pixiv] - set random saved pic or pixiv art',
-                         f'list [page] - check saved pics',
-                         f'list links [page] - check pics with saved link',
-                         f'search <name> [page] - find image in list (e.g. gif, png) '
-                         f'wrap in quotes for startswith search',
-                         f'link [name] [name2]... - get saved pic link, no args - last random pic link, filename',
-                         f'ban <name> [name2].. - add user to ignore-list',
-                         f'unban <name> [name2].. - remove user from ignore-list',
-                         f'banlist - get bot ignore-list',
-                         f'ren <name> <new name> - change saved pic filename',
-                         f'del <name> [name2].. - delete saved pic(s)',
-                         f'modlist - get bot mod-list',
-                         f'tts - enable/disable tts',
-                         f'tts cfg - current tts config',
-                         f'tts vol/rate/vc [value] - get/change tts volume/speech rate/voice',
-                         f'sr <yt/scld> [timecode] - play music with youtube link/id/search, '
-                         f'soundcloud links, optional timecode(start time)',
-                         f'srq [page] - current queue',
-                         f'srf [page] - your favorites list',
-                         f'srfa [url] [timecode] - favorite a song, optional timecode, np song if no url',
-                         f'srfd <index1> <index2>.. - remove from favorites by list index',
-                         f'srfp <word/index> [word2/index2].. - play songs from favorites ({prefix}srf)',
-                         f'srfl <index1> <index2>.. - get song link',
-                         f'src - clear current playlist',
-                         f'srt - set time for current song',
-                         f'srs [name/index] [name2/index2].. - '
-                         f'skip queue song by name/index, no args - skip now playing song',
-                         f'srv [value] - get/change volume',
-                         f'srp - play/pause',
-                         f'olist - list of your saved pics',
-                         f'orand [png/gif] - set random image from {prefix}olist',
-                         f'die - set greenscreen.png, mod command',
-                         f'log - enable/disable chat logging, admin command',
-                         f'mod/unmod - add user to mod-list, admin command',
-                         f'exit - clear folders, exit bot',
-                         f'help [command] - view bot commands help, no args - commands list, '
-                         f'wrap command in quotes for startswith search',
-                         f'np - get current song link, name, time, duration',
-                         f'cancel [name/index] [name2/index2].. - cancel your songrequest(s)',
-                         f'sql <query> - execute sql query and get result',
-                         f'tts: <msg> - say message, even when tts is off',
-                         f'title <query> - change stream title',
-                         f'game <query> - change stream game',
-                         f'info - get bot version, uptime',
-                         f'pipe <command1> | <command2>.. - run commands in chain, '
-                         f'transfer result from one command to another, last command gives complete result, '
-                         f'supported commands: {", ".join([x for x in pipe_commands if x != "tts_colon"])}',
-                         f'notify <username> <message> - notify twitch user when they next type in chat']
-
-        commands_desc = [prefix + x for x in commands_desc]
 
         while True:
             try:
@@ -2076,10 +2077,12 @@ def regular_query(func):
 class ThreadDB(threading.Thread):
 
     def __init__(self, name):
+        global numba
         threading.Thread.__init__(self)
         self.name = name
         self.conn = sqlite3.connect('db/picturebot.db', check_same_thread=False)
         self.c = self.conn.cursor()
+        numba = str(self.get_imgcount()[0][0])
 
     @conn_query
     def add_owner(self, filename, owner):
