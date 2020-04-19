@@ -1,6 +1,6 @@
 # shtcd twitch bot
   
-let viewers set images on stream, songrequests, tts, change twitch title, game  
+let viewers set images on stream, songrequests, tts, random pixiv arts, change twitch title, game  
 set image: any image link, pixiv links  
 songrequests: youtube link/id/query, soundcloud links  
 
