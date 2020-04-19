@@ -49,8 +49,8 @@ get account cookies using `cookies.txt` browser extension
 `admin` (string): bot admin, twitch username  
 `tts` (boolean): enable/disable tts  
 `tts_voices` (dict): dictionary of tts voices, keys are names, values are voice registry keys  
-`tts_default_vc` (string): startup tts voice (e.g. tts_voices[key])  
-`tts_volume` (numeric): startup tts volume in percent (e.g. 0.35 - 35%)  
+`tts_default_vc` (string): startup tts voice, registry key  
+`tts_volume` (numeric): startup tts volume in percent (0-1)  
 `logs` (boolean): enable/disable chat logging  
 `sr` (boolean): enable/disable songrequests  
 `screenwidth` (int): pic window width in px  
@@ -62,7 +62,7 @@ get account cookies using `cookies.txt` browser extension
 `pixiv_size` (pixivapi.Size): pixiv download size  
 `pixiv_artratio` (numeric): max pixiv art width/height ratio  
 `clear_folders` (list of strings): clear folders on !exit  
-`player_last_vol` (int): startup songrequests volume, 0 - 100  
+`player_last_vol` (int): startup songrequests volume (0-100)  
 `ytdl_rate` (int): songrequests download speed in bytes/s  
 `max_duration` (string): songrequests max duration, no limit for bot moderators, timecode string (e.g. 10:00 - ten minutes)  
 
