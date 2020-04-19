@@ -1,11 +1,11 @@
-import modules.main as m
+import modules.main
 import modules.decorators
+import modules.info as info
+import modules.globals as g
 from modules.utils import *
 from modules.regex import *
 from modules.pixiv import Pixiv
 from modules.tts import call_tts
-import modules.info as info
-import modules.globals as g
 from modules.decorators import bot_command, moderator_command
 
 
@@ -658,7 +658,7 @@ def ren_command(*, username, messagesplit, message):
 
 @bot_command
 def info_command(pipe=False, **kwargs):
-    response = f'uptime: {seconds_convert(time.time() - m.startTime, explicit=True)}'
+    response = f'uptime: {seconds_convert(time.time() - modules.main.startTime, explicit=True)}'
     if pipe:
         return response.split()
     send_message(response)
@@ -848,7 +848,7 @@ def notify_command(*, username, messagesplit, message, **kwargs):
         if not notify_message:
             send_message(f'{username}, no notify message')
             return
-        modules.main.Main.notify_list.append({'recipient': messagesplit[1].lower(),
-                                              'message': notify_message,
-                                              'date': time.time(),
-                                              'sender': username})
+        g.Main.notify_list.append({'recipient': messagesplit[1].lower(),
+                                   'message': notify_message,
+                                   'date': time.time(),
+                                   'sender': username})

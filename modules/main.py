@@ -102,10 +102,10 @@ if __name__ == '__main__':
     s.send(bytes("NICK " + g.BOT + "\r\n", "UTF-8"))
     s.send(bytes("JOIN #" + g.CHANNEL + " \r\n", "UTF-8"))
 
-    Main = ThreadMain("ThreadMain")
+    g.Main = ThreadMain("ThreadMain")
     Drawing = threading.Thread(target=ThreadPic)
 
-    Main.start()
+    g.Main.start()
     Drawing.start()
     Pixiv.start()
     call_tts.start()
