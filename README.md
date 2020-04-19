@@ -1,7 +1,7 @@
 # shtcd twitch bot
   
-let viewers set images on stream + songrequests + tts + change stream title, game  
-supports png, jpg, gif, webp, pixiv links  
+let viewers set images on stream, songrequests, tts, change twitch title, game  
+set image: any image link, pixiv links  
 songrequests: youtube link/id/query, soundcloud links  
 
 # Install
@@ -22,7 +22,7 @@ youtube-dl>=2020.1.24
 requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 
 ## tokens
-`special/tokens` - tokens file 
+`data/special/tokens` - tokens file 
  
 ```
 twitch_bot_token <token here>
@@ -36,13 +36,13 @@ twitch_app_oauth[channel_editor] <app oauth here>
 `pixiv token` - set/download random pixiv arts  
 `twitch channel id`, `client id`, `client OAuth with channel_editor scope` - edit stream title/game  
 
-## youtube cookies for songrequests
+## youtubedl
 
-`special/cookies.txt` - youtube cookies file  
+`data/special/cookies.txt` - youtube cookies file  
 youtube songrequests may stop working after a while, cookies solved it for me  
 get account cookies using `cookies.txt` browser extension  
 
-## global variables
+## globals.py
 
 `CHANNEL` (string): twitch channel to listen  
 `BOT` (string): twitch bot username  
@@ -66,7 +66,7 @@ get account cookies using `cookies.txt` browser extension
 `ytdl_rate` (int): songrequests download speed in bytes/s  
 `max_duration` (string): songrequests max duration, no limit for bot moderators, timecode string (e.g. 10:00 - ten minutes)  
 
-# commands
+## commands.py
 
 ### everyone
 `change <link> [name]` - change display pic, add name to save  
