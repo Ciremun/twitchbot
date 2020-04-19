@@ -1,15 +1,15 @@
 import threading
 import concurrent.futures
-import modules.globals as g
 import random
 import os
 import time
+import modules.utils as u
+import modules.globals as g
 
 from pixivapi import Client
 from pixivapi import RankingMode
 from pixivapi import BadApiResponse
 from pathlib import Path
-import modules.utils as u
 from os import listdir
 from os.path import isfile, join
 

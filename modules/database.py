@@ -1,6 +1,5 @@
 import sqlite3
 import threading
-import modules.globals as g
 
 lock = threading.Lock()
 

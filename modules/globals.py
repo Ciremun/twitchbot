@@ -1,8 +1,8 @@
-from pixivapi import Size
 import asyncio
 import vlc
 import socket
 import modules.database
+from pixivapi import Size
 from modules.utils import AsyncioLoop
 
 CHANNEL = "ciremun"  # twitch channel to listen

@@ -2,6 +2,7 @@ import modules.main
 import modules.decorators
 import modules.info as info
 import modules.globals as g
+
 from modules.utils import *
 from modules.regex import *
 from modules.pixiv import Pixiv

@@ -1,7 +1,6 @@
 import pyglet
-import modules.globals as g
-
 import os
+import modules.globals as g
 
 os.chdir('../')
 

@@ -1,5 +1,6 @@
-from modules.utils import checkbanlist, checkmodlist
 import modules.globals as g
+
+from modules.utils import checkbanlist, checkmodlist
 
 
 def bot_command(func):  # add command functions to commands dict, check if user is mod/banned on call
