@@ -1,3 +1,4 @@
+import threading
 import modules.globals as g
 
 from modules.utils import checkbanlist, checkmodlist
@@ -20,4 +21,30 @@ def moderator_command(func):
         return func(**kwargs)
 
     g.commands_dict[func.__code__.co_name[:-8]] = wrapper
+    return wrapper
+
+
+lock = threading.Lock()
+
+
+def conn_query(func):
+    def wrapper(self, *args, **kwargs):
+        with self.conn:
+            try:
+                lock.acquire(True)
+                return func(self, *args, **kwargs)
+            finally:
+                lock.release()
+
+    return wrapper
+
+
+def regular_query(func):
+    def wrapper(self, *args, **kwargs):
+        try:
+            lock.acquire(True)
+            return func(self, *args, **kwargs)
+        finally:
+            lock.release()
+
     return wrapper

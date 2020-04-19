@@ -1,30 +1,7 @@
 import sqlite3
 import threading
 
-lock = threading.Lock()
-
-
-def conn_query(func):
-    def wrapper(self, *args, **kwargs):
-        with self.conn:
-            try:
-                lock.acquire(True)
-                return func(self, *args, **kwargs)
-            finally:
-                lock.release()
-
-    return wrapper
-
-
-def regular_query(func):
-    def wrapper(self, *args, **kwargs):
-        try:
-            lock.acquire(True)
-            return func(self, *args, **kwargs)
-        finally:
-            lock.release()
-
-    return wrapper
+from modules.decorators import conn_query, regular_query
 
 
 class ThreadDB(threading.Thread):

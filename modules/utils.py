@@ -16,7 +16,6 @@ from modules.regex import *
 from modules.pixiv import Pixiv
 
 
-
 def checkmodlist(username):  # check if user is mod
     if username == g.admin:
         return True
