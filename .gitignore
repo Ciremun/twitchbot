@@ -1,6 +1,7 @@
 .idea/
 data/custom/*.png
 data/custom/*.gif
+data/images/*.png
 *.bat
 changelog.txt
 data/sounds/favs/*.wav
