@@ -2,21 +2,9 @@ import pyglet
 import os
 import modules.globals as g
 
+from modules.utils import resizeimg
+
 os.chdir('../')
-
-
-def resizeimg(ri, rs, image, screenwidth, screenheight):  # resize to fit window
-    if rs > ri:
-        resized = image.width * screenheight / image.height, screenheight
-        return resized[0], resized[1]
-    elif rs < ri:
-        resized = screenwidth, image.height * screenwidth / image.width
-        return resized[0], resized[1]
-    else:
-        imagescale = screenwidth / image.width
-        image.width *= imagescale
-        image.height *= imagescale
-        return image.width, image.height
 
 
 class ThreadPic:
