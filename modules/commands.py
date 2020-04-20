@@ -427,9 +427,7 @@ def cancel_command(*, username, messagesplit, **kwargs):
         return
     try:
         if messagesplit[1]:
-            playlist_cancelled = []
-            playlist_to_del = []
-            playlist_not_found = []
+            playlist_cancelled, playlist_to_del, playlist_not_found = [], [], []
             username_in_playlist = False
             for i in range(1, len(messagesplit)):
                 song_cancelled_title = False
@@ -438,7 +436,7 @@ def cancel_command(*, username, messagesplit, **kwargs):
                     if not 0 < target <= len(g.playlist):
                         playlist_not_found.append(f'{target}')
                         continue
-                    if username in g.playlist[target - 1][5]:
+                    if username == g.playlist[target - 1][5]:
                         playlist_to_del.append(g.playlist[target - 1])
                         if g.playlist[target - 1][3] is not None:
                             playlist_cancelled.append(

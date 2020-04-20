@@ -769,6 +769,5 @@ class AsyncioLoop:
     def call_playmusic(self):
         self.loop.create_task(playmusic())
 
-    def call_download_clip(self, url, username, user_duration=None, yt_request=True, folder='data/sounds/sr/',
-                           ytsearch=False):
-        self.loop.create_task(download_clip(url, username, user_duration, yt_request, folder, ytsearch))
+    def call_download_clip(self, url, username, **kwargs):
+        self.loop.create_task(download_clip(url, username, **kwargs))
