@@ -252,28 +252,26 @@ def srfp_command(*, username, messagesplit, **kwargs):
                         if not 0 < index <= len(songs):
                             target_not_found.append(messagesplit[i])
                             continue
-                        g.playlist.append(('data/sounds/favs/' + songs[index - 1].get("filename"),
-                                           songs[index - 1].get("title"),
-                                           seconds_convert(songs[index - 1].get("duration")),
-                                           songs[index - 1].get("user_duration"),
-                                           songs[index - 1].get("link"), username))
+                        song = songs[index - 1]
+                        g.playlist.append(Song(f'data/sounds/favs/{song["filename"]}', song["title"],
+                                               seconds_convert(song["duration"]), song["user_duration"],
+                                               song["link"], username))
                         g.sr_queue.call_playmusic()
-                        if songs[index - 1].get("user_duration") is not None:
-                            response_added.append(f'{songs[index - 1].get("title")} '
-                                                  f'[{seconds_convert(songs[index - 1].get("user_duration"))}]'
-                                                  f' - {songs[index - 1].get("link")} - #{len(g.playlist)}')
+                        if song["user_duration"] is not None:
+                            response_added.append(f'{song["title"]} '
+                                                  f'[{seconds_convert(song["user_duration"])}]'
+                                                  f' - {song["link"]} - #{len(g.playlist)}')
                         else:
-                            response_added.append(f'{songs[index - 1].get("title")} - '
-                                                  f'{songs[index - 1].get("link")} - #{len(g.playlist)}')
+                            response_added.append(f'{song["title"]} - '
+                                                  f'{song["link"]} - #{len(g.playlist)}')
                     except ValueError:
                         title = messagesplit[i]
                         title_found = False
                         for j in songs:
                             if any(title in x for x in [j.get('title'), j.get('title').lower()]):
-                                g.playlist.append(('data/sounds/favs/' + j.get("filename"),
-                                                   j.get("title"),
-                                                   seconds_convert(j.get("duration")),
-                                                   j.get("user_duration"), j.get("link"), username))
+                                g.playlist.append(Song('data/sounds/favs/' + j.get("filename"),
+                                                       j.get("title"), seconds_convert(j.get("duration")),
+                                                       j.get("user_duration"), j.get("link"), username))
                                 title_found = True
                                 g.sr_queue.call_playmusic()
                                 if j.get("user_duration") is not None:
@@ -322,8 +320,9 @@ def srfl_command(*, username, messagesplit, **kwargs):
                         if not 0 < index <= len(songs):
                             send_message(f'{username}, invalid index [{index}]')
                             continue
-                        response.append(f'{username}, {songs[index - 1].get("title")} - '
-                                        f'{songs[index - 1].get("link")}')
+                        song = songs[index - 1]
+                        response.append(f'{username}, {song["title"]} - '
+                                        f'{song["link"]}')
                     except ValueError:
                         title = messagesplit[i]
                         title_found = False
@@ -503,30 +502,30 @@ def cancel_command(*, username, messagesplit, **kwargs):
 def ban_command(*, username, messagesplit, message):
     if message != f"{g.prefix}ban":
         asyncio.run(ban_mod_commands(username, messagesplit, 'users banned', 'already banned',
-                                               checkbanlist, g.db.add_ban, True))
+                                     checkbanlist, g.db.add_ban, True))
 
 
 @moderator_command
 def unban_command(*, username, messagesplit, message):
     if message != f"{g.prefix}unban":
         asyncio.run(ban_mod_commands(username, messagesplit,
-                                               'users unbanned', f'not in the list',
-                                               checkbanlist, g.db.remove_ban, False))
+                                     'users unbanned', f'not in the list',
+                                     checkbanlist, g.db.remove_ban, False))
 
 
 @bot_command
 def mod_command(*, username, messagesplit, message):
     if message != f"{g.prefix}mod" and username == g.admin:
         asyncio.run(ban_mod_commands(username, messagesplit, 'users modded', 'already modded',
-                                               checkmodlist, g.db.add_mod, True))
+                                     checkmodlist, g.db.add_mod, True))
 
 
 @bot_command
 def unmod_command(*, username, messagesplit, message):
     if message != f"{g.prefix}unmod" and username == g.admin:
         asyncio.run(ban_mod_commands(username, messagesplit,
-                                               'users unmodded', f'not in the list',
-                                               checkmodlist, g.db.remove_mod, False))
+                                     'users unmodded', f'not in the list',
+                                     checkmodlist, g.db.remove_mod, False))
 
 
 @bot_command

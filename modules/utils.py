@@ -5,6 +5,7 @@ import requests
 import threading
 import os
 import random
+import typing
 import modules.globals as g
 
 from math import floor
@@ -14,6 +15,15 @@ from os import listdir
 from os.path import isfile, join
 from modules.regex import *
 from modules.pixiv import Pixiv
+
+
+class Song(typing.NamedTuple):
+    path: str
+    title: str
+    duration: str
+    user_duration: int
+    link: str
+    username: str
 
 
 def resizeimg(ri, rs, image, screenwidth, screenheight):  # resize to fit window
@@ -634,13 +644,13 @@ class Thread(threading.Thread):
         if not g.playlist:
             return
         file = g.playlist.pop(0)
-        media = g.PlayerInstance.media_new(file[0])
+        media = g.PlayerInstance.media_new(file.path)
         media.get_mrl()
         g.Player.set_media(media)
         g.Player.play()
-        g.np, g.np_duration, g.sr_url = file[1], file[2], file[4]
-        if file[3] is not None:
-            g.Player.set_time(file[3] * 1000)
+        g.np, g.np_duration, g.sr_url = file.title, file.duration, file.link
+        if file.user_duration is not None:
+            g.Player.set_time(file.user_duration * 1000)
         sr_start_playing()
         while any(str(g.Player.get_state()) == x for x in ['State.Playing', 'State.Paused']):
             time.sleep(2)
@@ -721,7 +731,7 @@ class Thread(threading.Thread):
                         f'{username}, {title} [{seconds_convert(user_duration)}] - {sr_url} - added to favorites')
                 return
             duration = seconds_convert(duration)
-            g.playlist.append((home, title, duration, user_duration, sr_url, username))
+            g.playlist.append(Song(home, title, duration, user_duration, sr_url, username))
             if user_duration is not None:
                 send_message(f'+ {title} [{seconds_convert(user_duration)}] - {sr_url} - #{len(g.playlist)}')
             else:
