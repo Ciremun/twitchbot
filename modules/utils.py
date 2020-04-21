@@ -730,19 +730,20 @@ async def sr_start_playing():  # wait for vlc player to start
 
 
 async def playmusic():  # play song from playlist
-    if not g.playlist:
-        return
-    file = g.playlist.pop(0)
-    media = g.PlayerInstance.media_new(file[0])
-    media.get_mrl()
-    g.Player.set_media(media)
-    g.Player.play()
-    g.np, g.np_duration, g.sr_url = file[1], file[2], file[4]
-    if file[3] is not None:
-        g.Player.set_time(file[3] * 1000)
-    await sr_start_playing()
-    while any(str(g.Player.get_state()) == x for x in ['State.Playing', 'State.Paused']):
-        time.sleep(2)
+    async with g.playmusic_lock:
+        if not g.playlist:
+            return
+        file = g.playlist.pop(0)
+        media = g.PlayerInstance.media_new(file[0])
+        media.get_mrl()
+        g.Player.set_media(media)
+        g.Player.play()
+        g.np, g.np_duration, g.sr_url = file[1], file[2], file[4]
+        if file[3] is not None:
+            g.Player.set_time(file[3] * 1000)
+        await sr_start_playing()
+        while any(str(g.Player.get_state()) == x for x in ['State.Playing', 'State.Paused']):
+            await asyncio.sleep(2)
 
 
 class AsyncioLoop:

@@ -55,6 +55,7 @@ s = socket.socket()
 db = modules.database.db
 my_loop = AsyncioLoop(as_loop)
 sr_queue = AsyncioLoop(asyncio.new_event_loop())
+playmusic_lock = asyncio.Lock(loop=sr_queue.loop)
 sr_download_queue = AsyncioLoop(asyncio.new_event_loop())
 commands_dict = {}
 PASS, px_token, channel_id, client_id, client_auth = '', '', '', '', ''
