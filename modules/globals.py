@@ -1,9 +1,9 @@
-import asyncio
 import vlc
 import socket
 import modules.database
+
 from pixivapi import Size
-from modules.utils import AsyncioLoop
+from modules.utils import Thread
 
 CHANNEL = "ciremun"  # twitch channel to listen
 BOT = "shtcd"  # twtich bot username
@@ -43,7 +43,6 @@ mod_commands_list = [prefix + x for x in
                      ['ban', 'unban', 'banlist', 'modlist', 'tts', 'srp', 'srs', 'srt', 'src', 'srv', 'sql',
                       'title',
                       'game']]
-as_loop = asyncio.get_event_loop()
 playlist = []
 PlayerInstance = vlc.Instance()
 Player = PlayerInstance.media_player_new()
@@ -53,10 +52,8 @@ HOST = "irc.twitch.tv"
 PORT = 6667
 s = socket.socket()
 db = modules.database.db
-my_loop = AsyncioLoop(as_loop)
-sr_queue = AsyncioLoop(asyncio.new_event_loop())
-playmusic_lock = asyncio.Lock(loop=sr_queue.loop)
-sr_download_queue = AsyncioLoop(asyncio.new_event_loop())
+sr_queue = Thread('sr_queue')
+sr_download_queue = Thread('sr_download_queue')
 commands_dict = {}
 PASS, px_token, channel_id, client_id, client_auth = '', '', '', '', ''
 Main = None

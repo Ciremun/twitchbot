@@ -76,7 +76,7 @@ class ThreadMain(threading.Thread):
                 print(f"{username}: {message}")
 
                 if all(x != username for x in self.notify_check_inprogress):
-                    g.as_loop.create_task(check_chat_notify(username))
+                    asyncio.run(check_chat_notify(username))
 
                 call_tts.temper.append([message, username])
 

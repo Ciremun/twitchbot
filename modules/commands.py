@@ -63,7 +63,7 @@ def srv_command(*, username, messagesplit, **kwargs):
                        for x in ['State.Playing', 'State.Paused']):
                     g.Player.audio_set_volume(g.player_last_vol)
                 elif not g.volume_await:
-                    g.as_loop.create_task(volume_await_change(g.player_last_vol))
+                    asyncio.run(volume_await_change(g.player_last_vol))
             else:
                 send_message(f'{username}, vol 0-100')
         except IndexError:
@@ -229,7 +229,7 @@ def srfd_command(*, username, messagesplit, **kwargs):
                 if not songs:
                     send_message(f'{username}, no favorite songs found')
                     return
-                g.as_loop.create_task(sr_favs_del(username, messagesplit, songs))
+                asyncio.run(sr_favs_del(username, messagesplit, songs))
         except IndexError:
             send_message(f'{username}, {g.prefix}srfd <index1> <index2>..')
 
@@ -502,14 +502,14 @@ def cancel_command(*, username, messagesplit, **kwargs):
 @moderator_command
 def ban_command(*, username, messagesplit, message):
     if message != f"{g.prefix}ban":
-        g.as_loop.create_task(ban_mod_commands(username, messagesplit, 'users banned', 'already banned',
+        asyncio.run(ban_mod_commands(username, messagesplit, 'users banned', 'already banned',
                                                checkbanlist, g.db.add_ban, True))
 
 
 @moderator_command
 def unban_command(*, username, messagesplit, message):
     if message != f"{g.prefix}unban":
-        g.as_loop.create_task(ban_mod_commands(username, messagesplit,
+        asyncio.run(ban_mod_commands(username, messagesplit,
                                                'users unbanned', f'not in the list',
                                                checkbanlist, g.db.remove_ban, False))
 
@@ -517,14 +517,14 @@ def unban_command(*, username, messagesplit, message):
 @bot_command
 def mod_command(*, username, messagesplit, message):
     if message != f"{g.prefix}mod" and username == g.admin:
-        g.as_loop.create_task(ban_mod_commands(username, messagesplit, 'users modded', 'already modded',
+        asyncio.run(ban_mod_commands(username, messagesplit, 'users modded', 'already modded',
                                                checkmodlist, g.db.add_mod, True))
 
 
 @bot_command
 def unmod_command(*, username, messagesplit, message):
     if message != f"{g.prefix}unmod" and username == g.admin:
-        g.as_loop.create_task(ban_mod_commands(username, messagesplit,
+        asyncio.run(ban_mod_commands(username, messagesplit,
                                                'users unmodded', f'not in the list',
                                                checkmodlist, g.db.remove_mod, False))
 
@@ -556,7 +556,7 @@ def setrand_command(*, username, messagesplit, **kwargs):
             onlypng = [f for f in os.listdir('data/custom/') if f.endswith('.png')]
             set_random_pic(onlypng, f'{username}, png not found')
         elif randsrc == 'pixiv':
-            asyncio.run_coroutine_threadsafe(Pixiv.random_pixiv_art(), g.as_loop)
+            Pixiv.random_pixiv_art()
     except IndexError:
         onlyfiles = [f for f in os.listdir('data/custom/') if isfile(join('data/custom/', f))]
         set_random_pic(onlyfiles, f'{username}, {g.prefix}list is empty')
@@ -613,8 +613,36 @@ def link_command(*, username, messagesplit, message):
             send_message('{}, {} - {}'.format(username, g.lastlink, g.last_rand_img))
         else:
             send_message(f'nothing here')
+    elif len(messagesplit) > 2:
+        links_filenames = [{'link': j[0], 'filename': j[1]} for j in g.db.get_links_and_filenames()]
+        target_not_found = []
+        response = []
+        for i in messagesplit[1:]:
+            link = None
+            for lnk in links_filenames:
+                if i == lnk.get('filename'):
+                    link = lnk.get('link')
+                    break
+            if link is None:
+                target_not_found.append(i)
+            else:
+                response.append(f'{link} - {i}')
+        if target_not_found:
+            response.append(f'Not found: {", ".join(target_not_found)}')
+        if response:
+            response_str = ', '.join(response)
+            if len(response_str) > 480:
+                response_arr = divide_chunks(response_str, 470, response, joinparam=', ')
+                for msg in response_arr:
+                    send_message(msg)
+            else:
+                send_message(', '.join(response))
     else:
-        g.as_loop.create_task(link_chat_command(username, messagesplit[1:]))
+        link = g.db.get_link(messagesplit[1])
+        if link:
+            send_message(f'{" , ".join([i[0] for i in link])} - {messagesplit[1]}')
+        else:
+            send_message(f"{username}, {messagesplit[1]} not found")
 
 
 @bot_command
@@ -645,13 +673,13 @@ def olist_command(*, username, messagesplit, **kwargs):
 @bot_command
 def del_command(*, username, messagesplit, message):
     if message != f"{g.prefix}del":
-        g.as_loop.create_task(del_chat_command(username, messagesplit))
+        asyncio.run(del_chat_command(username, messagesplit))
 
 
 @bot_command
 def ren_command(*, username, messagesplit, message):
     if message != f"{g.prefix}ren":
-        g.as_loop.create_task(rename_command(username, messagesplit))
+        asyncio.run(rename_command(username, messagesplit))
 
 
 @bot_command
@@ -737,12 +765,12 @@ def help_command(*, username, messagesplit, pipe=False, **kwargs):
 
 @moderator_command
 def title_command(*, username, messagesplit, **kwargs):
-    g.as_loop.create_task(change_stream_settings(username, messagesplit, 'title'))
+    asyncio.run(change_stream_settings(username, messagesplit, 'title'))
 
 
 @moderator_command
 def game_command(*, username, messagesplit, **kwargs):
-    g.as_loop.create_task(change_stream_settings(username, messagesplit, 'game'))
+    asyncio.run(change_stream_settings(username, messagesplit, 'game'))
 
 
 @bot_command

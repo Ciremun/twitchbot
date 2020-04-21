@@ -1,5 +1,4 @@
 import threading
-import concurrent.futures
 import random
 import os
 import time
@@ -22,6 +21,16 @@ class ThreadPixiv(threading.Thread):
         self.client = Client()
         self.allranking = []
         self.artpath = Path('data/pixiv/')
+        self.tasks = []
+
+    def run(self):
+        self.pixiv_init()
+        while True:
+            time.sleep(0.2)
+            if self.tasks:
+                task = self.tasks.pop(0)
+                print('waiting to execute?')
+                task['func'](*task['args'], **task['kwargs'])
 
     def download_art(self, obj, size, filename):
         obj.download(directory=self.artpath,
@@ -54,8 +63,11 @@ class ThreadPixiv(threading.Thread):
             u.call_draw('data/pixiv/', f'{artid}.png')
         except BadApiResponse as pixiv_exception:  # reconnect
             if 'Status code: 400' in str(pixiv_exception):
-                self.run()
-            g.as_loop.create_task(self.random_pixiv_art())
+                self.pixiv_init()
+            self.random_pixiv_art()
+        except Exception as e:
+            if 'RemoteDisconnected' in str(e):
+                self.random_pixiv_art()
 
     def save_setup(self, act, namesave, owner, artid, folder='data/custom/'):
         """
@@ -105,22 +117,19 @@ class ThreadPixiv(threading.Thread):
                 u.send_message(f'{owner}, {artid} not found')
                 return
             if 'Status code: 400' in str(pixiv_exception):
-                self.run()
-            g.as_loop.create_task(self.save_pixiv_art(act, namesave, owner, artid))
+                self.pixiv_init()
+            self.save_pixiv_art(act, namesave, owner, artid)
         except Exception as e:
             if 'RemoteDisconnected' in str(e):
-                g.as_loop.create_task(self.save_pixiv_art(act, namesave, owner, artid))
-                return
+                self.save_pixiv_art(act, namesave, owner, artid)
 
-    async def random_pixiv_art(self):
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            await g.as_loop.run_in_executor(pool, self.random_setup)
+    def random_pixiv_art(self):
+        self.tasks.append({'func': self.random_setup, 'args': (), 'kwargs': {}})
 
-    async def save_pixiv_art(self, act, namesave, owner, artid, folder='data/custom/'):
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            await g.as_loop.run_in_executor(pool, self.save_setup, act, namesave, owner, artid, folder)
+    def save_pixiv_art(self, *args, **kwargs):
+        self.tasks.append({'func': self.save_setup, 'args': args, 'kwargs': kwargs})
 
-    def run(self):
+    def pixiv_init(self):
         try:
             self.allranking *= 0
             self.client.authenticate(g.px_token)
