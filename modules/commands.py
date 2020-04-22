@@ -374,7 +374,7 @@ def sr_command(*, username, messagesplit, message):
                 g.sr = True
                 send_message(f'{g.prefix}sr on')
         elif g.sr:
-            np_command(username, messagesplit, message)
+            np_command(username=username, messagesplit=messagesplit, message=message)
     elif g.sr:
         match = sr_download(messagesplit, username, timecode_pos=2)
         if not match:
