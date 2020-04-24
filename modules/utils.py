@@ -409,7 +409,7 @@ def sr_get_list(username, messagesplit):
 async def volume_await_change(player_last_vol):
     g.volume_await = True
     while g.Player.audio_get_volume() != player_last_vol:
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.1)
         g.Player.audio_set_volume(player_last_vol)
     g.volume_await = False
 
