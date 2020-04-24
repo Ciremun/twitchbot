@@ -481,13 +481,13 @@ def change_pixiv(pattern, group, group2, url, messagesplit, username):
             pxid = int(pattern.sub(group, url))
         except ValueError:
             pxid = int(pattern.sub(group2, url))
-        Pixiv.save_pixiv_art('set+save+name', imagename, username, pxid)
+        Pixiv.save_pixiv_art(imagename, username, pxid, setpic=True, save=True)
     except IndexError:
         try:
             pxid = int(pattern.sub(group, url))
         except ValueError:
             pxid = int(pattern.sub(group2, url))
-        Pixiv.save_pixiv_art('set', g.db.numba, username, pxid, 'data/images/')
+        Pixiv.save_pixiv_art(g.db.numba, username, pxid, 'data/images/', setpic=True)
         g.db.update_imgcount(int(g.db.numba) + 1)
 
 
@@ -498,7 +498,7 @@ def save_pixiv(pattern, group, group2, url, messagesplit, username):
             pxid = int(pattern.sub(group, url))
         except ValueError:
             pxid = int(pattern.sub(group2, url))
-        Pixiv.save_pixiv_art('save', imagename, username, pxid)
+        Pixiv.save_pixiv_art(imagename, username, pxid, save=True, save_msg=True)
     except IndexError:
         pass
 

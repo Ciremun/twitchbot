@@ -29,7 +29,6 @@ class ThreadPixiv(threading.Thread):
             time.sleep(0.2)
             if self.tasks:
                 task = self.tasks.pop(0)
-                print('waiting to execute?')
                 task['func'](*task['args'], **task['kwargs'])
 
     def download_art(self, obj, size, filename):
@@ -69,10 +68,12 @@ class ThreadPixiv(threading.Thread):
             if 'RemoteDisconnected' in str(e):
                 self.random_pixiv_art()
 
-    def save_setup(self, act, namesave, owner, artid, folder='data/custom/'):
+    def save_setup(self, namesave, owner, artid, folder='data/custom/', setpic=False, save=False, save_msg=False):
         """
         save pixiv art by art id
-        :param act: just set, just save or set+save
+        :param save_msg: whether send <image saved> message
+        :param save: whether save image
+        :param setpic: whether set image
         :param namesave: filename
         :param owner: twitch username
         :param artid: pixiv art id
@@ -89,14 +90,14 @@ class ThreadPixiv(threading.Thread):
                 onlyfiles = [f for f in listdir(mypath2) if isfile(join(mypath2, f))]
                 for i in onlyfiles:
                     os.rename(f'data/pixiv/{namesave}/{i}', f'{folder}{namesave}{i[8:-4]}.png')
-                    if act != 'set':
+                    if save:
                         g.db.add_link(f'https://www.pixiv.net/en/artworks/{artid}', f'{namesave}{i[8:-4]}.png')
                         g.db.add_owner(f'{namesave}{i[8:-4]}.png', owner)
-                    if any(act == x for x in ['set', 'set+save+name']):
+                    if setpic:
                         u.call_draw(folder, f'{namesave}{i[8:-4]}.png')
                         time.sleep(1.5)
                 os.rmdir(f'data/pixiv/{namesave}')
-                if act == 'save':
+                if save_msg:
                     u.send_message(f'{owner}, {namesave}.png saved')
                 return
             art = Path(f'data/pixiv/{namesave}.png')
@@ -104,12 +105,12 @@ class ThreadPixiv(threading.Thread):
             if not art.is_file():
                 filepath = f'data/pixiv/{namesave}.jpg'
             os.rename(filepath, f'{folder}{namesave}.png')
-            if act != 'set':
+            if save:
                 g.db.add_link(f'https://www.pixiv.net/en/artworks/{artid}', f'{namesave}.png')
                 g.db.add_owner(f'{namesave}.png', owner)
-            if act != 'save':
+            if setpic:
                 u.call_draw(folder, f'{namesave}.png')
-            else:
+            if save_msg:
                 u.send_message(f'{owner}, {namesave}.png saved')
         except BadApiResponse as pixiv_exception:  # reconnect
             print(f'badapiresponse - {pixiv_exception}')
@@ -118,10 +119,10 @@ class ThreadPixiv(threading.Thread):
                 return
             if 'Status code: 400' in str(pixiv_exception):
                 self.pixiv_init()
-            self.save_pixiv_art(act, namesave, owner, artid)
+            self.save_pixiv_art(namesave, owner, artid, setpic, save, save_msg)
         except Exception as e:
             if 'RemoteDisconnected' in str(e):
-                self.save_pixiv_art(act, namesave, owner, artid)
+                self.save_pixiv_art(namesave, owner, artid, setpic, save, save_msg)
 
     def random_pixiv_art(self):
         self.tasks.append({'func': self.random_setup, 'args': (), 'kwargs': {}})
