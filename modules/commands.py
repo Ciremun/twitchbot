@@ -98,28 +98,29 @@ def srs_command(*, username, messagesplit, **kwargs):
                         target = int(messagesplit[i])
                         if not 0 < target <= len(g.playlist):
                             target_not_found.append(f'{target}')
+                            continue
+                        song = g.playlist[target - 1]
+                        if song.user_duration is not None:
+                            skipped_response.append(
+                                f'{song.title} '
+                                f'[{seconds_convert(song.user_duration)}]'
+                            )
                         else:
-                            if g.playlist[target - 1][3] is not None:
-                                skipped_response.append(
-                                    f'{g.playlist[target - 1][1]} '
-                                    f'[{seconds_convert(g.playlist[target - 1][3])}]'
-                                )
-                            else:
-                                skipped_response.append(f'{g.playlist[target - 1][1]}')
-                            skip_songs.append(g.playlist[target - 1])
+                            skipped_response.append(f'{song.title}')
+                        skip_songs.append(song)
                     except ValueError:
                         target = messagesplit[i]
                         title_skipped = False
-                        for j in g.playlist:
-                            if any(target in x for x in [j[1], j[1].lower()]):
-                                skip_songs.append(j)
-                                if j[3] is not None:
+                        for song in g.playlist:
+                            if any(target in x for x in [song.title, song.title.lower()]):
+                                skip_songs.append(song)
+                                if song.user_duration is not None:
                                     skipped_response.append(
-                                        f'{j[1]} '
-                                        f'[{seconds_convert(j[3])}]'
+                                        f'{song.title} '
+                                        f'[{seconds_convert(song.user_duration)}]'
                                     )
                                 else:
-                                    skipped_response.append(f'{j[1]}')
+                                    skipped_response.append(f'{song.title}')
                                 title_skipped = True
                         if not title_skipped:
                             target_not_found.append(target)
@@ -435,25 +436,26 @@ def cancel_command(*, username, messagesplit, **kwargs):
                     if not 0 < target <= len(g.playlist):
                         playlist_not_found.append(f'{target}')
                         continue
-                    if username == g.playlist[target - 1][5]:
-                        playlist_to_del.append(g.playlist[target - 1])
-                        if g.playlist[target - 1][3] is not None:
+                    song = g.playlist[target - 1]
+                    if username == song.username:
+                        playlist_to_del.append(song)
+                        if song.user_duration is not None:
                             playlist_cancelled.append(
-                                f'{g.playlist[target - 1][1]} '
-                                f'[{seconds_convert(g.playlist[target - 1][3])}]'
+                                f'{song.title} '
+                                f'[{seconds_convert(song.user_duration)}]'
                             )
                         else:
-                            playlist_cancelled.append(g.playlist[target - 1][1])
+                            playlist_cancelled.append(song.title)
                         username_in_playlist = True
                 except ValueError:
                     target = messagesplit[i]
-                    for j in g.playlist:
-                        if any(target in x for x in [j[1], j[1].lower()]) and username == j[5]:
-                            if j[3] is not None:
-                                playlist_cancelled.append(f'{j[1]} [{seconds_convert(j[3])}]')
+                    for song in g.playlist:
+                        if any(target in x for x in [song.title, song.title.lower()]) and username == song.username:
+                            if song.user_duration is not None:
+                                playlist_cancelled.append(f'{song.title} [{seconds_convert(song.user_duration)}]')
                             else:
-                                playlist_cancelled.append(j[1])
-                            playlist_to_del.append(j)
+                                playlist_cancelled.append(song.title)
+                            playlist_to_del.append(song)
                             song_cancelled_title = True
                             username_in_playlist = True
                     if not song_cancelled_title:
