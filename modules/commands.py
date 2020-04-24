@@ -877,3 +877,31 @@ def notify_command(*, username, messagesplit, message, **kwargs):
                                    'message': notify_message,
                                    'date': time.time(),
                                    'sender': username})
+
+
+@bot_command
+def when_command(*, username, **kwargs):
+    if any(username == i.username for i in g.playlist):
+        next_in = 0
+        np_end = 0
+        response = []
+        if any(str(g.Player.get_state()) == x for x in ['State.Playing', 'State.Paused']):
+            current_time_ms = g.Player.get_time()
+            current_time = floor(current_time_ms / 1000)
+            np_duration = timecode_convert(g.np_duration)
+            np_end = np_duration - current_time
+            next_in = np_end
+        for count, i in enumerate(g.playlist):
+            if i.username == username:
+                if g.playlist[:count]:
+                    next_in += sum([timecode_convert(j.duration) - j.user_duration if j.user_duration else timecode_convert(j.duration) for j in g.playlist[:count]]) + np_end
+                response.append(f'{i.title} in ({seconds_convert(next_in, explicit=True)})')
+                next_in = 0
+        response_str = ", ".join(response)
+        if len(response_str) > 480:
+            response = divide_chunks(response_str, 480, lst=response, joinparam='; ')
+            send_message(f'{username}, {response[0]}..')
+            return
+        send_message(f'{username}, {response_str}')
+    else:
+        send_message(f'{username}, nothing here')
