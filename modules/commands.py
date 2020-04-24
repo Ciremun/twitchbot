@@ -883,7 +883,7 @@ def notify_command(*, username, messagesplit, message, **kwargs):
 
 
 @bot_command
-def when_command(*, username, **kwargs):
+def when_command(*, username, messagesplit, **kwargs):
     if any(username == i.username for i in g.playlist):
         next_in = 0
         np_end = 0
@@ -900,6 +900,11 @@ def when_command(*, username, **kwargs):
                     next_in += sum([timecode_convert(j.duration) - j.user_duration if j.user_duration else timecode_convert(j.duration) for j in g.playlist[:count]]) + np_end
                 response.append(f'{i.title} in ({seconds_convert(next_in, explicit=True)})')
                 next_in = 0
+        if messagesplit[1:]:
+            response = [song for song in response for query in messagesplit[1:] if query.lower() in song.lower()]
+            if not response:
+                send_message(f'{username}, no results')
+                return
         response_str = ", ".join(response)
         if len(response_str) > 480:
             response = divide_chunks(response_str, 480, lst=response, joinparam='; ')
@@ -907,4 +912,4 @@ def when_command(*, username, **kwargs):
             return
         send_message(f'{username}, {response_str}')
     else:
-        send_message(f'{username}, nothing here')
+        send_message(f'{username}, no queue song')

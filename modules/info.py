@@ -64,4 +64,4 @@ commands_desc = [prefix + x for x in [f'change <link> - change display pic, add 
                                       f'last command gives complete result, supported commands: '
                                       f'{", ".join([x for x in pipe_commands if x != "tts_colon"])}',
                                       f'notify <username> <message> - notify twitch user when they next type in chat',
-                                      f'when - check when requested song is going to play']]
+                                      f'when - check when requested song is going to play, list all / search by name']]
