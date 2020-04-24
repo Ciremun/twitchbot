@@ -711,11 +711,7 @@ class Thread(threading.Thread):
                 if user_duration > duration:
                     send_message(f'{username}, time exceeds duration! [{seconds_convert(duration)}]')
                     return
-                if duration - user_duration > g.max_duration and not checkmodlist(username):
-                    send_message(f'{username}, {seconds_convert(user_duration)} > '
-                                 f'max duration[{seconds_convert(g.max_duration)}]')
-                    return
-            elif duration > g.max_duration and not checkmodlist(username):
+            if duration > g.max_duration and not checkmodlist(username):
                 send_message(f'{username}, '
                              f'{seconds_convert(duration)} > max duration[{seconds_convert(g.max_duration)}]')
                 return
