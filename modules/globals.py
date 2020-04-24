@@ -35,14 +35,6 @@ np_duration = ''
 sr_url = ''
 lastlink = ''
 last_rand_img = ''
-commands_list = [prefix + x for x in
-                 ['change', 'save', 'set', 'setrand', 'list', 'search', 'link', 'sr', 'srq', 'srf', 'srfa', 'srfd',
-                  'srfp', 'srfl', 'np', 'olist', 'orand', 'ren', 'del', 'cancel', 'help', 'tts:', 'info', 'pipe',
-                  'notify', 'when']]
-mod_commands_list = [prefix + x for x in
-                     ['ban', 'unban', 'banlist', 'modlist', 'tts', 'srp', 'srs', 'srt', 'src', 'srv', 'sql',
-                      'title',
-                      'game']]
 playlist = []
 PlayerInstance = vlc.Instance()
 Player = PlayerInstance.media_player_new()

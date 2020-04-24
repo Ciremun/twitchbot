@@ -7,6 +7,7 @@ from modules.regex import *
 from modules.pixiv import Pixiv
 from modules.tts import call_tts
 from modules.decorators import bot_command, moderator_command
+from modules.info import commands_list, mod_commands_list
 
 
 @moderator_command
@@ -726,9 +727,9 @@ def help_command(*, username, messagesplit, pipe=False, **kwargs):
         if help_command.startswith(("'", '"')) and help_command.endswith(("'", '"')):
             help_command = help_command[1:-1]
             help_command_quoted = True
-        if not set(command.split()).intersection(g.commands_list + g.mod_commands_list +
-                                                 [i[1:] for i in g.commands_list] +
-                                                 [i[1:] for i in g.mod_commands_list]):
+        if not set(command.split()).intersection(commands_list + mod_commands_list +
+                                                 [i[1:] for i in commands_list] +
+                                                 [i[1:] for i in mod_commands_list]):
             if pipe:
                 return f'{username}, unknown command'.split()
             send_message(f'{username}, unknown command')
@@ -758,10 +759,10 @@ def help_command(*, username, messagesplit, pipe=False, **kwargs):
             send_message(f'{username}, no results')
     except IndexError:
         if pipe:
-            return f'Public command list: {", ".join(i[1:] for i in g.commands_list)} ; ' \
-                   f'Mod: {", ".join(i[1:] for i in g.mod_commands_list)}'.split()
-        send_message(f'Public command list: {", ".join(i[1:] for i in g.commands_list)} ; '
-                     f'Mod: {", ".join(i[1:] for i in g.mod_commands_list)}')
+            return f'Public command list: {", ".join(i[1:] for i in commands_list)} ; ' \
+                   f'Mod: {", ".join(i[1:] for i in mod_commands_list)}'.split()
+        send_message(f'Public command list: {", ".join(i[1:] for i in commands_list)} ; '
+                     f'Mod: {", ".join(i[1:] for i in mod_commands_list)}')
 
 
 @moderator_command

@@ -1,5 +1,14 @@
 from modules.globals import prefix
 
+commands_list = [prefix + x for x in
+                 ['change', 'save', 'set', 'setrand', 'list', 'search', 'link', 'sr', 'srq', 'srf', 'srfa', 'srfd',
+                  'srfp', 'srfl', 'np', 'olist', 'orand', 'ren', 'del', 'cancel', 'help', 'tts:', 'info', 'pipe',
+                  'notify', 'when']]
+mod_commands_list = [prefix + x for x in
+                     ['ban', 'unban', 'banlist', 'modlist', 'tts', 'srp', 'srs', 'srt', 'src', 'srv', 'sql',
+                      'title',
+                      'game']]
+
 pipe_commands = ['sql', 'info', 'help', 'tts', 'notify', 'tts_colon']
 
 commands_desc = [prefix + x for x in [f'change <link> - change display pic, add name to save',
