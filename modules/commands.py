@@ -45,7 +45,7 @@ def log_command(*, username, **kwargs):
 
 @bot_command
 def np_command(*, username, **kwargs):
-    if all(str(g.Player.get_state()) != x for x in ['State.Playing', 'State.Paused']):
+    if not player_good_state():
         send_message(f'{username}, nothing is playing')
     elif str(g.Player.get_state()) == 'State.Paused':
         np_response('Paused')
@@ -60,8 +60,7 @@ def srv_command(*, username, messagesplit, **kwargs):
             value = int(messagesplit[1])
             if 0 <= value <= 100:
                 g.player_last_vol = value
-                if any(str(g.Player.get_state()) == x
-                       for x in ['State.Playing', 'State.Paused']):
+                if player_good_state():
                     g.Player.audio_set_volume(g.player_last_vol)
                 elif not g.volume_await:
                     asyncio.run(volume_await_change(g.player_last_vol))
@@ -82,7 +81,7 @@ def srq_command(*, username, messagesplit, **kwargs):
 @moderator_command
 def srs_command(*, username, messagesplit, **kwargs):
     if g.sr:
-        if all(str(g.Player.get_state()) != x for x in ['State.Playing', 'State.Paused']):
+        if not player_good_state():
             send_message(f'{username}, nothing is playing')
             return
         try:
@@ -174,7 +173,7 @@ def srp_command(*, username, **kwargs):
 @moderator_command
 def srt_command(*, username, messagesplit, **kwargs):
     if g.sr:
-        if all(str(g.Player.get_state()) != x for x in ['State.Playing', 'State.Paused']):
+        if not player_good_state():
             send_message(f'{username}, nothing is playing')
             return
         try:
@@ -214,8 +213,7 @@ def srfa_command(*, username, messagesplit, **kwargs):
                              timecode_pos=timecode_pos,
                              folder='data/sounds/favs/', ytsearch=True)
         except IndexError:
-            if all(str(g.Player.get_state()) != x for x in
-                   ['State.Playing', 'State.Paused']):
+            if not player_good_state():
                 send_message(f'{username}, nothing is playing')
             else:
                 messagesplit.append(g.sr_url)
@@ -888,7 +886,7 @@ def when_command(*, username, messagesplit, **kwargs):
         next_in = 0
         np_end = 0
         response = []
-        if any(str(g.Player.get_state()) == x for x in ['State.Playing', 'State.Paused']):
+        if player_good_state():
             current_time_ms = g.Player.get_time()
             current_time = floor(current_time_ms / 1000)
             np_duration = timecode_convert(g.np_duration)

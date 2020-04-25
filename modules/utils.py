@@ -615,8 +615,12 @@ def call_draw(folder, selected):  # update global var for pyglet update method, 
 
 
 def sr_start_playing():  # wait for vlc player to start
-    while not any(str(g.Player.get_state()) == x for x in ['State.Playing', 'State.Paused']):
+    while not player_good_state():
         time.sleep(0.01)
+
+
+def player_good_state():
+    return any(str(g.Player.get_state()) == x for x in ['State.Playing', 'State.Paused'])
 
 
 class Thread(threading.Thread):
@@ -652,7 +656,7 @@ class Thread(threading.Thread):
         if file.user_duration is not None:
             g.Player.set_time(file.user_duration * 1000)
         sr_start_playing()
-        while any(str(g.Player.get_state()) == x for x in ['State.Playing', 'State.Paused']):
+        while player_good_state():
             time.sleep(2)
 
     def download_clip(self, url, username, user_duration=None, yt_request=True, folder='data/sounds/sr/', ytsearch=False):
