@@ -112,7 +112,7 @@ def srs_command(*, username, messagesplit, **kwargs):
                         target = messagesplit[i]
                         title_skipped = False
                         for song in g.playlist:
-                            if any(target in x for x in [song.title, song.title.lower()]):
+                            if target.lower() in song.title.lower():
                                 skip_songs.append(song)
                                 if song.user_duration is not None:
                                     skipped_response.append(
@@ -268,7 +268,7 @@ def srfp_command(*, username, messagesplit, **kwargs):
                         title = messagesplit[i]
                         title_found = False
                         for j in songs:
-                            if any(title in x for x in [j.get('title'), j.get('title').lower()]):
+                            if title.lower() in j['title'].lower():
                                 g.playlist.append(Song('data/sounds/favs/' + j.get("filename"),
                                                        j.get("title"), seconds_convert(j.get("duration")),
                                                        j.get("user_duration"), j.get("link"), username))
@@ -327,7 +327,7 @@ def srfl_command(*, username, messagesplit, **kwargs):
                         title = messagesplit[i]
                         title_found = False
                         for j in songs:
-                            if any(title in x for x in [j.get('title'), j.get('title').lower()]):
+                            if title.lower() in j['title'].lower():
                                 response.append(f'{j.get("title")} - {j.get("link")}')
                                 title_found = True
                         if not title_found:
@@ -449,7 +449,7 @@ def cancel_command(*, username, messagesplit, **kwargs):
                 except ValueError:
                     target = messagesplit[i]
                     for song in g.playlist:
-                        if any(target in x for x in [song.title, song.title.lower()]) and username == song.username:
+                        if target.lower() in song.title.lower() and username == song.username:
                             if song.user_duration is not None:
                                 playlist_cancelled.append(f'{song.title} [{seconds_convert(song.user_duration)}]')
                             else:
