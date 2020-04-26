@@ -277,39 +277,56 @@ def updatelastlink(selected):
 
 
 async def sr_favs_del(username, messagesplit, songs):
-    response, remove_song, target_not_found, index_not_integer, song_removed_response = [], [], [], [], []
+    response, remove_song, target_not_found, song_removed_response = [], [], [], []
     for i in range(1, len(messagesplit)):
         await asyncio.sleep(0)
         try:
-            index = int(messagesplit[i]) - 1
+            index = int(messagesplit[i])
+            if not 0 <= index <= len(songs):
+                target_not_found.append(messagesplit[i])
+                continue
+            song = songs[index - 1]
+            user_duration = song["user_duration"]
+            if user_duration is None:
+                user_duration = 0
+                song_removed_response.append(song["title"])
+            else:
+                song_removed_response.append(f'{song["title"]} '
+                                             f'[{seconds_convert(song["user_duration"])}]')
+            remove_song.append((song["title"], username,
+                                song["filename"],
+                                user_duration,
+                                song["link"], song["duration"]))
         except ValueError:
-            index_not_integer.append(messagesplit[i])
-            continue
-        if not 0 <= index <= len(songs) - 1:
-            target_not_found.append(messagesplit[i])
-            continue
-        user_duration = songs[index].get("user_duration")
-        if user_duration is None:
-            user_duration = 0
-            song_removed_response.append(songs[index].get("title"))
-        else:
-            song_removed_response.append(f'{songs[index].get("title")} '
-                                         f'[{seconds_convert(songs[index].get("user_duration"))}]')
-        remove_song.append((songs[index].get("title"), username,
-                            songs[index].get("filename"),
-                            user_duration,
-                            songs[index].get("link"), songs[index].get("duration")))
-        try:
-            os.remove('data/sounds/favs/' + songs[index].get("filename"))
-        except:
-            pass
+            target = messagesplit[i]
+            song_found = False
+            for song in songs:
+                if target.lower() in song['title'].lower():
+                    song_found = True
+                    user_duration = song["user_duration"]
+                    if user_duration is None:
+                        user_duration = 0
+                        song_removed_response.append(song["title"])
+                    else:
+                        song_removed_response.append(f'{song["title"]} '
+                                                     f'[{seconds_convert(song["user_duration"])}]')
+                    remove_song.append((song["title"], username,
+                                        song["filename"],
+                                        user_duration,
+                                        song["link"], song["duration"]))
+                    try:
+                        os.remove('data/sounds/favs/' + song["filename"])
+                    except:
+                        pass
+                    break
+            if not song_found:
+                target_not_found.append(messagesplit[i])
+                continue
     g.db.remove_srfavs(remove_song)
     if song_removed_response:
         response.append(f'Favorites removed: {", ".join(song_removed_response)}')
     if target_not_found:
         response.append(f'Not found: {", ".join(target_not_found)}')
-    if index_not_integer:
-        response.append(f'Not integer: {", ".join(index_not_integer)}')
     if response:
         response_str = ' '.join(response)
         if len(response_str) > 470:
