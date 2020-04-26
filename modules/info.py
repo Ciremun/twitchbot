@@ -35,7 +35,7 @@ commands_desc = [prefix + x for x in [f'change <link> - change display pic, add 
                                       f'srq [page] - current queue',
                                       f'srf [page] - your favorites list',
                                       f'srfa [url] [timecode] - favorite a song, optional timecode, np song if no url',
-                                      f'srfd <index1> <index2>.. - remove from favorites by list index',
+                                      f'srfd <word/index> [word/index].. - remove from favorites by word/list index',
                                       f'srfp <word/index> [word2/index2].. - play songs from favorites ({prefix}srf)',
                                       f'srfl <index1> <index2>.. - get song link',
                                       f'src - clear current playlist',

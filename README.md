@@ -85,7 +85,7 @@ get account cookies using `cookies.txt` browser extension
 `srq [page]` - current queue  
 `srf [page]` - your favorites list  
 `srfa [url] [timecode]` - favorite a song, optional timecode, no url - add now playing song  
-`srfd <index1> [index2]..` - remove from favorites by list index  
+`srfd <word/index> [word/index]..` - remove from favorites by word/list index  
 `srfp <name/index> [name2/index2]..` - play songs from favorites (srf)  
 `srfl <index1> [index2]..` - get song link(s)  
 `np` - get current song link, name, time, duration  
