@@ -623,6 +623,102 @@ def player_good_state():
     return any(str(g.Player.get_state()) == x for x in ['State.Playing', 'State.Paused'])
 
 
+def playmusic():  # play song from playlist
+    if not g.playlist:
+        return
+    file = g.playlist.pop(0)
+    media = g.PlayerInstance.media_new(file.path)
+    media.get_mrl()
+    g.Player.set_media(media)
+    g.Player.play()
+    g.np, g.np_duration, g.sr_url = file.title, file.duration, file.link
+    if file.user_duration is not None:
+        g.Player.set_time(file.user_duration * 1000)
+    sr_start_playing()
+    while player_good_state():
+        time.sleep(2)
+
+
+def download_clip(url, username, user_duration=None, yt_request=True, folder='data/sounds/sr/', ytsearch=False):
+    """
+    download .wav song file, add song to favorites, add song to playlist
+    :param url: youtube/soundcloud link or youtube search query
+    :param username: twitch username
+    :param user_duration: timecode (song start time)
+    :param yt_request: if url is youtube
+    :param folder: .wav file folder
+    :param ytsearch: if youtube search query
+    """
+    name = ''.join(random.choices('qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM' + '1234567890', k=10))
+    name = while_is_file(folder, name, '.wav')
+    home = folder + name + '.wav'
+    ydl_opts = {
+        'quiet': True,
+        'nocheckcertificate': True,
+        'max_downloads': '1',
+        'cookiefile': 'data/special/cookies.txt',
+        'ratelimit': g.ytdl_rate,
+        'format': 'bestaudio/best',
+        'outtmpl': home,
+        'noplaylist': True,
+        'continue_dl': True,
+        'noprogress': True,
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'wav',
+            'preferredquality': '192', }]
+    }
+    if ytsearch:
+        ydl_opts['playlist_items'] = '1'
+        search_query = ''
+        for i in url.split():
+            search_query += i + '+'
+        search_query = search_query[:-1]
+        url = f'https://www.youtube.com/results?search_query={search_query}'
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        info_dict = ydl.extract_info(url, download=False)
+        if ytsearch:
+            title = info_dict['entries'][0].get('title', None)
+            duration = info_dict['entries'][0].get('duration', 0)
+            video_id = info_dict['entries'][0].get('id', None)
+            url = f'https://youtu.be/{video_id}'
+        else:
+            title = info_dict.get('title', None)
+            duration = info_dict.get('duration', 0)
+        if yt_request and not ytsearch:
+            sr_url = info_dict.get('id', None)
+            sr_url = f'https://youtu.be/{sr_url}'
+        else:
+            sr_url = url
+        if user_duration is not None:
+            user_duration = timecode_convert(user_duration)
+            if user_duration > duration:
+                send_message(f'{username}, time exceeds duration! [{seconds_convert(duration)}]')
+                return
+        if duration > g.max_duration and not checkmodlist(username):
+            send_message(f'{username}, '
+                         f'{seconds_convert(duration)} > max duration[{seconds_convert(g.max_duration)}]')
+            return
+        ydl.prepare_filename(info_dict)
+        ydl.download([url])
+        if folder == 'data/sounds/favs/':
+            if user_duration is None:
+                g.db.add_srfavs(title, username, name + '.wav', 0, sr_url, duration)
+                send_message(f'{username}, {title} - {sr_url} - added to favorites')
+            else:
+                g.db.add_srfavs(title, username, name + '.wav', user_duration, sr_url, duration)
+                send_message(
+                    f'{username}, {title} [{seconds_convert(user_duration)}] - {sr_url} - added to favorites')
+            return
+        duration = seconds_convert(duration)
+        g.playlist.append(Song(home, title, duration, user_duration, sr_url, username))
+        if user_duration is not None:
+            send_message(f'+ {title} [{seconds_convert(user_duration)}] - {sr_url} - #{len(g.playlist)}')
+        else:
+            send_message(f'+ {title} - {sr_url} - #{len(g.playlist)}')
+        g.sr_queue.call_playmusic()
+
+
 class Thread(threading.Thread):
 
     def __init__(self, name):
@@ -639,101 +735,7 @@ class Thread(threading.Thread):
                 task['func'](*task['args'], **task['kwargs'])
 
     def call_playmusic(self):
-        self.tasks.append({'func': self.playmusic, 'args': (), 'kwargs': {}})
+        self.tasks.append({'func': playmusic, 'args': (), 'kwargs': {}})
 
     def call_download_clip(self, url, username, **kwargs):
-        self.tasks.append({'func': self.download_clip, 'args': (url, username), 'kwargs': kwargs})
-
-    def playmusic(self):  # play song from playlist
-        if not g.playlist:
-            return
-        file = g.playlist.pop(0)
-        media = g.PlayerInstance.media_new(file.path)
-        media.get_mrl()
-        g.Player.set_media(media)
-        g.Player.play()
-        g.np, g.np_duration, g.sr_url = file.title, file.duration, file.link
-        if file.user_duration is not None:
-            g.Player.set_time(file.user_duration * 1000)
-        sr_start_playing()
-        while player_good_state():
-            time.sleep(2)
-
-    def download_clip(self, url, username, user_duration=None, yt_request=True, folder='data/sounds/sr/', ytsearch=False):
-        """
-        download .wav song file, add song to favorites, add song to playlist
-        :param url: youtube/soundcloud link or youtube search query
-        :param username: twitch username
-        :param user_duration: timecode (song start time)
-        :param yt_request: if url is youtube
-        :param folder: .wav file folder
-        :param ytsearch: if youtube search query
-        """
-        name = ''.join(random.choices('qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM' + '1234567890', k=10))
-        name = while_is_file(folder, name, '.wav')
-        home = folder + name + '.wav'
-        ydl_opts = {
-            'quiet': True,
-            'nocheckcertificate': True,
-            'max_downloads': '1',
-            'cookiefile': 'data/special/cookies.txt',
-            'ratelimit': g.ytdl_rate,
-            'format': 'bestaudio/best',
-            'outtmpl': home,
-            'noplaylist': True,
-            'continue_dl': True,
-            'noprogress': True,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'wav',
-                'preferredquality': '192', }]
-        }
-        if ytsearch:
-            ydl_opts['playlist_items'] = '1'
-            search_query = ''
-            for i in url.split():
-                search_query += i + '+'
-            search_query = search_query[:-1]
-            url = f'https://www.youtube.com/results?search_query={search_query}'
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(url, download=False)
-            if ytsearch:
-                title = info_dict['entries'][0].get('title', None)
-                duration = info_dict['entries'][0].get('duration', 0)
-                video_id = info_dict['entries'][0].get('id', None)
-                url = f'https://youtu.be/{video_id}'
-            else:
-                title = info_dict.get('title', None)
-                duration = info_dict.get('duration', 0)
-            if yt_request and not ytsearch:
-                sr_url = info_dict.get('id', None)
-                sr_url = f'https://youtu.be/{sr_url}'
-            else:
-                sr_url = url
-            if user_duration is not None:
-                user_duration = timecode_convert(user_duration)
-                if user_duration > duration:
-                    send_message(f'{username}, time exceeds duration! [{seconds_convert(duration)}]')
-                    return
-            if duration > g.max_duration and not checkmodlist(username):
-                send_message(f'{username}, '
-                             f'{seconds_convert(duration)} > max duration[{seconds_convert(g.max_duration)}]')
-                return
-            ydl.prepare_filename(info_dict)
-            ydl.download([url])
-            if folder == 'data/sounds/favs/':
-                if user_duration is None:
-                    g.db.add_srfavs(title, username, name + '.wav', 0, sr_url, duration)
-                    send_message(f'{username}, {title} - {sr_url} - added to favorites')
-                else:
-                    g.db.add_srfavs(title, username, name + '.wav', user_duration, sr_url, duration)
-                    send_message(
-                        f'{username}, {title} [{seconds_convert(user_duration)}] - {sr_url} - added to favorites')
-                return
-            duration = seconds_convert(duration)
-            g.playlist.append(Song(home, title, duration, user_duration, sr_url, username))
-            if user_duration is not None:
-                send_message(f'+ {title} [{seconds_convert(user_duration)}] - {sr_url} - #{len(g.playlist)}')
-            else:
-                send_message(f'+ {title} - {sr_url} - #{len(g.playlist)}')
-            g.sr_queue.call_playmusic()
+        self.tasks.append({'func': download_clip, 'args': (url, username), 'kwargs': kwargs})
