@@ -297,6 +297,10 @@ async def sr_favs_del(username, messagesplit, songs):
                                 song["filename"],
                                 user_duration,
                                 song["link"], song["duration"]))
+            try:
+                os.remove('data/sounds/favs/' + song["filename"])
+            except:
+                pass
         except ValueError:
             target = messagesplit[i]
             song_found = False
