@@ -469,13 +469,13 @@ def try_timecode(url, messagesplit, username, timecode_pos=None, yt_request=True
             raise IndexError
         timecode = messagesplit[timecode_pos]
         if re.match(timecode_re, timecode):
-            g.sr_download_queue.call_download_clip(url, username, user_duration=timecode, yt_request=yt_request,
-                                                   folder=folder, ytsearch=ytsearch)
+            g.sr_download_queue.new_task(download_clip, url, username, user_duration=timecode, yt_request=yt_request,
+                                         folder=folder, ytsearch=ytsearch)
         else:
             send_message(f'{username}, timecode error')
     except IndexError:
-        g.sr_download_queue.call_download_clip(url, username, yt_request=yt_request, folder=folder,
-                                               ytsearch=ytsearch)
+        g.sr_download_queue.new_task(download_clip, url, username, yt_request=yt_request, folder=folder,
+                                     ytsearch=ytsearch)
 
 
 def clear_folder(path):
@@ -729,10 +729,10 @@ def download_clip(url, username, user_duration=None, yt_request=True, folder='da
             send_message(f'+ {title} [{seconds_convert(user_duration)}] - {sr_url} - #{len(g.playlist)}')
         else:
             send_message(f'+ {title} - {sr_url} - #{len(g.playlist)}')
-        g.sr_queue.call_playmusic()
+        g.sr_queue.new_task(playmusic)
 
 
-class Thread(threading.Thread):
+class RunInThread(threading.Thread):
 
     def __init__(self, name):
         threading.Thread.__init__(self)
@@ -747,8 +747,5 @@ class Thread(threading.Thread):
                 task = self.tasks.pop(0)
                 task['func'](*task['args'], **task['kwargs'])
 
-    def call_playmusic(self):
-        self.tasks.append({'func': playmusic, 'args': (), 'kwargs': {}})
-
-    def call_download_clip(self, url, username, **kwargs):
-        self.tasks.append({'func': download_clip, 'args': (url, username), 'kwargs': kwargs})
+    def new_task(self, func, *args, **kwargs):
+        self.tasks.append({'func': func, 'args': args, 'kwargs': kwargs})

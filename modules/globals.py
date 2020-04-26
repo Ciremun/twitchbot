@@ -3,7 +3,7 @@ import socket
 import modules.database
 
 from pixivapi import Size
-from modules.utils import Thread
+from modules.utils import RunInThread
 
 CHANNEL = "ciremun"  # twitch channel to listen
 BOT = "shtcd"  # twtich bot username
@@ -43,8 +43,8 @@ HOST = "irc.twitch.tv"
 PORT = 6667
 s = socket.socket()
 db = modules.database.db
-sr_queue = Thread('sr_queue')
-sr_download_queue = Thread('sr_download_queue')
+sr_queue = RunInThread('sr_queue')
+sr_download_queue = RunInThread('sr_download_queue')
 commands_dict = {}
 PASS, px_token, channel_id, client_id, client_auth = '', '', '', '', ''
 Main = None

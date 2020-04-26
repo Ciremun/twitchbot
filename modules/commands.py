@@ -255,7 +255,7 @@ def srfp_command(*, username, messagesplit, **kwargs):
                         g.playlist.append(Song(f'data/sounds/favs/{song["filename"]}', song["title"],
                                                seconds_convert(song["duration"]), song["user_duration"],
                                                song["link"], username))
-                        g.sr_queue.call_playmusic()
+                        g.sr_queue.new_task(playmusic)
                         if song["user_duration"] is not None:
                             response_added.append(f'{song["title"]} '
                                                   f'[{seconds_convert(song["user_duration"])}]'
@@ -272,7 +272,7 @@ def srfp_command(*, username, messagesplit, **kwargs):
                                                        j.get("title"), seconds_convert(j.get("duration")),
                                                        j.get("user_duration"), j.get("link"), username))
                                 title_found = True
-                                g.sr_queue.call_playmusic()
+                                g.sr_queue.new_task(playmusic)
                                 if j.get("user_duration") is not None:
                                     response_added.append(f'{j.get("title")} '
                                                           f'[{seconds_convert(j.get("user_duration"))}]'
@@ -377,12 +377,10 @@ def sr_command(*, username, messagesplit, message):
         if not match:
             if re.match(timecode_re, messagesplit[-1]):
                 query = ' '.join(messagesplit[1:-1])
-                g.sr_download_queue.call_download_clip(
-                    query, username, user_duration=messagesplit[-1], ytsearch=True)
+                g.sr_download_queue.new_task(download_clip, query, username, user_duration=messagesplit[-1], ytsearch=True)
             else:
                 query = ' '.join(messagesplit[1:])
-                g.sr_download_queue.call_download_clip(
-                    query, username, user_duration=None, ytsearch=True)
+                g.sr_download_queue.new_task(download_clip, query, username, user_duration=None, ytsearch=True)
 
 
 @moderator_command
