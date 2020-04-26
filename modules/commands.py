@@ -353,11 +353,9 @@ def srf_command(*, username, messagesplit, **kwargs):
         if not songs:
             send_message(f'{username}, no favorite songs found')
             return
-        songs_arr = [f'{songs[i - 1].get("title")} '
-                     f'[{seconds_convert(songs[i - 1].get("user_duration"))}] - #{i}'
-                     if songs[i - 1].get("user_duration") is not None
-                     else f'{songs[i - 1].get("title")} - #{i}'
-                     for i in range(1, len(songs) + 1)]
+        songs_arr = [f'{song["title"]} [{seconds_convert(song["user_duration"])}] - #{count}'
+                     if song["user_duration"] is not None else f'{song["title"]} - #{count}'
+                     for count, song in enumerate(songs, start=1)]
         songs_str = ", ".join(songs_arr)
         songs_arr = divide_chunks(songs_str, 470, lst=songs_arr, joinparam=', ')
         send_list(username, messagesplit, songs_str, songs_arr, 1, "list")
