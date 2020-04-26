@@ -58,14 +58,13 @@ def srv_command(*, username, messagesplit, **kwargs):
     if g.sr:
         try:
             value = int(messagesplit[1])
-            if 0 <= value <= 100:
+            if not 0 <= value <= 100:
+                raise ValueError
+            if player_good_state():
                 g.player_last_vol = value
-                if player_good_state():
-                    g.Player.audio_set_volume(g.player_last_vol)
-                elif not g.volume_await:
-                    asyncio.run(volume_await_change(g.player_last_vol))
-            else:
-                send_message(f'{username}, vol 0-100')
+                g.Player.audio_set_volume(g.player_last_vol)
+                return
+            send_message(f'{username}, nothing is playing')
         except IndexError:
             send_message(f'{g.prefix}sr vol={g.player_last_vol}')
         except ValueError:

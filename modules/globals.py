@@ -39,7 +39,6 @@ playlist = []
 PlayerInstance = vlc.Instance()
 Player = PlayerInstance.media_player_new()
 Player.audio_set_volume(player_last_vol)
-volume_await = False
 HOST = "irc.twitch.tv"
 PORT = 6667
 s = socket.socket()

@@ -427,14 +427,6 @@ def sr_get_list(username, messagesplit):
     send_list(username, messagesplit, sr_str, sr_list, 1, "list")
 
 
-async def volume_await_change(player_last_vol):
-    g.volume_await = True
-    while g.Player.audio_get_volume() != player_last_vol:
-        await asyncio.sleep(0.1)
-        g.Player.audio_set_volume(player_last_vol)
-    g.volume_await = False
-
-
 async def change_stream_settings(username, messagesplit, setting):
     channel_info = requests.get(f"https://api.twitch.tv/kraken/channels/{g.channel_id}",
                                 headers={"Client-ID": g.client_id,
