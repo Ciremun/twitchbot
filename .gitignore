@@ -12,3 +12,4 @@ data/special/cookies.txt
 data/special/tokens
 data/log/*.txt
 modules/__pycache__
+data/db/shtcd_sqlite.py
