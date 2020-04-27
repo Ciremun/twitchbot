@@ -292,7 +292,7 @@ async def sr_favs_del(username, messagesplit, songs):
                 song_removed_response.append(song["title"])
             else:
                 song_removed_response.append(f'{song["title"]} '
-                                             f'[{seconds_convert(song["user_duration"])}]')
+                                             f'[{seconds_convert(user_duration)}]')
             remove_song.append((song["title"], username,
                                 song["filename"],
                                 user_duration,
@@ -313,7 +313,7 @@ async def sr_favs_del(username, messagesplit, songs):
                         song_removed_response.append(song["title"])
                     else:
                         song_removed_response.append(f'{song["title"]} '
-                                                     f'[{seconds_convert(song["user_duration"])}]')
+                                                     f'[{seconds_convert(user_duration)}]')
                     remove_song.append((song["title"], username,
                                         song["filename"],
                                         user_duration,
@@ -322,10 +322,8 @@ async def sr_favs_del(username, messagesplit, songs):
                         os.remove('data/sounds/favs/' + song["filename"])
                     except:
                         pass
-                    break
             if not song_found:
                 target_not_found.append(messagesplit[i])
-                continue
     g.db.remove_srfavs(remove_song)
     if song_removed_response:
         response.append(f'Favorites removed: {", ".join(song_removed_response)}')
