@@ -22,7 +22,7 @@ youtube-dl>=2020.1.24
 requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 
 ## tokens
-`data/special/tokens` - tokens file 
+`data/special/tokens` - tokens file  
  
 ```
 twitch_bot_token <token here>
