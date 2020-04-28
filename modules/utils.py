@@ -303,16 +303,13 @@ async def sr_favs_del(username, messagesplit, songs):
                                 song.filename,
                                 user_duration,
                                 song.link, song.duration))
+            g.playlist = [x for x in g.playlist if x != Song(f'data/sounds/favs/{song.filename}',
+                                                             song.title, seconds_convert(song.duration),
+                                                             song.user_duration, song.link,
+                                                             username)]
             try:
                 os.remove(f'data/sounds/favs/{song.filename}')
             except:
-                pass
-            try:
-                g.playlist = [x for x in g.playlist if x != Song(f'data/sounds/favs/{song.filename}',
-                                                                 song.title, seconds_convert(song.duration),
-                                                                 song.user_duration, song.link,
-                                                                 username)]
-            except ValueError:
                 pass
         except ValueError:
             target = messagesplit[i]
@@ -331,16 +328,13 @@ async def sr_favs_del(username, messagesplit, songs):
                                         song.filename,
                                         user_duration,
                                         song.link, song.duration))
+                    g.playlist = [x for x in g.playlist if x != Song(f'data/sounds/favs/{song.filename}',
+                                                                     song.title, seconds_convert(song.duration),
+                                                                     song.user_duration, song.link,
+                                                                     username)]
                     try:
                         os.remove(f'data/sounds/favs/{song.filename}')
                     except:
-                        pass
-                    try:
-                        g.playlist = [x for x in g.playlist if x != Song(f'data/sounds/favs/{song.filename}',
-                                                                         song.title, seconds_convert(song.duration),
-                                                                         song.user_duration, song.link,
-                                                                         username)]
-                    except ValueError:
                         pass
             if not song_found:
                 target_not_found.append(messagesplit[i])
