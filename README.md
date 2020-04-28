@@ -22,19 +22,7 @@ youtube-dl>=2020.1.24
 requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 
 ## tokens
-`data/special/tokens` - tokens file  
- 
-```
-twitch_bot_token <token here>
-pixiv_token <token here>
-twitch_channel_id <channel id here>
-twitch_app_client_id <client id here>
-twitch_app_oauth[channel_editor] <app oauth here>
-```
-
-`twitch bot token` - read chat commands, tts  
-`pixiv token` - set/download random pixiv arts  
-`twitch channel id`, `client id`, `client OAuth with channel_editor scope` - edit stream title/game  
+run `token_setup.py` to add twitch and pixiv tokens  
 
 ## youtubedl
 
