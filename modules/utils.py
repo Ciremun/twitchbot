@@ -1,6 +1,5 @@
 import youtube_dl
 import time
-import asyncio
 import requests
 import threading
 import os
@@ -24,6 +23,14 @@ class Song(typing.NamedTuple):
     user_duration: int
     link: str
     username: str
+
+
+class FavSong(typing.NamedTuple):
+    title: str
+    filename: str
+    user_duration: int
+    link: str
+    duration: int
 
 
 def resizeimg(ri, rs, image, screenwidth, screenheight):  # resize to fit window
@@ -279,47 +286,46 @@ def updatelastlink(selected):
 async def sr_favs_del(username, messagesplit, songs):
     response, remove_song, target_not_found, song_removed_response = [], [], [], []
     for i in range(1, len(messagesplit)):
-        await asyncio.sleep(0)
         try:
             index = int(messagesplit[i])
             if not 0 <= index <= len(songs):
                 target_not_found.append(messagesplit[i])
                 continue
             song = songs[index - 1]
-            user_duration = song["user_duration"]
+            user_duration = song.user_duration
             if user_duration is None:
                 user_duration = 0
-                song_removed_response.append(song["title"])
+                song_removed_response.append(song.title)
             else:
-                song_removed_response.append(f'{song["title"]} '
+                song_removed_response.append(f'{song.title} '
                                              f'[{seconds_convert(user_duration)}]')
-            remove_song.append((song["title"], username,
-                                song["filename"],
+            remove_song.append((song.title, username,
+                                song.filename,
                                 user_duration,
-                                song["link"], song["duration"]))
+                                song.link, song.duration))
             try:
-                os.remove('data/sounds/favs/' + song["filename"])
+                os.remove(f'data/sounds/favs/{song.filename}')
             except:
                 pass
         except ValueError:
             target = messagesplit[i]
             song_found = False
             for song in songs:
-                if target.lower() in song['title'].lower():
+                if target.lower() in song.title.lower():
                     song_found = True
-                    user_duration = song["user_duration"]
+                    user_duration = song.user_duration
                     if user_duration is None:
                         user_duration = 0
-                        song_removed_response.append(song["title"])
+                        song_removed_response.append(song.title)
                     else:
-                        song_removed_response.append(f'{song["title"]} '
+                        song_removed_response.append(f'{song.title} '
                                                      f'[{seconds_convert(user_duration)}]')
-                    remove_song.append((song["title"], username,
-                                        song["filename"],
+                    remove_song.append((song.title, username,
+                                        song.filename,
                                         user_duration,
-                                        song["link"], song["duration"]))
+                                        song.link, song.duration))
                     try:
-                        os.remove('data/sounds/favs/' + song["filename"])
+                        os.remove(f'data/sounds/favs/{song.filename}')
                     except:
                         pass
             if not song_found:
@@ -539,21 +545,7 @@ def get_srfavs_dictlist(username):
     result = g.db.check_srfavs_list(username)
     if not result:
         return False
-    songs = []
-    for song in result:
-        if song[2] == 0:
-            user_duration = None
-        else:
-            user_duration = song[2]
-        song_dict = {
-            "title": song[0],
-            "filename": song[1],
-            "user_duration": user_duration,
-            "link": song[3],
-            "duration": song[4]
-        }
-        songs.append(song_dict)
-    return songs
+    return [FavSong(song[0], song[1], (None if song[2] == 0 else song[2]), song[3], song[4]) for song in result]
 
 
 def set_random_pic(lst, response):

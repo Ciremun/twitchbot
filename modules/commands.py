@@ -1,3 +1,4 @@
+import asyncio
 import modules.main
 import modules.decorators
 import modules.info as info
@@ -242,9 +243,7 @@ def srfp_command(*, username, messagesplit, **kwargs):
                 if not songs:
                     send_message(f'{username}, no favorite songs found')
                     return
-                response = []
-                target_not_found = []
-                response_added = []
+                response, target_not_found, response_added = [], [], []
                 for i in range(1, len(messagesplit)):
                     try:
                         index = int(messagesplit[i])
@@ -252,34 +251,34 @@ def srfp_command(*, username, messagesplit, **kwargs):
                             target_not_found.append(messagesplit[i])
                             continue
                         song = songs[index - 1]
-                        g.playlist.append(Song(f'data/sounds/favs/{song["filename"]}', song["title"],
-                                               seconds_convert(song["duration"]), song["user_duration"],
-                                               song["link"], username))
+                        g.playlist.append(Song(f'data/sounds/favs/{song.filename}', song.title,
+                                               seconds_convert(song.duration), song.user_duration,
+                                               song.link, username))
                         g.sr_queue.new_task(playmusic)
-                        if song["user_duration"] is not None:
-                            response_added.append(f'{song["title"]} '
-                                                  f'[{seconds_convert(song["user_duration"])}]'
-                                                  f' - {song["link"]} - #{len(g.playlist)}')
+                        if song.user_duration is not None:
+                            response_added.append(f'{song.title} '
+                                                  f'[{seconds_convert(song.user_duration)}]'
+                                                  f' - {song.link} - #{len(g.playlist)}')
                         else:
-                            response_added.append(f'{song["title"]} - '
-                                                  f'{song["link"]} - #{len(g.playlist)}')
+                            response_added.append(f'{song.title} - '
+                                                  f'{song.link} - #{len(g.playlist)}')
                     except ValueError:
                         title = messagesplit[i]
                         title_found = False
                         for j in songs:
-                            if title.lower() in j['title'].lower():
-                                g.playlist.append(Song('data/sounds/favs/' + j.get("filename"),
-                                                       j.get("title"), seconds_convert(j.get("duration")),
-                                                       j.get("user_duration"), j.get("link"), username))
+                            if title.lower() in j.title.lower():
+                                g.playlist.append(Song('data/sounds/favs/' + j.filename,
+                                                       j.title, seconds_convert(j.duration),
+                                                       j.user_duration, j.link, username))
                                 title_found = True
                                 g.sr_queue.new_task(playmusic)
-                                if j.get("user_duration") is not None:
-                                    response_added.append(f'{j.get("title")} '
-                                                          f'[{seconds_convert(j.get("user_duration"))}]'
+                                if j.user_duration is not None:
+                                    response_added.append(f'{j.title} '
+                                                          f'[{seconds_convert(j.user_duration)}]'
                                                           f' - '
-                                                          f'{j.get("link")} - #{len(g.playlist)}')
+                                                          f'{j.link} - #{len(g.playlist)}')
                                 else:
-                                    response_added.append(f'{j.get("title")} - {j.get("link")} - '
+                                    response_added.append(f'{j.title} - {j.link} - '
                                                           f'#{len(g.playlist)}')
                         if not title_found:
                             target_not_found.append(title)
@@ -317,17 +316,16 @@ def srfl_command(*, username, messagesplit, **kwargs):
                     try:
                         index = int(messagesplit[i])
                         if not 0 < index <= len(songs):
-                            send_message(f'{username}, invalid index [{index}]')
+                            target_not_found.append(messagesplit[i])
                             continue
                         song = songs[index - 1]
-                        response.append(f'{username}, {song["title"]} - '
-                                        f'{song["link"]}')
+                        response.append(f'{song.title} - {song.link}')
                     except ValueError:
                         title = messagesplit[i]
                         title_found = False
                         for j in songs:
-                            if title.lower() in j['title'].lower():
-                                response.append(f'{j.get("title")} - {j.get("link")}')
+                            if title.lower() in j.title.lower():
+                                response.append(f'{j.title} - {j.link}')
                                 title_found = True
                         if not title_found:
                             target_not_found.append(title)
@@ -352,8 +350,8 @@ def srf_command(*, username, messagesplit, **kwargs):
         if not songs:
             send_message(f'{username}, no favorite songs found')
             return
-        songs_arr = [f'{song["title"]} [{seconds_convert(song["user_duration"])}] - #{count}'
-                     if song["user_duration"] is not None else f'{song["title"]} - #{count}'
+        songs_arr = [f'{song.title} [{seconds_convert(song.user_duration)}] - #{count}'
+                     if song.user_duration is not None else f'{song.title} - #{count}'
                      for count, song in enumerate(songs, start=1)]
         songs_str = ", ".join(songs_arr)
         songs_arr = divide_chunks(songs_str, 470, lst=songs_arr, joinparam=', ')
