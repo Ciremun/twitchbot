@@ -1,6 +1,9 @@
 import sys
+import os
 from os.path import realpath
-sys.path.append(realpath('../'))
+if __name__ == '__main__':
+    sys.path.append(realpath('../'))
+    os.chdir('../')
 import re
 import time
 import threading

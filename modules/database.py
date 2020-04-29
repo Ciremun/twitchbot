@@ -9,7 +9,7 @@ class ThreadDB(threading.Thread):
     def __init__(self, name):
         threading.Thread.__init__(self)
         self.name = name
-        self.conn = sqlite3.connect('../data/db/picturebot.db', check_same_thread=False)
+        self.conn = sqlite3.connect('data/db/picturebot.db', check_same_thread=False)
         self.c = self.conn.cursor()
         self.numba = str(self.get_imgcount()[0][0])
 

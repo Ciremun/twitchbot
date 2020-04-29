@@ -1,10 +1,7 @@
 import pyglet
-import os
 import modules.globals as g
 
 from modules.utils import resizeimg
-
-os.chdir('../')
 
 
 class ThreadPic:
