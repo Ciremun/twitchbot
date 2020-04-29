@@ -18,19 +18,12 @@ from modules.pixiv import Pixiv
 
 class Song(typing.NamedTuple):
     path: str
+    filename: str
     title: str
     duration: str
     user_duration: int
     link: str
     username: str
-
-
-class FavSong(typing.NamedTuple):
-    title: str
-    filename: str
-    user_duration: int
-    link: str
-    duration: int
 
 
 def resizeimg(ri, rs, image, screenwidth, screenheight):  # resize to fit window
@@ -240,7 +233,7 @@ def checklist(username, messagesplit, db_call):  # check ban/mod list
     send_list(username, messagesplit, result, allpages, 1, "list")
 
 
-def fixname(name):  # fix filename for windows
+def fixname(name):  # fix filename for OS Windows
     if name.startswith('.'):
         name = '•' + name[1:]
     name = \
@@ -302,13 +295,10 @@ async def sr_favs_del(username, messagesplit, songs):
             remove_song.append((song.title, username,
                                 song.filename,
                                 user_duration,
-                                song.link, song.duration))
-            g.playlist = [x for x in g.playlist if x != Song(f'data/sounds/favs/{song.filename}',
-                                                             song.title, seconds_convert(song.duration),
-                                                             song.user_duration, song.link,
-                                                             username)]
+                                song.link, timecode_convert(song.duration)))
+            g.playlist = [x for x in g.playlist if x != song]
             try:
-                os.remove(f'data/sounds/favs/{song.filename}')
+                os.remove(song.path)
             except:
                 pass
         except ValueError:
@@ -327,13 +317,10 @@ async def sr_favs_del(username, messagesplit, songs):
                     remove_song.append((song.title, username,
                                         song.filename,
                                         user_duration,
-                                        song.link, song.duration))
-                    g.playlist = [x for x in g.playlist if x != Song(f'data/sounds/favs/{song.filename}',
-                                                                     song.title, seconds_convert(song.duration),
-                                                                     song.user_duration, song.link,
-                                                                     username)]
+                                        song.link, timecode_convert(song.duration)))
+                    g.playlist = [x for x in g.playlist if x != song]
                     try:
-                        os.remove(f'data/sounds/favs/{song.filename}')
+                        os.remove(song.path)
                     except:
                         pass
             if not song_found:
@@ -432,8 +419,8 @@ def sr_get_list(username, messagesplit):
     if not g.playlist:
         send_message(f'{username}, playlist is empty')
         return
-    sr_list = [f'{x[1]} [{seconds_convert(x[3])}] #{i}' if x[3] is not None else f'{x[1]} #{i}' for i, x in
-               enumerate(g.playlist, start=1)]
+    sr_list = [f'{x.title} [{seconds_convert(x.user_duration)}] #{i}'
+               if x.user_duration is not None else f'{x.title} #{i}' for i, x in enumerate(g.playlist, start=1)]
     sr_str = ", ".join(sr_list)
     sr_list = divide_chunks(sr_str, 470, sr_list, joinparam=', ')
     send_list(username, messagesplit, sr_str, sr_list, 1, "list")
@@ -553,7 +540,8 @@ def get_srfavs_dictlist(username):
     result = g.db.check_srfavs_list(username)
     if not result:
         return False
-    return [FavSong(song[0], song[1], (None if song[2] == 0 else song[2]), song[3], song[4]) for song in result]
+    return [Song(f'data/sounds/favs/{song[0]}', song[0], song[1], seconds_convert(song[2]),
+                 (None if song[3] == 0 else song[3]), song[4], username) for song in result]
 
 
 def set_random_pic(lst, response):
@@ -662,7 +650,7 @@ def download_clip(url, username, user_duration=None, yt_request=True, folder='da
     """
     name = ''.join(random.choices('qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM' + '1234567890', k=10))
     name = while_is_file(folder, name, '.wav')
-    home = folder + name + '.wav'
+    home = f'{folder}{name}.wav'
     ydl_opts = {
         'quiet': True,
         'nocheckcertificate': True,
@@ -714,15 +702,15 @@ def download_clip(url, username, user_duration=None, yt_request=True, folder='da
         ydl.download([url])
         if folder == 'data/sounds/favs/':
             if user_duration is None:
-                g.db.add_srfavs(title, username, name + '.wav', 0, sr_url, duration)
+                g.db.add_srfavs(title, username, f'{name}.wav', 0, sr_url, duration)
                 send_message(f'{username}, {title} - {sr_url} - added to favorites')
             else:
-                g.db.add_srfavs(title, username, name + '.wav', user_duration, sr_url, duration)
+                g.db.add_srfavs(title, username, f'{name}.wav', user_duration, sr_url, duration)
                 send_message(
                     f'{username}, {title} [{seconds_convert(user_duration)}] - {sr_url} - added to favorites')
             return
         duration = seconds_convert(duration)
-        g.playlist.append(Song(home, title, duration, user_duration, sr_url, username))
+        g.playlist.append(Song(home, f'{name}.wav', title, duration, user_duration, sr_url, username))
         if user_duration is not None:
             send_message(f'+ {title} [{seconds_convert(user_duration)}] - {sr_url} - #{len(g.playlist)}')
         else:

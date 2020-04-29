@@ -36,7 +36,7 @@ class ThreadDB(threading.Thread):
 
     @regular_query
     def check_srfavs_list(self, owner):
-        self.c.execute('SELECT song, filename, user_duration, link, duration FROM srfavs WHERE owner = :owner',
+        self.c.execute('SELECT filename, song, duration, user_duration, link FROM srfavs WHERE owner = :owner',
                        {'owner': owner})
         return self.c.fetchall()
 

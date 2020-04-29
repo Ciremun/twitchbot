@@ -251,9 +251,7 @@ def srfp_command(*, username, messagesplit, **kwargs):
                             target_not_found.append(messagesplit[i])
                             continue
                         song = songs[index - 1]
-                        g.playlist.append(Song(f'data/sounds/favs/{song.filename}', song.title,
-                                               seconds_convert(song.duration), song.user_duration,
-                                               song.link, username))
+                        g.playlist.append(song)
                         g.sr_queue.new_task(playmusic)
                         if song.user_duration is not None:
                             response_added.append(f'{song.title} '
@@ -267,9 +265,7 @@ def srfp_command(*, username, messagesplit, **kwargs):
                         title_found = False
                         for j in songs:
                             if title.lower() in j.title.lower():
-                                g.playlist.append(Song('data/sounds/favs/' + j.filename,
-                                                       j.title, seconds_convert(j.duration),
-                                                       j.user_duration, j.link, username))
+                                g.playlist.append(j)
                                 title_found = True
                                 g.sr_queue.new_task(playmusic)
                                 if j.user_duration is not None:
