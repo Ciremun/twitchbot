@@ -21,21 +21,15 @@ class ThreadPixiv(threading.Thread):
         self.client = Client()
         self.allranking = []
         self.artpath = Path('data/pixiv/')
-        self.tasks = []
 
     def run(self):
         self.pixiv_init()
-        while True:
-            time.sleep(0.1)
-            if self.tasks:
-                task = self.tasks.pop(0)
-                task['func'](*task['args'], **task['kwargs'])
 
     def download_art(self, obj, size, filename):
         obj.download(directory=self.artpath,
                      size=size, filename=filename)
 
-    def random_setup(self):  # download and set random pixiv art
+    def random_pixiv_art(self):  # download and set random pixiv art
         try:
             ranking = random.choice(self.allranking)
             fetchmode = random.random()  # ranked or ranked related art 20/80
@@ -68,7 +62,7 @@ class ThreadPixiv(threading.Thread):
             if 'RemoteDisconnected' in str(e):
                 self.random_pixiv_art()
 
-    def save_setup(self, namesave, owner, artid, folder='data/custom/', setpic=False, save=False, save_msg=False):
+    def save_pixiv_art(self, namesave, owner, artid, folder='data/custom/', setpic=False, save=False, save_msg=False):
         """
         save pixiv art by art id
         :param save_msg: whether send <image saved> message
@@ -119,16 +113,10 @@ class ThreadPixiv(threading.Thread):
                 return
             if 'Status code: 400' in str(pixiv_exception):
                 self.pixiv_init()
-            self.save_pixiv_art(namesave, owner, artid, setpic, save, save_msg)
+            self.save_pixiv_art(namesave, owner, artid, folder, setpic, save, save_msg)
         except Exception as e:
             if 'RemoteDisconnected' in str(e):
-                self.save_pixiv_art(namesave, owner, artid, setpic, save, save_msg)
-
-    def random_pixiv_art(self):
-        self.tasks.append({'func': self.random_setup, 'args': (), 'kwargs': {}})
-
-    def save_pixiv_art(self, *args, **kwargs):
-        self.tasks.append({'func': self.save_setup, 'args': args, 'kwargs': kwargs})
+                self.save_pixiv_art(namesave, owner, artid, folder, setpic, save, save_msg)
 
     def pixiv_init(self):
         try:

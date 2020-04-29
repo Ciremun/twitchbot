@@ -45,6 +45,7 @@ s = socket.socket()
 db = modules.database.db
 sr_queue = RunInThread('sr_queue')
 sr_download_queue = RunInThread('sr_download_queue')
+px_download_queue = RunInThread('pixiv_download_queue')
 commands_dict = {}
 PASS, px_token, channel_id, client_id, client_auth = '', '', '', '', ''
 Main = None

@@ -5,6 +5,7 @@ import threading
 import os
 import random
 import typing
+import queue
 import modules.globals as g
 
 from math import floor
@@ -493,13 +494,13 @@ def change_pixiv(pattern, group, group2, url, messagesplit, username):
             pxid = int(pattern.sub(group, url))
         except ValueError:
             pxid = int(pattern.sub(group2, url))
-        Pixiv.save_pixiv_art(imagename, username, pxid, setpic=True, save=True)
+        g.px_download_queue.new_task(Pixiv.save_pixiv_art, imagename, username, pxid, setpic=True, save=True)
     except IndexError:
         try:
             pxid = int(pattern.sub(group, url))
         except ValueError:
             pxid = int(pattern.sub(group2, url))
-        Pixiv.save_pixiv_art(g.db.numba, username, pxid, 'data/images/', setpic=True)
+        g.px_download_queue.new_task(Pixiv.save_pixiv_art, g.db.numba, username, pxid, 'data/images/', setpic=True)
         g.db.update_imgcount(int(g.db.numba) + 1)
 
 
@@ -510,7 +511,7 @@ def save_pixiv(pattern, group, group2, url, messagesplit, username):
             pxid = int(pattern.sub(group, url))
         except ValueError:
             pxid = int(pattern.sub(group2, url))
-        Pixiv.save_pixiv_art(imagename, username, pxid, save=True, save_msg=True)
+        g.px_download_queue.new_task(Pixiv.save_pixiv_art, imagename, username, pxid, save=True, save_msg=True)
     except IndexError:
         pass
 
@@ -723,15 +724,14 @@ class RunInThread(threading.Thread):
     def __init__(self, name):
         threading.Thread.__init__(self)
         self.name = name
-        self.tasks = []
+        self.q = queue.Queue()
         self.start()
 
     def run(self):
         while True:
-            time.sleep(0.1)
-            if self.tasks:
-                task = self.tasks.pop(0)
-                task['func'](*task['args'], **task['kwargs'])
+            task = self.q.get(block=True)
+            task['func'](*task['args'], **task['kwargs'])
+            self.q.task_done()
 
     def new_task(self, func, *args, **kwargs):
-        self.tasks.append({'func': func, 'args': args, 'kwargs': kwargs})
+        self.q.put({'func': func, 'args': args, 'kwargs': kwargs})

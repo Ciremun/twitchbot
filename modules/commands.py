@@ -545,7 +545,7 @@ def setrand_command(*, username, messagesplit, **kwargs):
             onlypng = [f for f in os.listdir('data/custom/') if f.endswith('.png')]
             set_random_pic(onlypng, f'{username}, png not found')
         elif randsrc == 'pixiv':
-            Pixiv.random_pixiv_art()
+            g.px_download_queue.new_task(Pixiv.random_pixiv_art)
     except IndexError:
         onlyfiles = [f for f in os.listdir('data/custom/') if isfile(join('data/custom/', f))]
         set_random_pic(onlyfiles, f'{username}, {g.prefix}list is empty')
