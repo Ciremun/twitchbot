@@ -475,14 +475,14 @@ def cancel_command(*, username, messagesplit, **kwargs):
                     send_message(f'{username}, {responsestr}')
     except IndexError:
         song_cancelled = False
-        for i in g.playlist:
-            if username == i[5]:
-                if i[3] is not None:
-                    send_message(f'{username}, Cancelled: {i[1]} [{seconds_convert(i[3])}]')
+        for song in g.playlist:
+            if username == song.username:
+                if song.user_duration is not None:
+                    send_message(f'{username}, Cancelled: {song.title} [{seconds_convert(song.user_duration)}]')
                 else:
-                    send_message(f'{username}, Cancelled: {i[1]}')
+                    send_message(f'{username}, Cancelled: {song.title}')
                 song_cancelled = True
-                g.playlist.remove(i)
+                g.playlist.remove(song)
                 break
         if not song_cancelled:
             send_message(f'{username}, nothing to cancel')
@@ -560,7 +560,7 @@ def search_command(*, username, messagesplit, message):
         else:
             search_words = [x for x in words if messagesplit[1].lower() in x]
         str1 = ' '.join(search_words)
-        allpages = divide_chunks(str1, 480)
+        allpages = divide_chunks(str1, 470)
         send_list(username, messagesplit, str1, allpages, 2, "search")
 
 
@@ -568,9 +568,9 @@ def search_command(*, username, messagesplit, message):
 def list_command(*, username, messagesplit, **kwargs):
     words, linkwords = checkifnolink('!list')
     linkstr1 = ' '.join(linkwords)
-    linkallpages = divide_chunks(linkstr1, 480)
+    linkallpages = divide_chunks(linkstr1, 470)
     str1 = ' '.join(words)
-    allpages = divide_chunks(str1, 480)
+    allpages = divide_chunks(str1, 470)
     try:
         int(messagesplit[2])
         if messagesplit[0][1:] == "list" and messagesplit[1] == "links":
@@ -893,8 +893,8 @@ def when_command(*, username, messagesplit, **kwargs):
                 send_message(f'{username}, no results')
                 return
         response_str = ", ".join(response)
-        if len(response_str) > 480:
-            response = divide_chunks(response_str, 480, lst=response, joinparam='; ')
+        if len(response_str) > 470:
+            response = divide_chunks(response_str, 470, lst=response, joinparam='; ')
             send_message(f'{username}, {response[0]}..')
             return
         send_message(f'{username}, {response_str}')
