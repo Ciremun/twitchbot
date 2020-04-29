@@ -26,7 +26,7 @@ class ThreadPixiv(threading.Thread):
     def run(self):
         self.pixiv_init()
         while True:
-            time.sleep(0.2)
+            time.sleep(0.1)
             if self.tasks:
                 task = self.tasks.pop(0)
                 task['func'](*task['args'], **task['kwargs'])
