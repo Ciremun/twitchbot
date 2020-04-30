@@ -438,7 +438,7 @@ def cancel_command(*, username, messagesplit, **kwargs):
                 except ValueError:
                     target = messagesplit[i]
                     for song in g.playlist:
-                        if target.lower() in song.title.lower() and username == song.username:
+                        if username == song.username and target.lower() in song.title.lower():
                             if song.user_duration is not None:
                                 playlist_cancelled.append(f'{song.title} [{seconds_convert(song.user_duration)}]')
                             else:
@@ -884,13 +884,13 @@ def when_command(*, username, messagesplit, **kwargs):
         for count, i in enumerate(g.playlist):
             if i.username == username:
                 if g.playlist[:count]:
-                    next_in += sum((timecode_convert(j.duration) - j.user_duration if j.user_duration else timecode_convert(j.duration) for j in g.playlist[:count])) + np_end
+                    next_in += sum(timecode_convert(j.duration) - j.user_duration if j.user_duration else timecode_convert(j.duration) for j in g.playlist[:count]) + np_end
                 response.append(f'{i.title} in ({seconds_convert(next_in, explicit=True)})')
                 next_in = 0
                 if len(response) > 4:
                     break
         if messagesplit[1:]:
-            response = [song for song in response for query in messagesplit[1:] if query.lower() in song.lower()]
+            response = [song for song in response if " ".join(messagesplit[1:]).lower() in song.lower()]
             if not response:
                 send_message(f'{username}, no results')
                 return
