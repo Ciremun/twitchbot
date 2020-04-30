@@ -7,9 +7,9 @@ if __name__ == '__main__':
 import re
 import time
 import threading
+import asyncio
 import modules.globals as g
 import modules.commands
-import asyncio
 
 from modules.picture import ThreadPic
 from modules.utils import timecode_convert, get_current_date, seconds_convert, divide_chunks, send_message
