@@ -92,9 +92,8 @@ class ThreadMain(threading.Thread):
 
                 if message.startswith(g.prefix):
                     command = g.commands_dict.get(messagesplit[0][1:], None)
-                    if command is None:
-                        continue
-                    command(username=username, messagesplit=messagesplit, message=message)
+                    if command is not None:
+                        g.main_queue.new_task(command, username=username, messagesplit=messagesplit, message=message)
 
 
 if __name__ == '__main__':
