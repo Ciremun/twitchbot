@@ -81,72 +81,59 @@ def srq_command(*, username, messagesplit, **kwargs):
 @moderator_command
 def srs_command(*, username, messagesplit, **kwargs):
     if g.sr:
-        if not player_good_state():
-            send_message(f'{username}, nothing is playing')
+        if len(messagesplit) == 1:
+            if not player_good_state():
+                send_message(f'{username}, nothing is playing')
+            else:
+                g.Player.stop()
             return
-        try:
-            if messagesplit[1]:
-                if not g.playlist:
-                    send_message(f'{username}, playlist is empty')
-                    return
-                skipped_response = []
-                skip_songs = []
-                user_response = []
-                target_not_found = []
-                for i in range(1, len(messagesplit)):
-                    try:
-                        target = int(messagesplit[i])
-                        if not 0 < target <= len(g.playlist):
-                            target_not_found.append(f'{target}')
-                            continue
-                        song = g.playlist[target - 1]
-                        if song.user_duration is not None:
-                            skipped_response.append(
-                                f'{song.title} '
-                                f'[{seconds_convert(song.user_duration)}]'
-                            )
-                        else:
-                            skipped_response.append(f'{song.title}')
-                        skip_songs.append(song)
-                    except ValueError:
-                        target = messagesplit[i]
-                        title_skipped = False
-                        for song in g.playlist:
-                            if target.lower() in song.title.lower():
-                                skip_songs.append(song)
-                                if song.user_duration is not None:
-                                    skipped_response.append(
-                                        f'{song.title} '
-                                        f'[{seconds_convert(song.user_duration)}]'
-                                    )
-                                else:
-                                    skipped_response.append(f'{song.title}')
-                                title_skipped = True
-                        if not title_skipped:
-                            target_not_found.append(target)
-                if skip_songs:
-                    for i in skip_songs:
-                        try:
-                            g.playlist.remove(i)
-                        except ValueError:
-                            skipped_response = list(set(skipped_response))
+        if not g.playlist:
+            send_message(f'{username}, playlist is empty')
+            return
+        skipped_response, skip_title, skip_index, user_response, target_not_found = [], [], [], [], []
+        for i in range(1, len(messagesplit)):
+            try:
+                target = int(messagesplit[i])
+                if not 0 < target <= len(g.playlist):
+                    target_not_found.append(f'{target}')
+                    continue
+                song = g.playlist[target - 1]
+                skip_index.append(song)
+                skipped_response.append(
+                    f'{song.title}'
+                    f'{"" if song.user_duration is None else f" [{seconds_convert(song.user_duration)}]"}')
+            except ValueError:
+                target = messagesplit[i]
+                title_skipped = False
+                for song in g.playlist:
+                    if song not in skip_index and target.lower() in song.title.lower():
+                        skip_title.append(song)
+                        skipped_response.append(
+                            f'{song.title}'
+                            f'{"" if song.user_duration is None else f" [{seconds_convert(song.user_duration)}]"}')
+                        title_skipped = True
+                if not title_skipped:
+                    target_not_found.append(target)
+                for song in skip_title:
+                    g.playlist.remove(song)
+                skip_title.clear()
+        for song in skip_index:
+            g.playlist.remove(song)
+        if skipped_response:
+            user_response.append(f'Skip: {", ".join(skipped_response)}')
+        if target_not_found:
+            user_response.append(f'Not found: {", ".join(target_not_found)}')
+        if user_response:
+            user_response_str = "; ".join(user_response)
+            if len(user_response_str) > 470:
+                user_response *= 0
                 if skipped_response:
-                    user_response.append(f'Skip: {", ".join(skipped_response)}')
+                    user_response.append(f'Skip: {len(skipped_response)}')
                 if target_not_found:
-                    user_response.append(f'Not found: {", ".join(target_not_found)}')
-                if user_response:
-                    user_response_str = " ".join(user_response)
-                    if len(user_response_str) > 470:
-                        user_response *= 0
-                        if skipped_response:
-                            user_response.append(f'Skip: {len(skipped_response)}')
-                        if target_not_found:
-                            user_response.append(f'Not found: {len(target_not_found)}')
-                        send_message(f'{username}, {" ".join(user_response)}')
-                    else:
-                        send_message(user_response_str)
-        except IndexError:
-            g.Player.stop()
+                    user_response.append(f'Not found: {len(target_not_found)}')
+                send_message(f'{username}, {"; ".join(user_response)}')
+            else:
+                send_message(user_response_str)
 
 
 @moderator_command
@@ -414,7 +401,7 @@ def cancel_command(*, username, messagesplit, **kwargs):
     if not any(username == i.username for i in g.playlist):
         send_message(f'{username}, nothing to cancel')
         return
-    if len(messagesplit) < 2:
+    if len(messagesplit) == 1:
         for song in g.playlist:
             if username == song.username:
                 g.playlist.remove(song)
