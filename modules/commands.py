@@ -371,7 +371,8 @@ def sr_command(*, username, messagesplit, message):
         if not match:
             if re.match(timecode_re, messagesplit[-1]):
                 query = ' '.join(messagesplit[1:-1])
-                g.sr_download_queue.new_task(download_clip, query, username, user_duration=messagesplit[-1], ytsearch=True)
+                g.sr_download_queue.new_task(download_clip, query, username, user_duration=messagesplit[-1],
+                                             ytsearch=True)
             else:
                 query = ' '.join(messagesplit[1:])
                 g.sr_download_queue.new_task(download_clip, query, username, user_duration=None, ytsearch=True)
@@ -410,82 +411,60 @@ def sql_command(*, username, messagesplit, pipe=False, **kwargs):
 
 @bot_command
 def cancel_command(*, username, messagesplit, **kwargs):
-    if not g.playlist:
-        send_message(f'{username}, playlist is empty')
+    if not any(username == i.username for i in g.playlist):
+        send_message(f'{username}, nothing to cancel')
         return
-    try:
-        if messagesplit[1]:
-            playlist_cancelled, playlist_to_del, playlist_not_found = [], [], []
-            username_in_playlist = False
-            for i in range(1, len(messagesplit)):
-                song_cancelled_title = False
-                try:
-                    target = int(messagesplit[i])
-                    if not 0 < target <= len(g.playlist):
-                        playlist_not_found.append(f'{target}')
-                        continue
-                    song = g.playlist[target - 1]
-                    if username == song.username:
-                        playlist_to_del.append(song)
-                        if song.user_duration is not None:
-                            playlist_cancelled.append(
-                                f'{song.title} '
-                                f'[{seconds_convert(song.user_duration)}]'
-                            )
-                        else:
-                            playlist_cancelled.append(song.title)
-                        username_in_playlist = True
-                except ValueError:
-                    target = messagesplit[i]
-                    for song in g.playlist:
-                        if username == song.username and target.lower() in song.title.lower():
-                            if song.user_duration is not None:
-                                playlist_cancelled.append(f'{song.title} [{seconds_convert(song.user_duration)}]')
-                            else:
-                                playlist_cancelled.append(song.title)
-                            playlist_to_del.append(song)
-                            song_cancelled_title = True
-                            username_in_playlist = True
-                    if not song_cancelled_title:
-                        playlist_not_found.append(target)
-            if playlist_to_del:
-                for i in playlist_to_del:
-                    try:
-                        g.playlist.remove(i)
-                    except ValueError:
-                        playlist_cancelled = list(set(playlist_cancelled))
-            if not username_in_playlist:
-                send_message(f'{username}, nothing to cancel')
-                return
-            response = []
-            if playlist_cancelled:
-                response.append(f'Cancelled: {", ".join(playlist_cancelled)}')
-            if playlist_not_found:
-                response.append(f'Not found: {", ".join(playlist_not_found)}')
-            if response:
-                responsestr = " ".join(response)
-                if len(responsestr) > 480:
-                    response *= 0
-                    if playlist_cancelled:
-                        response.append(f'Cancelled: {len(playlist_cancelled)}')
-                    if playlist_not_found:
-                        response.append(f'Not found: {len(playlist_not_found)}')
-                    send_message(f'{username}, {" ".join(response)}')
-                else:
-                    send_message(f'{username}, {responsestr}')
-    except IndexError:
-        song_cancelled = False
+    if len(messagesplit) < 2:
         for song in g.playlist:
             if username == song.username:
-                if song.user_duration is not None:
-                    send_message(f'{username}, Cancelled: {song.title} [{seconds_convert(song.user_duration)}]')
-                else:
-                    send_message(f'{username}, Cancelled: {song.title}')
-                song_cancelled = True
                 g.playlist.remove(song)
-                break
-        if not song_cancelled:
-            send_message(f'{username}, nothing to cancel')
+                send_message(f'{username}, Cancelled: {song.title}'
+                             f'{"" if song.user_duration is None else f" [{seconds_convert(song.user_duration)}]"}')
+                return
+    playlist_cancelled, playlist_to_del, playlist_not_found, response = [], [], [], []
+    for i in range(1, len(messagesplit)):
+        song_cancelled_title = False
+        try:
+            target = int(messagesplit[i])
+            if not 0 < target <= len(g.playlist):
+                playlist_not_found.append(f'{target}')
+                continue
+            song = g.playlist[target - 1]
+            if username == song.username and song not in playlist_to_del:
+                playlist_to_del.append(song)
+                if song.user_duration is not None:
+                    playlist_cancelled.append(f'{song.title} [{seconds_convert(song.user_duration)}]')
+                else:
+                    playlist_cancelled.append(song.title)
+        except ValueError:
+            target = messagesplit[i]
+            for song in g.playlist:
+                if username == song.username and song not in playlist_to_del and target.lower() in song.title.lower():
+                    if song.user_duration is not None:
+                        playlist_cancelled.append(f'{song.title} [{seconds_convert(song.user_duration)}]')
+                    else:
+                        playlist_cancelled.append(song.title)
+                    playlist_to_del.append(song)
+                    song_cancelled_title = True
+            if not song_cancelled_title:
+                playlist_not_found.append(target)
+    for i in playlist_to_del:
+        g.playlist.remove(i)
+    if playlist_cancelled:
+        response.append(f'Cancelled: {", ".join(playlist_cancelled)}')
+    if playlist_not_found:
+        response.append(f'Not found: {", ".join(playlist_not_found)}')
+    if response:
+        responsestr = " ".join(response)
+        if len(responsestr) > 480:
+            response *= 0
+            if playlist_cancelled:
+                response.append(f'Cancelled: {len(playlist_cancelled)}')
+            if playlist_not_found:
+                response.append(f'Not found: {len(playlist_not_found)}')
+            send_message(f'{username}, {" ".join(response)}')
+        else:
+            send_message(f'{username}, {responsestr}')
 
 
 @moderator_command
@@ -871,34 +850,36 @@ def notify_command(*, username, messagesplit, message, **kwargs):
 
 @bot_command
 def when_command(*, username, messagesplit, **kwargs):
-    if any(username == i.username for i in g.playlist):
-        next_in = 0
-        np_end = 0
-        response = []
-        if player_good_state():
-            current_time_ms = g.Player.get_time()
-            current_time = floor(current_time_ms / 1000)
-            np_duration = timecode_convert(g.np_duration)
-            np_end = np_duration - current_time
-            next_in = np_end
-        for count, i in enumerate(g.playlist):
-            if i.username == username:
-                if g.playlist[:count]:
-                    next_in += sum(timecode_convert(j.duration) - j.user_duration if j.user_duration else timecode_convert(j.duration) for j in g.playlist[:count]) + np_end
-                response.append(f'{i.title} in ({seconds_convert(next_in, explicit=True)})')
-                next_in = 0
-                if len(response) > 4:
-                    break
-        if messagesplit[1:]:
-            response = [song for song in response if " ".join(messagesplit[1:]).lower() in song.lower()]
-            if not response:
-                send_message(f'{username}, no results')
-                return
-        response_str = ", ".join(response)
-        if len(response_str) > 470:
-            response = divide_chunks(response_str, 470, lst=response, joinparam='; ')
-            send_message(f'{username}, {response[0]}..')
-            return
-        send_message(f'{username}, {response_str}')
-    else:
+    if not any(username == i.username for i in g.playlist):
         send_message(f'{username}, no queue song')
+        return
+    next_in = 0
+    np_end = 0
+    response = []
+    if player_good_state():
+        current_time_ms = g.Player.get_time()
+        current_time = floor(current_time_ms / 1000)
+        np_duration = timecode_convert(g.np_duration)
+        np_end = np_duration - current_time
+        next_in = np_end
+    for count, i in enumerate(g.playlist):
+        if i.username == username:
+            if g.playlist[:count]:
+                next_in += sum(
+                    timecode_convert(j.duration) - j.user_duration if j.user_duration else timecode_convert(
+                        j.duration) for j in g.playlist[:count]) + np_end
+            response.append(f'{i.title} in ({seconds_convert(next_in, explicit=True)})')
+            next_in = 0
+            if len(response) > 4:
+                break
+    if messagesplit[1:]:
+        response = [song for song in response if " ".join(messagesplit[1:]).lower() in song.lower()]
+        if not response:
+            send_message(f'{username}, no results')
+            return
+    response_str = ", ".join(response)
+    if len(response_str) > 470:
+        response = divide_chunks(response_str, 470, lst=response, joinparam='; ')
+        send_message(f'{username}, {response[0]}..')
+        return
+    send_message(f'{username}, {response_str}')
