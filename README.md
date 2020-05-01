@@ -66,27 +66,27 @@ get account cookies using `cookies.txt` browser extension
 `orand [png/gif]` - set random image from olist  
 `setrand [gif/png/pixiv]` - set random saved pic or pixiv art  
 `search <name> [page]` - find image in list (e.g. gif, png) wrap in quotes for startswith search  
-`link [name] [name2]...` - get saved pic link, no args - last random pic link, filename  
+`link [name] [name]..` - get saved pic link, no args - last random pic link, filename  
 `ren <name> <new name>` - change saved pic filename  
-`del <name> [name2]..` - delete saved pic(s)  
+`del <name> [name]..` - delete saved pic(s)  
 `sr <yt/scld> [timecode]` - play music with youtube link/id/search, soundcloud links, optional timecode(start time)  
 `srq [page]` - current queue  
 `srf [page]` - your favorites list  
 `srfa [url] [timecode]` - favorite a song, optional timecode, no url - add now playing song  
 `srfd <word/index> [word/index]..` - remove from favorites by word/list index  
-`srfp <name/index> [name2/index2]..` - play songs from favorites (srf)  
-`srfl <index1> [index2]..` - get song link(s)  
+`srfp <name/index> [name/index]..` - play songs from favorites (srf)  
+`srfl <index1> [index]..` - get song link(s)  
 `np` - get current song link, name, time, duration  
-`cancel [name/index] [name2/index2]..` - cancel your songrequest(s)  
+`cancel [name/index] [name/index]..` - cancel your songrequest(s)  
 `tts: <msg>` - say message, even when tts is off  
 `info` - bot uptime  
-`pipe <command1> | <command2>..` - run commands in chain, transfer result from one command to another, last command gives complete result, supported commands: sql, info, help, tts, notify  
+`pipe <command> | <command>..` - run commands in chain, transfer result from one command to another, last command gives complete result, supported commands: sql, info, help, tts, notify  
 `help [command]` - view bot commands help, no args - commands list, wrap command in quotes for startswith search  
 `notify <username> <message>` - notify twitch user when they next type in chat  
 `when [name]` - check when requested song is going to play (up to 5)  
 ### bot moderators
-`ban <name> [name2]..` - add user(s) to ignore-list  
-`unban <name> [name2]..` - remove user(s) from ignore-list  
+`ban <name> [name]..` - add user(s) to ignore-list  
+`unban <name> [name]..` - remove user(s) from ignore-list  
 `banlist` - get bot ignore-list  
 `modlist` - get bot moderators list  
 `sql <query>` - execute sql query and get result  
@@ -98,7 +98,7 @@ get account cookies using `cookies.txt` browser extension
 `sr` - enable/disable songrequests  
 `src` - clear current playlist  
 `srt` - set time for current song  
-`srs [name/index] [name2/index2]..` - skip queue song by name/index, no args - skip now playing song  
+`srs [name/index] [name/index]..` - skip queue song by name/index, no args - skip now playing song  
 `srv [value]` - get/change volume  
 `srp` - play/pause  
 `die` - set greenscreen.png  
