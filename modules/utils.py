@@ -289,19 +289,17 @@ async def sr_favs_del(username, messagesplit, songs):
             user_duration = song.user_duration
             if user_duration is None:
                 user_duration = 0
-                song_removed_response.append(song.title)
-            else:
-                song_removed_response.append(f'{song.title} '
-                                             f'[{seconds_convert(user_duration)}]')
-            remove_song.append((song.title, username,
-                                song.filename,
-                                user_duration,
-                                song.link, timecode_convert(song.duration)))
-            g.playlist = [x for x in g.playlist if x != song]
-            try:
-                os.remove(song.path)
-            except:
-                pass
+            remove_tup = (
+                song.title, username, song.filename, user_duration, song.link, timecode_convert(song.duration))
+            if remove_tup not in remove_song:
+                song_removed_response.append(f'{song.title}'
+                                             f'{"" if not user_duration else f" [{seconds_convert(user_duration)}]"}')
+                remove_song.append(remove_tup)
+                g.playlist = [x for x in g.playlist if x != song]
+                try:
+                    os.remove(song.path)
+                except:
+                    pass
         except ValueError:
             target = messagesplit[i]
             song_found = False
@@ -311,19 +309,17 @@ async def sr_favs_del(username, messagesplit, songs):
                     user_duration = song.user_duration
                     if user_duration is None:
                         user_duration = 0
-                        song_removed_response.append(song.title)
-                    else:
-                        song_removed_response.append(f'{song.title} '
-                                                     f'[{seconds_convert(user_duration)}]')
-                    remove_song.append((song.title, username,
-                                        song.filename,
-                                        user_duration,
-                                        song.link, timecode_convert(song.duration)))
-                    g.playlist = [x for x in g.playlist if x != song]
-                    try:
-                        os.remove(song.path)
-                    except:
-                        pass
+                    remove_tup = (
+                        song.title, username, song.filename, user_duration, song.link, timecode_convert(song.duration))
+                    if remove_tup not in remove_song:
+                        song_removed_response.append(f'{song.title}'
+                                                     f'{"" if not user_duration else f" [{seconds_convert(user_duration)}]"}')
+                        remove_song.append(remove_tup)
+                        g.playlist = [x for x in g.playlist if x != song]
+                        try:
+                            os.remove(song.path)
+                        except:
+                            pass
             if not song_found:
                 target_not_found.append(messagesplit[i])
     g.db.remove_srfavs(remove_song)
