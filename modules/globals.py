@@ -29,6 +29,8 @@ sr = True
 player_last_vol = 40  # !sr volume
 ytdl_rate = 4000000  # 4Mb/s !sr download rate
 max_duration = '10:00'  # !sr max song duration (no limit for mods)
+sr_cooldown = '60'
+sr_max_per_request = 5
 
 np = ''
 np_duration = ''

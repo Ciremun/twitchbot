@@ -30,14 +30,14 @@ class ThreadMain(threading.Thread):
         self.name = name
         self.notify_check_inprogress = []
         self.notify_list = []
-
+        self.sr_cooldowns = {}
     def run(self):
         readbuffer = ''
         nowdate = get_current_date()
         date = str(nowdate).replace(':', '.', 3)
 
         async def check_chat_notify(username):
-            if self.notify_list and any(d['recipient'] == username for d in self.notify_list):
+            if any(d['recipient'] == username for d in self.notify_list):
                 self.notify_check_inprogress.append(username)
                 response = []
                 for i in self.notify_list:
@@ -97,8 +97,8 @@ class ThreadMain(threading.Thread):
 
 
 if __name__ == '__main__':
-    g.max_duration = timecode_convert(g.max_duration)  # global var to seconds
-
+    g.max_duration = timecode_convert(g.max_duration)  # to seconds
+    g.sr_cooldown = timecode_convert(g.sr_cooldown)
     s = g.s
     s.connect((g.HOST, g.PORT))
     s.send(bytes("PASS " + g.PASS + "\r\n", "UTF-8"))

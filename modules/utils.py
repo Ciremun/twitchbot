@@ -645,6 +645,8 @@ def download_clip(url, username, user_duration=None, yt_request=True, folder='da
     :param folder: .wav file folder
     :param ytsearch: if youtube search query
     """
+    if not checkmodlist(username):
+        g.Main.sr_cooldowns[username] = time.time()
     name = ''.join(random.choices('qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM' + '1234567890', k=10))
     name = while_is_file(folder, name, '.wav')
     home = f'{folder}{name}.wav'
@@ -713,6 +715,24 @@ def download_clip(url, username, user_duration=None, yt_request=True, folder='da
         else:
             send_message(f'+ {title} - {sr_url} - #{len(g.playlist)}')
         g.sr_queue.new_task(playmusic)
+
+
+def sr(username):
+    if not g.sr:
+        return False
+    return not sr_user_cooldown(username)
+
+
+def sr_user_cooldown(username):
+    user_cooldown = g.Main.sr_cooldowns.get(username, None)
+    if not user_cooldown:
+        return False
+    time_diff = time.time() - user_cooldown
+    if time_diff < g.sr_cooldown:
+        send_message(f'{username}, your cooldown is {seconds_convert(g.sr_cooldown - time_diff, explicit=True)}')
+        return True
+    del g.Main.sr_cooldowns[username]
+    return False
 
 
 class RunInThread(threading.Thread):

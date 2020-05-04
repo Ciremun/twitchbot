@@ -9,7 +9,6 @@ def bot_command(func):  # add command functions to commands dict, check if user 
         if checkbanlist(kwargs['username']):
             return
         return func(**kwargs)
-
     g.commands_dict[func.__code__.co_name[:-8]] = wrapper
     return wrapper
 
@@ -19,7 +18,6 @@ def moderator_command(func):
         if not checkmodlist(kwargs['username']):
             return
         return func(**kwargs)
-
     g.commands_dict[func.__code__.co_name[:-8]] = wrapper
     return wrapper
 
@@ -35,7 +33,6 @@ def conn_query(func):
                 return func(self, *args, **kwargs)
             finally:
                 lock.release()
-
     return wrapper
 
 
@@ -46,5 +43,4 @@ def regular_query(func):
             return func(self, *args, **kwargs)
         finally:
             lock.release()
-
     return wrapper

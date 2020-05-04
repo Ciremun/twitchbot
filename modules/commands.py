@@ -56,20 +56,19 @@ def np_command(*, username, **kwargs):
 
 @moderator_command
 def srv_command(*, username, messagesplit, **kwargs):
-    if g.sr:
-        try:
-            value = int(messagesplit[1])
-            if not 0 <= value <= 100:
-                raise ValueError
-            if player_good_state():
-                g.player_last_vol = value
-                g.Player.audio_set_volume(g.player_last_vol)
-                return
-            send_message(f'{username}, nothing is playing')
-        except IndexError:
-            send_message(f'{g.prefix}sr vol={g.player_last_vol}')
-        except ValueError:
-            send_message(f'{username}, vol 0-100')
+    try:
+        value = int(messagesplit[1])
+        if not 0 <= value <= 100:
+            raise ValueError
+        if player_good_state():
+            g.player_last_vol = value
+            g.Player.audio_set_volume(g.player_last_vol)
+            return
+        send_message(f'{username}, nothing is playing')
+    except IndexError:
+        send_message(f'{g.prefix}sr vol={g.player_last_vol}')
+    except ValueError:
+        send_message(f'{username}, vol 0-100')
 
 
 @bot_command
@@ -80,106 +79,102 @@ def srq_command(*, username, messagesplit, **kwargs):
 
 @moderator_command
 def srs_command(*, username, messagesplit, **kwargs):
-    if g.sr:
-        if len(messagesplit) == 1:
-            if not player_good_state():
-                send_message(f'{username}, nothing is playing')
-            else:
-                g.Player.stop()
-            return
-        if not g.playlist:
-            send_message(f'{username}, playlist is empty')
-            return
-        skipped_response, skip_title, skip_index, user_response, target_not_found = [], [], [], [], []
-        for i in range(1, len(messagesplit)):
-            try:
-                target = int(messagesplit[i])
-                if not 0 < target <= len(g.playlist):
-                    target_not_found.append(f'{target}')
-                    continue
-                song = g.playlist[target - 1]
-                skip_index.append(song)
-                skipped_response.append(
-                    f'{song.title}'
-                    f'{"" if song.user_duration is None else f" [{seconds_convert(song.user_duration)}]"}')
-            except ValueError:
-                target = messagesplit[i]
-                title_skipped = False
-                for song in g.playlist:
-                    if song not in skip_index and target.lower() in song.title.lower():
-                        skip_title.append(song)
-                        skipped_response.append(
-                            f'{song.title}'
-                            f'{"" if song.user_duration is None else f" [{seconds_convert(song.user_duration)}]"}')
-                        title_skipped = True
-                if not title_skipped:
-                    target_not_found.append(target)
-                for song in skip_title:
-                    g.playlist.remove(song)
-                skip_title.clear()
-        for song in skip_index:
-            g.playlist.remove(song)
-        if skipped_response:
-            user_response.append(f'Skip: {", ".join(skipped_response)}')
-        if target_not_found:
-            user_response.append(f'Not found: {", ".join(target_not_found)}')
-        if user_response:
-            user_response_str = "; ".join(user_response)
-            if len(user_response_str) > 470:
-                user_response *= 0
-                if skipped_response:
-                    user_response.append(f'Skip: {len(skipped_response)}')
-                if target_not_found:
-                    user_response.append(f'Not found: {len(target_not_found)}')
-                send_message(f'{username}, {"; ".join(user_response)}')
-            else:
-                send_message(user_response_str)
+    if len(messagesplit) == 1:
+        if not player_good_state():
+            send_message(f'{username}, nothing is playing')
+        else:
+            g.Player.stop()
+        return
+    if not g.playlist:
+        send_message(f'{username}, playlist is empty')
+        return
+    skipped_response, skip_title, skip_index, user_response, target_not_found = [], [], [], [], []
+    for i in range(1, len(messagesplit)):
+        try:
+            target = int(messagesplit[i])
+            if not 0 < target <= len(g.playlist):
+                target_not_found.append(f'{target}')
+                continue
+            song = g.playlist[target - 1]
+            skip_index.append(song)
+            skipped_response.append(
+                f'{song.title}'
+                f'{"" if song.user_duration is None else f" [{seconds_convert(song.user_duration)}]"}')
+        except ValueError:
+            target = messagesplit[i]
+            title_skipped = False
+            for song in g.playlist:
+                if song not in skip_index and target.lower() in song.title.lower():
+                    skip_title.append(song)
+                    skipped_response.append(
+                        f'{song.title}'
+                        f'{"" if song.user_duration is None else f" [{seconds_convert(song.user_duration)}]"}')
+                    title_skipped = True
+            if not title_skipped:
+                target_not_found.append(target)
+            for song in skip_title:
+                g.playlist.remove(song)
+            skip_title.clear()
+    for song in skip_index:
+        g.playlist.remove(song)
+    if skipped_response:
+        user_response.append(f'Skip: {", ".join(skipped_response)}')
+    if target_not_found:
+        user_response.append(f'Not found: {", ".join(target_not_found)}')
+    if user_response:
+        user_response_str = "; ".join(user_response)
+        if len(user_response_str) > 470:
+            user_response *= 0
+            if skipped_response:
+                user_response.append(f'Skip: {len(skipped_response)}')
+            if target_not_found:
+                user_response.append(f'Not found: {len(target_not_found)}')
+            send_message(f'{username}, {"; ".join(user_response)}')
+        else:
+            send_message(user_response_str)
 
 
 @moderator_command
 def src_command(*, username, **kwargs):
-    if g.sr:
-        if not g.playlist:
-            send_message(f'{username} playlist is empty')
-            return
-        g.playlist *= 0
-        send_message(f'queue wiped')
+    if not g.playlist:
+        send_message(f'{username} playlist is empty')
+        return
+    g.playlist.clear()
+    send_message(f'queue wiped')
 
 
 @moderator_command
 def srp_command(*, username, **kwargs):
-    if g.sr:
-        if str(g.Player.get_state()) == 'State.Playing':
-            g.Player.pause()
-        elif str(g.Player.get_state()) == 'State.Paused':
-            g.Player.play()
-        else:
-            send_message(f'{username}, nothing is playing')
+    if str(g.Player.get_state()) == 'State.Playing':
+        g.Player.pause()
+    elif str(g.Player.get_state()) == 'State.Paused':
+        g.Player.play()
+    else:
+        send_message(f'{username}, nothing is playing')
 
 
 @moderator_command
 def srt_command(*, username, messagesplit, **kwargs):
-    if g.sr:
-        if not player_good_state():
-            send_message(f'{username}, nothing is playing')
-            return
-        try:
-            timecode = messagesplit[1]
-            if re.match(timecode_re, timecode):
-                seconds = timecode_convert(timecode)
-                if seconds > timecode_convert(g.np_duration):
-                    send_message(f'{username}, time exceeds duration! [{g.np_duration}]')
-                else:
-                    g.Player.set_time(seconds * 1000)
+    if not player_good_state():
+        send_message(f'{username}, nothing is playing')
+        return
+    try:
+        timecode = messagesplit[1]
+        if re.match(timecode_re, timecode):
+            seconds = timecode_convert(timecode)
+            if seconds > timecode_convert(g.np_duration):
+                send_message(f'{username}, time exceeds duration! [{g.np_duration}]')
             else:
-                send_message(f'{username}, timecode error')
-        except IndexError:
-            send_message(f'{username}, no timecode')
+                g.Player.set_time(seconds * 1000)
+        else:
+            send_message(f'{username}, timecode error')
+    except IndexError:
+        send_message(f'{username}, no timecode')
 
 
 @bot_command
 def srfa_command(*, username, messagesplit, **kwargs):
-    if g.sr:
+    if not sr_user_cooldown(username):
         try:
             url_or_timecode = messagesplit[1]
             if re.match(timecode_re, url_or_timecode):
@@ -209,21 +204,20 @@ def srfa_command(*, username, messagesplit, **kwargs):
 
 @bot_command
 def srfd_command(*, username, messagesplit, **kwargs):
-    if g.sr:
-        try:
-            if messagesplit[1]:
-                songs = get_srfavs_dictlist(username)
-                if not songs:
-                    send_message(f'{username}, no favorite songs found')
-                    return
-                asyncio.run(sr_favs_del(username, messagesplit, songs))
-        except IndexError:
-            send_message(f'{username}, {g.prefix}srfd <index1> <index2>..')
+    try:
+        if messagesplit[1]:
+            songs = get_srfavs_dictlist(username)
+            if not songs:
+                send_message(f'{username}, no favorite songs found')
+                return
+            asyncio.run(sr_favs_del(username, messagesplit, songs))
+    except IndexError:
+        send_message(f'{username}, {g.prefix}srfd <index1> <index2>..')
 
 
 @bot_command
 def srfp_command(*, username, messagesplit, **kwargs):
-    if g.sr:
+    if sr(username):
         try:
             if messagesplit[1]:
                 songs = get_srfavs_dictlist(username)
@@ -263,9 +257,15 @@ def srfp_command(*, username, messagesplit, **kwargs):
                                 else:
                                     response_added.append(f'{j.title} - {j.link} - '
                                                           f'#{len(g.playlist)}')
+                            if len(response_added) >= g.sr_max_per_request:
+                                break
                         if not title_found:
                             target_not_found.append(title)
+                    if len(response_added) >= g.sr_max_per_request:
+                        break
                 if response_added:
+                    if not checkmodlist(username):
+                        g.Main.sr_cooldowns[username] = time.time()
                     response.append(f"+ {'; '.join(response_added)}")
                 if target_not_found:
                     response.append(f"Not found: {', '.join(target_not_found)}")
@@ -286,59 +286,57 @@ def srfp_command(*, username, messagesplit, **kwargs):
 
 @bot_command
 def srfl_command(*, username, messagesplit, **kwargs):
-    if g.sr:
-        try:
-            if messagesplit[1]:
-                songs = get_srfavs_dictlist(username)
-                if not songs:
-                    send_message(f'{username}, no favorite songs found')
-                    return
-                target_not_found = []
-                response = []
-                for i in range(1, len(messagesplit)):
-                    try:
-                        index = int(messagesplit[i])
-                        if not 0 < index <= len(songs):
-                            target_not_found.append(messagesplit[i])
-                            continue
-                        song = songs[index - 1]
-                        response.append(f'{song.title} - {song.link}')
-                    except ValueError:
-                        title = messagesplit[i]
-                        title_found = False
-                        for j in songs:
-                            if title.lower() in j.title.lower():
-                                response.append(f'{j.title} - {j.link}')
-                                title_found = True
-                        if not title_found:
-                            target_not_found.append(title)
-                if target_not_found:
-                    response.append(f'Not found: {", ".join(target_not_found)}')
-                if response:
-                    response_str = ' ; '.join(response)
-                    if len(response_str) > 470:
-                        response_arr = divide_chunks(response_str, 470, response, joinparam=' ; ')
-                        for msg in response_arr:
-                            send_message(msg)
-                    else:
-                        send_message(' ; '.join(response))
-        except IndexError:
-            send_message(f'{username}, {g.prefix}srfl <word/index>')
+    try:
+        if messagesplit[1]:
+            songs = get_srfavs_dictlist(username)
+            if not songs:
+                send_message(f'{username}, no favorite songs found')
+                return
+            target_not_found = []
+            response = []
+            for i in range(1, len(messagesplit)):
+                try:
+                    index = int(messagesplit[i])
+                    if not 0 < index <= len(songs):
+                        target_not_found.append(messagesplit[i])
+                        continue
+                    song = songs[index - 1]
+                    response.append(f'{song.title} - {song.link}')
+                except ValueError:
+                    title = messagesplit[i]
+                    title_found = False
+                    for j in songs:
+                        if title.lower() in j.title.lower():
+                            response.append(f'{j.title} - {j.link}')
+                            title_found = True
+                    if not title_found:
+                        target_not_found.append(title)
+            if target_not_found:
+                response.append(f'Not found: {", ".join(target_not_found)}')
+            if response:
+                response_str = ' ; '.join(response)
+                if len(response_str) > 470:
+                    response_arr = divide_chunks(response_str, 470, response, joinparam=' ; ')
+                    for msg in response_arr:
+                        send_message(msg)
+                else:
+                    send_message(' ; '.join(response))
+    except IndexError:
+        send_message(f'{username}, {g.prefix}srfl <word/index>')
 
 
 @bot_command
 def srf_command(*, username, messagesplit, **kwargs):
-    if g.sr:
-        songs = get_srfavs_dictlist(username)
-        if not songs:
-            send_message(f'{username}, no favorite songs found')
-            return
-        songs_arr = [f'{song.title} [{seconds_convert(song.user_duration)}] - #{count}'
-                     if song.user_duration is not None else f'{song.title} - #{count}'
-                     for count, song in enumerate(songs, start=1)]
-        songs_str = ", ".join(songs_arr)
-        songs_arr = divide_chunks(songs_str, 470, lst=songs_arr, joinparam=', ')
-        send_list(username, messagesplit, songs_str, songs_arr, 1, "list")
+    songs = get_srfavs_dictlist(username)
+    if not songs:
+        send_message(f'{username}, no favorite songs found')
+        return
+    songs_arr = [f'{song.title} [{seconds_convert(song.user_duration)}] - #{count}'
+                 if song.user_duration is not None else f'{song.title} - #{count}'
+                 for count, song in enumerate(songs, start=1)]
+    songs_str = ", ".join(songs_arr)
+    songs_arr = divide_chunks(songs_str, 470, lst=songs_arr, joinparam=', ')
+    send_list(username, messagesplit, songs_str, songs_arr, 1, "list")
 
 
 @bot_command
@@ -353,7 +351,7 @@ def sr_command(*, username, messagesplit, message):
                 send_message(f'{g.prefix}sr on')
         elif g.sr:
             np_command(username=username, messagesplit=messagesplit, message=message)
-    elif g.sr:
+    elif sr(username):
         match = sr_download(messagesplit, username, timecode_pos=2)
         if not match:
             if re.match(timecode_re, messagesplit[-1]):
