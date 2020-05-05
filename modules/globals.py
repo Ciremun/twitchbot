@@ -49,6 +49,7 @@ sr_queue = RunInThread('sr')
 sr_download_queue = RunInThread('srdl')
 px_download_queue = RunInThread('pixivdl')
 main_queue = RunInThread('main')
+utils_queue = RunInThread('utils')
 commands_dict = {}
 PASS, px_token, channel_id, client_id, client_auth = '', '', '', '', ''
 Main = None

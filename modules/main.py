@@ -8,7 +8,6 @@ if __name__ == '__main__':
 import re
 import time
 import threading
-import asyncio
 import modules.globals as g
 import modules.commands
 
@@ -37,7 +36,7 @@ class ThreadMain(threading.Thread):
         nowdate = get_current_date()
         date = str(nowdate).replace(':', '.', 3)
 
-        async def check_chat_notify(username):
+        def check_chat_notify(username):
             if any(d['recipient'] == username for d in self.notify_list):
                 self.notify_check_inprogress.append(username)
                 response = []
@@ -50,7 +49,7 @@ class ThreadMain(threading.Thread):
                     if len(response_str) > 480:
                         for i in divide_chunks(response_str, 480, response, joinparam='; '):
                             send_message(i)
-                            await asyncio.sleep(1)
+                            time.sleep(1)
                     else:
                         send_message(response_str)
                 self.notify_list = [d for d in self.notify_list if d['recipient'] != username]
@@ -80,7 +79,7 @@ class ThreadMain(threading.Thread):
                 print(f"{username}: {message}")
 
                 if all(x != username for x in self.notify_check_inprogress):
-                    asyncio.run(check_chat_notify(username))
+                    g.utils_queue.new_task(check_chat_notify, username)
 
                 call_tts.new_task(call_tts.new_message, message, messagesplit, username)
 

@@ -1,4 +1,3 @@
-import asyncio
 import modules.main
 import modules.decorators
 import modules.info as info
@@ -210,7 +209,7 @@ def srfd_command(*, username, messagesplit, **kwargs):
             if not songs:
                 send_message(f'{username}, no favorite songs found')
                 return
-            asyncio.run(sr_favs_del(username, messagesplit, songs))
+            g.utils_queue.new_task(sr_favs_del, username, messagesplit, songs)
     except IndexError:
         send_message(f'{username}, {g.prefix}srfd <index1> <index2>..')
 
@@ -456,32 +455,30 @@ def cancel_command(*, username, messagesplit, **kwargs):
 
 @moderator_command
 def ban_command(*, username, messagesplit, message):
-    if message != f"{g.prefix}ban":
-        asyncio.run(ban_mod_commands(username, messagesplit, 'users banned', 'already banned',
-                                     checkbanlist, g.db.add_ban, True))
+    if message[1:] != f"ban":
+        g.utils_queue.new_task(ban_mod_commands, username, messagesplit, 'users banned', 'already banned',
+                               checkbanlist, g.db.add_ban, True)
 
 
 @moderator_command
 def unban_command(*, username, messagesplit, message):
-    if message != f"{g.prefix}unban":
-        asyncio.run(ban_mod_commands(username, messagesplit,
-                                     'users unbanned', f'not in the list',
-                                     checkbanlist, g.db.remove_ban, False))
+    if message[1:] != f"unban":
+        g.utils_queue.new_task(ban_mod_commands, username, messagesplit, 'users unbanned', f'not in the list',
+                               checkbanlist, g.db.remove_ban, False)
 
 
 @bot_command
 def mod_command(*, username, messagesplit, message):
-    if message != f"{g.prefix}mod" and username == g.admin:
-        asyncio.run(ban_mod_commands(username, messagesplit, 'users modded', 'already modded',
-                                     checkmodlist, g.db.add_mod, True))
+    if message[1:] != f"mod" and username == g.admin:
+        g.utils_queue.new_task(ban_mod_commands, username, messagesplit, 'users modded', 'already modded',
+                               checkmodlist, g.db.add_mod, True)
 
 
 @bot_command
 def unmod_command(*, username, messagesplit, message):
-    if message != f"{g.prefix}unmod" and username == g.admin:
-        asyncio.run(ban_mod_commands(username, messagesplit,
-                                     'users unmodded', f'not in the list',
-                                     checkmodlist, g.db.remove_mod, False))
+    if message[1:] != f"unmod" and username == g.admin:
+        g.utils_queue.new_task(ban_mod_commands, username, messagesplit, 'users unmodded', f'not in the list',
+                               checkmodlist, g.db.remove_mod, False)
 
 
 @bot_command
@@ -627,14 +624,14 @@ def olist_command(*, username, messagesplit, **kwargs):
 
 @bot_command
 def del_command(*, username, messagesplit, message):
-    if message != f"{g.prefix}del":
-        asyncio.run(del_chat_command(username, messagesplit))
+    if message[1:] != f"del":
+        g.utils_queue.new_task(del_chat_command, username, messagesplit)
 
 
 @bot_command
 def ren_command(*, username, messagesplit, message):
-    if message != f"{g.prefix}ren":
-        asyncio.run(rename_command(username, messagesplit))
+    if message[1:] != f"ren":
+        g.utils_queue.new_task(rename_command, username, messagesplit)
 
 
 @bot_command
@@ -720,23 +717,23 @@ def help_command(*, username, messagesplit, pipe=False, **kwargs):
 
 @moderator_command
 def title_command(*, username, messagesplit, **kwargs):
-    asyncio.run(change_stream_settings(username, messagesplit, 'title'))
+    g.utils_queue.new_task(change_stream_settings, username, messagesplit, 'title')
 
 
 @moderator_command
 def game_command(*, username, messagesplit, **kwargs):
-    asyncio.run(change_stream_settings(username, messagesplit, 'game'))
+    g.utils_queue.new_task(change_stream_settings, username, messagesplit, 'game')
 
 
 @bot_command
 def change_command(*, username, messagesplit, message):
-    if message != f"{g.prefix}change":
-        change_save_command(username, messagesplit, do_draw=True)
+    if message[1:] != f"change":
+        g.utils_queue.new_task(change_save_command, username, messagesplit, do_draw=True)
 
 
 @bot_command
 def pipe_command(*, username, messagesplit, message):
-    if message != f"{g.prefix}pipe":
+    if message[1:] != f"pipe":
         pipesplit = " ".join(messagesplit[1:]).split(' | ')
         if len(pipesplit) < 2:
             send_message(f'{username}, you need at least two commands')

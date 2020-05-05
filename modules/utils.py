@@ -140,7 +140,7 @@ def sort_pixiv_arts(arts_list, result_list):
     return result_list
 
 
-async def rename_command(username, messagesplit):  # rename function for image owners
+def rename_command(username, messagesplit):  # rename function for image owners
     try:
         imagename = messagesplit[1].lower()
         newimagename = fixname(messagesplit[2].lower())
@@ -277,7 +277,7 @@ def updatelastlink(selected):
     return
 
 
-async def sr_favs_del(username, messagesplit, songs):
+def sr_favs_del(username, messagesplit, songs):
     response, remove_song, target_not_found, song_removed_response = [], [], [], []
     for i in range(1, len(messagesplit)):
         try:
@@ -340,7 +340,7 @@ async def sr_favs_del(username, messagesplit, songs):
             send_message(response_str)
 
 
-async def del_chat_command(username, messagesplit):
+def del_chat_command(username, messagesplit):
     response_not_found, response_denied, response_deleted, remove_links, remove_owners = [], [], [], [], []
     file_deleted = False
     moderator = checkmodlist(username)
@@ -380,7 +380,7 @@ async def del_chat_command(username, messagesplit):
             send_message(i)
 
 
-async def delete_ban_mod(response, boolean, str1, str2, username):
+def delete_ban_mod(response, boolean, str1, str2, username):
     if response:
         response = ', '.join(response)
         if boolean:
@@ -397,7 +397,7 @@ async def delete_ban_mod(response, boolean, str1, str2, username):
         send_message('{}, {}'.format(username, str1))
 
 
-async def ban_mod_commands(username, messagesplit, str1, str2, check_func, db_call, check_func_result):
+def ban_mod_commands(username, messagesplit, str1, str2, check_func, db_call, check_func_result):
     response = []
     users = []
     boolean = False
@@ -409,7 +409,7 @@ async def ban_mod_commands(username, messagesplit, str1, str2, check_func, db_ca
             users.append((user,))
             boolean = True
     db_call(users)
-    await delete_ban_mod(response, boolean, str1, str2, username)
+    delete_ban_mod(response, boolean, str1, str2, username)
 
 
 def sr_get_list(username, messagesplit):
@@ -423,7 +423,7 @@ def sr_get_list(username, messagesplit):
     send_list(username, messagesplit, sr_str, sr_list, 1, "list")
 
 
-async def change_stream_settings(username, messagesplit, setting):
+def change_stream_settings(username, messagesplit, setting):
     channel_info = requests.get(f"https://api.twitch.tv/kraken/channels/{g.channel_id}",
                                 headers={"Client-ID": g.client_id,
                                          "Accept": "application/vnd.twitchtv.v5+json"}).json()
@@ -432,16 +432,16 @@ async def change_stream_settings(username, messagesplit, setting):
         if not set_title:
             send_message(f'Title: {channel_info["status"]}')
         else:
-            await change_status_game(set_title, channel_info["game"], username)
+            change_status_game(set_title, channel_info["game"], username)
     elif setting == 'game':
         set_game = " ".join(messagesplit[1:])
         if not set_game:
             send_message(f'Game: {channel_info["game"]}')
         else:
-            await change_status_game(channel_info["status"], set_game, username)
+            change_status_game(channel_info["status"], set_game, username)
 
 
-async def change_status_game(channel_status, channel_game, username):
+def change_status_game(channel_status, channel_game, username):
     requests.put(f"https://api.twitch.tv/kraken/channels/{g.channel_id}",
                  headers={"Client-ID": g.client_id,
                           "Accept": "application/vnd.twitchtv.v5+json",
