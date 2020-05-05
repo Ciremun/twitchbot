@@ -22,6 +22,7 @@ youtube-dl>=2020.1.24
 requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 
 ## tokens
+
 run `token_setup.py` to add twitch and pixiv tokens  
 
 ## youtubedl
@@ -52,7 +53,9 @@ get account cookies using `cookies.txt` browser extension
 `clear_folders` (list of strings): clear folders on !exit  
 `player_last_vol` (int): startup songrequests volume (0-100)  
 `ytdl_rate` (int): songrequests download speed in bytes/s  
-`max_duration` (string): songrequests max duration, no limit for bot moderators, timecode string (e.g. 10:00 - ten minutes)  
+`max_duration` (string): songrequests non-mod max song duration, timecode string (ex. 10:00)  
+`sr_cooldown` (string): songrequests non-mod cooldown, timecode string / falsy value  
+`sr_max_per_request` (int): max number of song per request (ex. using srfp command)  
 
 ## commands.py
 
@@ -85,6 +88,7 @@ get account cookies using `cookies.txt` browser extension
 `notify <username> <message>` - notify twitch user when they next type in chat  
 `when [name]` - check when requested song is going to play (up to 5)  
 ### bot moderators
+
 `ban <name> [name]..` - add user(s) to ignore-list  
 `unban <name> [name]..` - remove user(s) from ignore-list  
 `banlist` - get bot ignore-list  
@@ -102,7 +106,9 @@ get account cookies using `cookies.txt` browser extension
 `srv [value]` - get/change volume  
 `srp` - play/pause  
 `die` - set greenscreen.png  
+
 ### bot admin
+
 `log` - enable/disable chat logging  
 `mod/unmod` - remove/add user to bot modlist  
 `exit` - clear folders, exit bot  
