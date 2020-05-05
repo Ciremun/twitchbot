@@ -1,6 +1,7 @@
 import sys
 import os
 from os.path import realpath
+
 if __name__ == '__main__':
     sys.path.append(realpath('../'))
     os.chdir('../')
@@ -20,7 +21,6 @@ from modules.pixiv import Pixiv
 g.PASS, g.px_token, g.channel_id, g.client_id, g.client_auth = [' '.join(token.split()[1:]) for token in
                                                                 open('data/special/tokens')]
 
-
 startTime = time.time()  # uptime
 
 
@@ -31,6 +31,7 @@ class ThreadMain(threading.Thread):
         self.notify_check_inprogress = []
         self.notify_list = []
         self.sr_cooldowns = {}
+
     def run(self):
         readbuffer = ''
         nowdate = get_current_date()
@@ -81,7 +82,7 @@ class ThreadMain(threading.Thread):
                 if all(x != username for x in self.notify_check_inprogress):
                     asyncio.run(check_chat_notify(username))
 
-                call_tts.temper.append([message, username])
+                call_tts.new_task(call_tts.new_message, message, messagesplit, username)
 
                 if g.logs:
                     strdate = get_current_date()

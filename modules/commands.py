@@ -791,11 +791,14 @@ def tts_colon_command(*, username, messagesplit, **kwargs):
 def tts_command(*, username, messagesplit, **kwargs):
     try:
         if messagesplit[1] == 'vc':
-            call_tts.send_set_tts_vc(username, messagesplit)
+            call_tts.new_task(call_tts.send_set_tts_vc, username, messagesplit)
         elif messagesplit[1] == 'vol':
             try:
-                call_tts.engine.setProperty('volume', float(messagesplit[2]))
-                send_message('{}, vol={}'.format(username, float(messagesplit[2])))
+                vol = float(messagesplit[2])
+                if not 0 <= vol <= 1:
+                    send_message(f'{username}, volume 0-1')
+                    return
+                call_tts.new_task(call_tts.change_volume, vol)
             except IndexError:
                 send_message('{}, vol={}'.format(username, call_tts.engine.getProperty('volume')))
         elif messagesplit[1] == 'rate':
