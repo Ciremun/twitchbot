@@ -764,17 +764,24 @@ def pipe_command(*, username, messagesplit, message):
                 if i[0][1:] == 'tts':
                     i[0] += '_colon'
                 if i[1:]:
-                    result.insert(0, " ".join(i[1:]))
-                    #  insert last command args to specify users, append to tts
+                    for last_arg in i[:0:-1]:
+                        result.insert(0, last_arg)
+                    #  insert last command args to add something before piped message, example:
+                    #  !notify <last_args> <piped message>
+                    #  output for "!pipe uptime | notify ciremun bot uptime is:" will create notification for ciremun:
+                    #  ciremun, <notify_sender>: bot uptime is: <bot_uptime> [<time> ago]
             try:
                 if all(i[0][1:] != x for x in info.pipe_commands):
                     raise TypeError
                 command = g.commands_dict[i[0][1:]]
                 result.insert(0, i[0])  # insert command string at the beginning, so it looks like chat message
                 result = command(username=username, messagesplit=result, message=" ".join(result), pipe=pipe)
-                if result is None and not last_item:
-                    send_message(f'{username}, {i[0][1:]} - mod command')
-                    return
+                if not last_item:
+                    if result is False:
+                        send_message(f'{username}, {i[0][1:]} - mod command')
+                        return
+                    elif result is None:
+                        return
             except TypeError:
                 send_message(f'{username}, {i[0][1:]} - unsupported command')
                 return
@@ -786,7 +793,7 @@ def pipe_command(*, username, messagesplit, message):
 @bot_command
 def tts_colon_command(*, username, messagesplit, **kwargs):
     messagesplit[0] = 'tts:'
-    call_tts.temper.append([" ".join(messagesplit), username])
+    call_tts.new_task(call_tts.new_message, " ".join(messagesplit), messagesplit, username)
 
 
 @moderator_command
