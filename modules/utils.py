@@ -724,12 +724,15 @@ def sr(username):
 
 
 def sr_user_cooldown(username):
+    sr_cooldown = g.sr_cooldown
+    if not sr_cooldown:
+        return False
     user_cooldown = g.Main.sr_cooldowns.get(username, None)
     if not user_cooldown:
         return False
     time_diff = time.time() - user_cooldown
-    if time_diff < g.sr_cooldown:
-        send_message(f'{username}, your cooldown is {seconds_convert(g.sr_cooldown - time_diff, explicit=True)}')
+    if time_diff < sr_cooldown:
+        send_message(f'{username}, your cooldown is {seconds_convert(sr_cooldown - time_diff, explicit=True)}')
         return True
     del g.Main.sr_cooldowns[username]
     return False

@@ -13,8 +13,8 @@ screenheight = 990  # image window width/height in px
 pixiv_artratio = 1.3  # max pixiv art width/height ratio
 res = 'data/custom/'  # init image folder
 drawfile = 'rempls.gif'  # init image
-prefix = '!'
-banned_tags = ['Pokémon', 'how to draw', 'oshinagaki', 'subarashikihokkorinosekai']  # ban pixiv tags
+prefix = '$'
+banned_tags = ['Pokémon', 'how to draw', 'oshinagaki', 'subarashikihokkorinosekai', 'catalog']  # ban pixiv tags
 pixiv_size = Size.MEDIUM
 clear_folders = ['data/sounds/sr/', 'data/pixiv/', 'data/images/']  # clear folders on !exit
 tts_voices = {'haruka': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\TTS_MS_JA-JP_HARUKA_11.0',
@@ -23,13 +23,13 @@ tts_voices = {'haruka': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\To
               'ivy': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\Ivy RSI Harpo 22kHz'}
 tts_default_vc = tts_voices['ivy']
 tts = False
-tts_volume = 0.35
+tts_volume = 0.15
 logs = False
 sr = True
-player_last_vol = 40  # !sr volume
+player_last_vol = 23  # !sr volume
 ytdl_rate = 4000000  # 4Mb/s !sr download rate
 max_duration = '10:00'  # !sr max song duration (no limit for mods)
-sr_cooldown = '60'
+sr_cooldown = '2:28'
 sr_max_per_request = 5
 
 np = ''
