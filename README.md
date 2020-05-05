@@ -54,8 +54,8 @@ get account cookies using `cookies.txt` browser extension
 `player_last_vol` (int): startup songrequests volume (0-100)  
 `ytdl_rate` (int): songrequests download speed in bytes/s  
 `max_duration` (string): songrequests non-mod max song duration, timecode string (ex. 10:00)  
-`sr_cooldown` (string): songrequests non-mod cooldown, timecode string / falsy value  
-`sr_max_per_request` (int): max number of song per request (ex. using srfp command)  
+`sr_cooldown` (string): songrequests non-mod cooldown, timecode string  
+`sr_max_per_request` (int): max number of songs per request (ex. using srfp command)  
 
 ## commands.py
 

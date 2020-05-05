@@ -5,18 +5,18 @@ import modules.database
 from pixivapi import Size
 from modules.utils import RunInThread
 
-CHANNEL = "ciremun"  # twitch channel to listen
-BOT = "shtcd"  # twtich bot username
-admin = "ciremun"  # bot admin
+CHANNEL = "ciremun"
+BOT = "shtcd"
+admin = "ciremun"
 screenwidth = 390
-screenheight = 990  # image window width/height in px
-pixiv_artratio = 1.3  # max pixiv art width/height ratio
-res = 'data/custom/'  # init image folder
-drawfile = 'rempls.gif'  # init image
+screenheight = 645
+pixiv_artratio = 1.3
+res = 'data/custom/'
+drawfile = 'rempls.gif'
 prefix = '$'
-banned_tags = ['Pokémon', 'how to draw', 'oshinagaki', 'subarashikihokkorinosekai', 'catalog']  # ban pixiv tags
+banned_tags = ['Pokémon', 'how to draw', 'oshinagaki', 'subarashikihokkorinosekai', 'catalog']
 pixiv_size = Size.MEDIUM
-clear_folders = ['data/sounds/sr/', 'data/pixiv/', 'data/images/']  # clear folders on !exit
+clear_folders = ['data/sounds/sr/', 'data/pixiv/', 'data/images/']
 tts_voices = {'haruka': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\TTS_MS_JA-JP_HARUKA_11.0',
               'mizuki': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\VE_Japanese_Mizuki_22kHz',
               'yuri': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\VE_Russian_Yuri_22kHz',
@@ -26,10 +26,10 @@ tts = False
 tts_volume = 0.15
 logs = False
 sr = True
-player_last_vol = 23  # !sr volume
-ytdl_rate = 4000000  # 4Mb/s !sr download rate
-max_duration = '10:00'  # !sr max song duration (no limit for mods)
-sr_cooldown = '2:28'
+player_last_vol = 23
+ytdl_rate = 4000000
+max_duration = '10:00'
+sr_cooldown = '60'
 sr_max_per_request = 5
 
 np = ''
