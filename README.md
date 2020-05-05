@@ -33,7 +33,7 @@ get account cookies using `cookies.txt` browser extension
 
 ## globals.py
 
-`CHANNEL` (string): twitch channel to listen  
+`CHANNEL` (string): twitch username to listen  
 `BOT` (string): twitch bot username  
 `admin` (string): bot admin, twitch username  
 `tts` (boolean): enable/disable tts  

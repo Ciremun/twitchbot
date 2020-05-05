@@ -341,14 +341,14 @@ def srf_command(*, username, messagesplit, **kwargs):
 
 @bot_command
 def sr_command(*, username, messagesplit, message):
-    if message == f"{g.prefix}sr":
+    if message[1:] == f"sr":
         if checkmodlist(username):
             if g.sr:
                 g.sr = False
-                send_message(f'{g.prefix}sr off')
+                send_message(f'songrequests off')
             else:
                 g.sr = True
-                send_message(f'{g.prefix}sr on')
+                send_message(f'songrequests on')
         elif g.sr:
             np_command(username=username, messagesplit=messagesplit, message=message)
     elif sr(username):
@@ -421,6 +421,8 @@ def cancel_command(*, username, messagesplit, **kwargs):
                     playlist_cancelled.append(f'{song.title} [{seconds_convert(song.user_duration)}]')
                 else:
                     playlist_cancelled.append(song.title)
+            else:
+                playlist_not_found.append(f'{target}')
         except ValueError:
             target = messagesplit[i]
             for song in g.playlist:
@@ -493,7 +495,7 @@ def set_command(*, username, messagesplit, message):
             else:
                 send_message(f'{username}, {selected} not found ')
         else:
-            send_message('{}, names include extensions [png/gif]'.format(username))
+            send_message(f'{username}, names include extensions [png/gif]')
 
 
 @bot_command
@@ -800,13 +802,17 @@ def tts_command(*, username, messagesplit, **kwargs):
                     return
                 call_tts.new_task(call_tts.change_volume, vol)
             except IndexError:
-                send_message('{}, vol={}'.format(username, call_tts.engine.getProperty('volume')))
+                send_message(f'{username}, vol={call_tts.engine.getProperty("volume")}')
+            except ValueError:
+                send_message(f'{username}, error converting to float! [{messagesplit[2]}]')
         elif messagesplit[1] == 'rate':
             try:
-                call_tts.engine.setProperty('rate', int(messagesplit[2]))
-                send_message('{}, rate={}'.format(username, float(messagesplit[2])))
+                rate = int(messagesplit[2])
+                call_tts.new_task(call_tts.change_rate, rate)
             except IndexError:
-                send_message('{}, rate={}'.format(username, call_tts.engine.getProperty('rate')))
+                send_message(f'{username}, rate={call_tts.engine.getProperty("rate")}')
+            except ValueError:
+                send_message(f'{username}, error converting to int! [{messagesplit[2]}]')
         elif messagesplit[1] == 'cfg':
             send_message(f"vol={call_tts.engine.getProperty('volume')}, rate="
                          f"{call_tts.engine.getProperty('rate')}, "

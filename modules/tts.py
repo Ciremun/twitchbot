@@ -59,5 +59,9 @@ class ThreadTTS(threading.Thread):
         self.engine.setProperty('volume', vol)
         send_message(f'tts vol={vol}')
 
+    def change_rate(self, rate: int):
+        self.engine.setProperty('rate', rate)
+        send_message(f'tts rate={rate}')
+
 
 call_tts = ThreadTTS("calltts")
