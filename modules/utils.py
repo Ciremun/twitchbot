@@ -732,16 +732,17 @@ def download_clip(url, username, user_duration=None, yt_request=True, folder='da
                 title = entries.get('title', None)
                 duration = entries.get('duration', 0)
                 url = f"https://youtu.be/{entries.get('id', None)}"
+                filename = 'None'
+                path = 'None'
             else:
                 title = info_dict.get('title', None)
                 duration = info_dict.get('duration', 0)
-                if yt_request:
-                    url = f'https://youtu.be/{info_dict.get("id", None)}'
             user_duration = check_sr_req(user_duration, duration, username)
             if user_duration is False:
                 return
-            ydl.prepare_filename(info_dict)
-            ydl.download([url])
+            if not ytsearch:
+                ydl.prepare_filename(info_dict)
+                ydl.download([url])
     if save:
         if user_duration is None:
             g.db.add_srfavs(path, filename, title, duration, 0, url, username)
