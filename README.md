@@ -17,6 +17,7 @@ python-vlc>=3.0.7110
 pyttsx3>=2.81
 requests>=2.22.0
 youtube-dl>=2020.1.24
+pafy>=0.5.5
 ```
 
 requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
