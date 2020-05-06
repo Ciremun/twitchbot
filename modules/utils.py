@@ -679,13 +679,10 @@ def download_clip(url, username, user_duration=None, yt_request=True, folder='da
         user_duration = check_sr_req(user_duration, duration, username)
         if user_duration is False:
             return
+        path = 'None'
         filename = 'None'
         title = pafy_obj.title
         url = f'https://youtu.be/{pafy_obj.videoid}'
-        if save:
-            path = 'None'
-        else:
-            path = fix_pafy_url(pafy_obj.getbestaudio().url, pafy_obj)
     else:
         name = ''.join(random.choices('qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM' + '1234567890', k=10))
         name = while_is_file(folder, name, '.wav')
