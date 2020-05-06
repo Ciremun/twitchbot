@@ -8,13 +8,15 @@ pixiv_token = input('pixiv_token?\n')
 twitch_channel_id = input('twitch_channel_id?\n')
 twitch_app_client_id = input('twitch_app_client_id?\n')
 twitch_app_oauth = input('twitch_app_oauth[channel_editor]?\n')
+google_api_key = input('google_api_key[pafy]?\n')
 
 with open('data/special/tokens', 'w') as f:
     f.write(f'twitch_bot_token {twitch_bot_token}\n'
             f'pixiv_token {pixiv_token}\n'
             f'twitch_channel_id {twitch_channel_id}\n'
             f'twitch_app_client_id {twitch_app_client_id}\n'
-            f'twitch_app_oauth[channel_editor] {twitch_app_oauth}')
+            f'twitch_app_oauth[channel_editor] {twitch_app_oauth}\n'
+            f'google_api_key {google_api_key}')
 with conn:
     c.execute(f'delete from owners')
     c.execute(f'delete from links')
