@@ -709,11 +709,10 @@ def download_clip(url, username, user_duration=None, yt_request=True, folder='da
                     f'{username}, {title} [{seconds_convert(user_duration)}] - {sr_url} - added to favorites')
             return
         duration = seconds_convert(duration)
-        g.playlist.append(Song(home, f'{name}.wav', title, duration, user_duration, sr_url, username))
-        if user_duration is not None:
-            send_message(f'+ {title} [{seconds_convert(user_duration)}] - {sr_url} - #{len(g.playlist)}')
-        else:
-            send_message(f'+ {title} - {sr_url} - #{len(g.playlist)}')
+        song = Song(home, f'{name}.wav', title, duration, user_duration, sr_url, username)
+        g.playlist.append(song)
+        response = new_song_response([], song)
+        send_message(f'+ {response[0]}')
         g.sr_queue.new_task(playmusic)
 
 
@@ -723,7 +722,7 @@ def sr(username):
     return not sr_user_cooldown(username)
 
 
-def sr_user_cooldown(username):
+def sr_user_cooldown(username: str):
     sr_cooldown = g.sr_cooldown
     if not sr_cooldown:
         return False
@@ -736,6 +735,36 @@ def sr_user_cooldown(username):
         return True
     del g.Main.sr_cooldowns[username]
     return False
+
+
+def next_song_in():
+    if player_good_state():
+        current_time_ms = g.Player.get_time()
+        current_time = floor(current_time_ms / 1000)
+        np_duration = timecode_convert(g.np_duration)
+        return np_duration - current_time
+    return 0
+
+
+def new_song_response(response: list, song: Song):
+    next_in = next_song_in()
+    if not next_in and g.sr_queue.q.empty():
+        response.append(
+            f'{song.title} '
+            f'{"" if song.user_duration is None else f"[{seconds_convert(song.user_duration)}]"}'
+            f' - {song.link} - Now playing'
+        )
+    else:
+        next_in += sum(
+            timecode_convert(x.duration) - x.user_duration if x.user_duration else timecode_convert(x.duration) for x in
+            g.playlist[:-1])
+        response.append(
+            f'{song.title} '
+            f'{"" if song.user_duration is None else f"[{seconds_convert(song.user_duration)}]"}'
+            f' - {song.link} - #{len(g.playlist)}'
+            f'{"" if not next_in else f", playing in {seconds_convert(next_in, explicit=True)}"}'
+        )
+    return response
 
 
 class RunInThread(threading.Thread):

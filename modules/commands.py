@@ -232,30 +232,17 @@ def srfp_command(*, username, messagesplit, **kwargs):
                             continue
                         song = songs[index - 1]
                         g.playlist.append(song)
+                        response_added = new_song_response(response_added, song)
                         g.sr_queue.new_task(playmusic)
-                        if song.user_duration is not None:
-                            response_added.append(f'{song.title} '
-                                                  f'[{seconds_convert(song.user_duration)}]'
-                                                  f' - {song.link} - #{len(g.playlist)}')
-                        else:
-                            response_added.append(f'{song.title} - '
-                                                  f'{song.link} - #{len(g.playlist)}')
                     except ValueError:
                         title = messagesplit[i]
                         title_found = False
                         for j in songs:
                             if title.lower() in j.title.lower():
-                                g.playlist.append(j)
                                 title_found = True
+                                g.playlist.append(j)
+                                response_added = new_song_response(response_added, j)
                                 g.sr_queue.new_task(playmusic)
-                                if j.user_duration is not None:
-                                    response_added.append(f'{j.title} '
-                                                          f'[{seconds_convert(j.user_duration)}]'
-                                                          f' - '
-                                                          f'{j.link} - #{len(g.playlist)}')
-                                else:
-                                    response_added.append(f'{j.title} - {j.link} - '
-                                                          f'#{len(g.playlist)}')
                             if len(response_added) >= g.sr_max_per_request:
                                 break
                         if not title_found:
@@ -269,7 +256,7 @@ def srfp_command(*, username, messagesplit, **kwargs):
                 if target_not_found:
                     response.append(f"Not found: {', '.join(target_not_found)}")
                 if response:
-                    response_str = ' '.join(response)
+                    response_str = '; '.join(response)
                     if len(response_str) > 470:
                         response *= 0
                         if response_added:
@@ -416,20 +403,16 @@ def cancel_command(*, username, messagesplit, **kwargs):
             song = g.playlist[target - 1]
             if username == song.username and song not in playlist_to_del:
                 playlist_to_del.append(song)
-                if song.user_duration is not None:
-                    playlist_cancelled.append(f'{song.title} [{seconds_convert(song.user_duration)}]')
-                else:
-                    playlist_cancelled.append(song.title)
+                playlist_cancelled.append(f'{song.title}'
+                                          f'{"" if song.user_duration is None else f"  [{seconds_convert(song.user_duration)}]"}')
             else:
                 playlist_not_found.append(f'{target}')
         except ValueError:
             target = messagesplit[i]
             for song in g.playlist:
                 if username == song.username and song not in playlist_to_del and target.lower() in song.title.lower():
-                    if song.user_duration is not None:
-                        playlist_cancelled.append(f'{song.title} [{seconds_convert(song.user_duration)}]')
-                    else:
-                        playlist_cancelled.append(song.title)
+                    playlist_cancelled.append(f'{song.title}'
+                                              f'{"" if song.user_duration is None else f"  [{seconds_convert(song.user_duration)}]"}')
                     playlist_to_del.append(song)
                     song_cancelled_title = True
             if not song_cancelled_title:
@@ -851,22 +834,16 @@ def when_command(*, username, messagesplit, **kwargs):
     if not any(username == i.username for i in g.playlist):
         send_message(f'{username}, no queue song')
         return
-    next_in = 0
-    np_end = 0
     response = []
-    if player_good_state():
-        current_time_ms = g.Player.get_time()
-        current_time = floor(current_time_ms / 1000)
-        np_duration = timecode_convert(g.np_duration)
-        np_end = np_duration - current_time
-        next_in = np_end
+    np_end = next_song_in()
+    next_in = np_end
     for count, i in enumerate(g.playlist):
         if i.username == username:
             if g.playlist[:count]:
                 next_in += sum(
                     timecode_convert(j.duration) - j.user_duration if j.user_duration else timecode_convert(
                         j.duration) for j in g.playlist[:count]) + np_end
-            response.append(f'{i.title} in ({seconds_convert(next_in, explicit=True)})')
+            response.append(f'{i.title} in {seconds_convert(next_in, explicit=True)}')
             next_in = 0
             if len(response) > 4:
                 break
@@ -875,7 +852,7 @@ def when_command(*, username, messagesplit, **kwargs):
         if not response:
             send_message(f'{username}, no results')
             return
-    response_str = ", ".join(response)
+    response_str = "; ".join(response)
     if len(response_str) > 470:
         response = divide_chunks(response_str, 470, lst=response, joinparam='; ')
         send_message(f'{username}, {response[0]}..')
