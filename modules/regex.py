@@ -13,11 +13,9 @@ timecode_re = re.compile(r'^(?:(?:(\d+):)?(\d+):)?(\d+)$')
 youtube_link_re = re.compile(
     r'http(?:s?)://(?:www\.)?youtu(?:be\.com/watch\?v=|\.be/)([\w\-_]*)(&(amp;)?‌​[\w?‌​=]*)?')
 
-video_id_re = re.compile(r'^([/]?watch\?v)?=([\w-]{11})$')
+youtube_id_re = re.compile(r'^([/]?watch\?v)?=([\w-]{11})$')
 
 soundcloud_re = re.compile(r'^(https://)?(www.)?(m\.)?soundcloud\.com/([\w\-.]+/[\w\-.]+)$')
-
-soundcloud_id_re = re.compile(r'^/?[\w\-.]+/[\w\-.]+$')
 
 pixiv_re = re.compile(r'^(https://)?(www.)?pixiv\.net/(en)?(artworks)?/(\d+)?(artworks)?(/(\d+)?)?$')
 

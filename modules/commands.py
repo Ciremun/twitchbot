@@ -179,10 +179,9 @@ def srfa_command(*, username, messagesplit, **kwargs):
             if re.match(timecode_re, url_or_timecode):
                 messagesplit.append(url_or_timecode)
                 messagesplit[1] = g.sr_url
-                sr_download(messagesplit, username, 'data/sounds/favs/', timecode_pos=2)
+                sr_download(messagesplit[1], messagesplit, username, 2, save=True, folder='data/sounds/favs/')
                 return
-            match = sr_download(messagesplit, username, 'data/sounds/favs/',
-                                link_pos=1, timecode_pos=2)
+            match = sr_download(messagesplit[1], messagesplit, username, 2, save=True, folder='data/sounds/favs/')
             if not match:
                 timecode_pos = None
                 if re.match(timecode_re, messagesplit[-1]):
@@ -190,15 +189,14 @@ def srfa_command(*, username, messagesplit, **kwargs):
                     messagesplit[1] = ' '.join(messagesplit[1:-1])
                 else:
                     messagesplit[1] = ' '.join(messagesplit[1:])
-                try_timecode(messagesplit[1], messagesplit, username,
-                             timecode_pos=timecode_pos,
-                             folder='data/sounds/favs/', ytsearch=True)
+                try_timecode(messagesplit[1], messagesplit, username, timecode_pos, save=True, ytsearch=True,
+                             folder='data/sounds/favs/')
         except IndexError:
             if not player_good_state():
                 send_message(f'{username}, nothing is playing')
             else:
                 messagesplit.append(g.sr_url)
-                sr_download(messagesplit, username, 'data/sounds/favs/', timecode_pos=3)
+                sr_download(messagesplit[1], messagesplit, username, 2, save=True, folder='data/sounds/favs/')
 
 
 @bot_command
@@ -327,7 +325,7 @@ def srf_command(*, username, messagesplit, **kwargs):
 
 @bot_command
 def sr_command(*, username, messagesplit, message):
-    if message[1:] == f"sr":
+    if message[1:] == "sr":
         if checkmodlist(username):
             if g.sr:
                 g.sr = False
@@ -338,7 +336,7 @@ def sr_command(*, username, messagesplit, message):
         elif g.sr:
             np_command(username=username, messagesplit=messagesplit, message=message)
     elif sr(username):
-        match = sr_download(messagesplit, username, timecode_pos=2)
+        match = sr_download(messagesplit[1], messagesplit, username, 2)
         if not match:
             if re.match(timecode_re, messagesplit[-1]):
                 query = ' '.join(messagesplit[1:-1])
@@ -438,35 +436,35 @@ def cancel_command(*, username, messagesplit, **kwargs):
 
 @moderator_command
 def ban_command(*, username, messagesplit, message):
-    if message[1:] != f"ban":
+    if message[1:] != "ban":
         g.utils_queue.new_task(ban_mod_commands, username, messagesplit, 'users banned', 'already banned',
                                checkbanlist, g.db.add_ban, True)
 
 
 @moderator_command
 def unban_command(*, username, messagesplit, message):
-    if message[1:] != f"unban":
+    if message[1:] != "unban":
         g.utils_queue.new_task(ban_mod_commands, username, messagesplit, 'users unbanned', f'not in the list',
                                checkbanlist, g.db.remove_ban, False)
 
 
 @bot_command
 def mod_command(*, username, messagesplit, message):
-    if message[1:] != f"mod" and username == g.admin:
+    if message[1:] != "mod" and username == g.admin:
         g.utils_queue.new_task(ban_mod_commands, username, messagesplit, 'users modded', 'already modded',
                                checkmodlist, g.db.add_mod, True)
 
 
 @bot_command
 def unmod_command(*, username, messagesplit, message):
-    if message[1:] != f"unmod" and username == g.admin:
+    if message[1:] != "unmod" and username == g.admin:
         g.utils_queue.new_task(ban_mod_commands, username, messagesplit, 'users unmodded', f'not in the list',
                                checkmodlist, g.db.remove_mod, False)
 
 
 @bot_command
 def set_command(*, username, messagesplit, message):
-    if message != f"{g.prefix}set":
+    if message[1:] != "set":
         selected = messagesplit[1].lower()
         if selected.endswith('.png') or selected.endswith('.gif'):
             my_file = Path("data/custom/" + selected)
@@ -499,7 +497,7 @@ def setrand_command(*, username, messagesplit, **kwargs):
 
 @bot_command
 def search_command(*, username, messagesplit, message):
-    if message != f'{g.prefix}search':
+    if message[1:] != 'search':
         words = checkifnolink('!search')
         if messagesplit[1].startswith(("'", '"')) and messagesplit[1].endswith(("'", '"')):
             search_words = [x for x in words if x.startswith(messagesplit[1][1:-1])]
@@ -543,7 +541,7 @@ def modlist_command(*, username, messagesplit, **kwargs):
 
 @bot_command
 def link_command(*, username, messagesplit, message):
-    if message == f"{g.prefix}link":
+    if message[1:] == "link":
         if g.lastlink:
             send_message('{}, {} - {}'.format(username, g.lastlink, g.last_rand_img))
         else:
@@ -582,7 +580,7 @@ def link_command(*, username, messagesplit, message):
 
 @bot_command
 def save_command(*, username, messagesplit, message):
-    if message == f'{g.prefix}save':
+    if message[1:] == 'save':
         if re.match(regex, g.lastlink):
             messagesplit.append(g.lastlink)
             messagesplit.append(''.join(random.choices(
@@ -607,13 +605,13 @@ def olist_command(*, username, messagesplit, **kwargs):
 
 @bot_command
 def del_command(*, username, messagesplit, message):
-    if message[1:] != f"del":
+    if message[1:] != "del":
         g.utils_queue.new_task(del_chat_command, username, messagesplit)
 
 
 @bot_command
 def ren_command(*, username, messagesplit, message):
-    if message[1:] != f"ren":
+    if message[1:] != "ren":
         g.utils_queue.new_task(rename_command, username, messagesplit)
 
 
@@ -710,13 +708,13 @@ def game_command(*, username, messagesplit, **kwargs):
 
 @bot_command
 def change_command(*, username, messagesplit, message):
-    if message[1:] != f"change":
+    if message[1:] != "change":
         g.utils_queue.new_task(change_save_command, username, messagesplit, do_draw=True)
 
 
 @bot_command
 def pipe_command(*, username, messagesplit, message):
-    if message[1:] != f"pipe":
+    if message[1:] != "pipe":
         pipesplit = " ".join(messagesplit[1:]).split(' | ')
         if len(pipesplit) < 2:
             send_message(f'{username}, you need at least two commands')
@@ -815,7 +813,7 @@ def tts_command(*, username, messagesplit, **kwargs):
 
 @bot_command
 def notify_command(*, username, messagesplit, message, **kwargs):
-    if message != f"{g.prefix}notify":
+    if message[1:] != "notify":
         if not 4 <= len(messagesplit[1]) <= 25:
             send_message(f'{username}, username must be between 4 and 25 characters')
             return

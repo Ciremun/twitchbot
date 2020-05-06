@@ -23,21 +23,25 @@ class ThreadDB(threading.Thread):
         self.c.executemany('DELETE FROM owners WHERE filename = ?', filename)
 
     @conn_query
-    def add_srfavs(self, song, owner, filename, user_duration, link, duration):
-        self.c.execute('INSERT INTO srfavs (song, owner, filename, user_duration, link, duration) '
-                       'VALUES (:song, :owner, :filename, :user_duration, :link, :duration)',
-                       {'song': song, 'owner': owner, 'filename': filename, 'user_duration': user_duration,
-                        'link': link, 'duration': duration})
+    def add_srfavs(self, path, filename, title, duration, user_duration, link, username):
+        self.c.execute('INSERT INTO srfavs (path, filename, title, duration, user_duration, link, username) '
+                       'VALUES (:path, :filename, :title, :duration, :user_duration, :link, :username)',
+                       {'path': path, 'filename': filename, 'title': title, 'duration': duration,
+                        'user_duration': user_duration,
+                        'link': link, 'username': username})
 
     @conn_query
     def remove_srfavs(self, data):
-        self.c.executemany("DELETE FROM srfavs WHERE song = ? and owner = ? and filename = ? and "
-                           "user_duration = ? and link = ? and duration = ?", data)
+        self.c.executemany(
+            "DELETE FROM srfavs WHERE path = ? and filename = ? and title = ? and duration = ? and user_duration = ? "
+            "and link = ? and username = ?",
+            data)
 
     @regular_query
-    def check_srfavs_list(self, owner):
-        self.c.execute('SELECT filename, song, duration, user_duration, link FROM srfavs WHERE owner = :owner',
-                       {'owner': owner})
+    def check_srfavs_list(self, username):
+        self.c.execute(
+            'SELECT path, filename, title, duration, user_duration, link FROM srfavs WHERE username = :username',
+            {'username': username})
         return self.c.fetchall()
 
     @regular_query

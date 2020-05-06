@@ -8,6 +8,7 @@ if __name__ == '__main__':
 import re
 import time
 import threading
+import pafy
 import modules.globals as g
 import modules.commands
 
@@ -16,11 +17,6 @@ from modules.utils import timecode_convert, get_current_date, seconds_convert, d
 from modules.tts import call_tts
 from modules.regex import chat_msg
 from modules.pixiv import Pixiv
-
-g.PASS, g.px_token, g.channel_id, g.client_id, g.client_auth = [' '.join(token.split()[1:]) for token in
-                                                                open('data/special/tokens')]
-
-startTime = time.time()  # uptime
 
 
 class ThreadMain(threading.Thread):
@@ -92,11 +88,13 @@ class ThreadMain(threading.Thread):
 
                 if message.startswith(g.prefix):
                     command = g.commands_dict.get(messagesplit[0][1:], None)
-                    if command is not None:
+                    if command:
                         g.main_queue.new_task(command, username=username, messagesplit=messagesplit, message=message)
 
 
 if __name__ == '__main__':
+    startTime = time.time()  # uptime
+    pafy.set_api_key(g.google_key)
     g.max_duration = timecode_convert(g.max_duration)  # to seconds
     g.sr_cooldown = timecode_convert(g.sr_cooldown)
     s = g.s
