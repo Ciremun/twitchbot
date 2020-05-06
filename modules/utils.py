@@ -629,7 +629,11 @@ def playmusic():  # play song from playlist
         pafy_obj = get_pafy_obj(song.link)
         if not pafy_obj:
             return
-        url = fix_pafy_url(pafy_obj.getbestaudio().url, pafy_obj)
+        pafy_url = pafy_obj.getbestaudio()
+        if not pafy_url:
+            send_message(f'no audio for {song.link}')
+            return
+        url = fix_pafy_url(pafy_url.url, pafy_obj)
         media = g.PlayerInstance.media_new(url)
     else:
         media = g.PlayerInstance.media_new(song.path)
