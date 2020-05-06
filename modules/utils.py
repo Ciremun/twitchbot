@@ -625,8 +625,10 @@ def playmusic():  # play song from playlist
     if not g.playlist:
         return
     song = g.playlist.pop(0)
-    if re.match(youtube_link_re, song.path):
-        pafy_obj = get_pafy_obj(song.path)
+    if song.path == 'None':
+        pafy_obj = get_pafy_obj(song.link)
+        if not pafy_obj:
+            return
         url = fix_pafy_url(pafy_obj.getbestaudio().url, pafy_obj)
         media = g.PlayerInstance.media_new(url)
     else:
@@ -647,8 +649,11 @@ def get_pafy_obj(url: str):
     while not pafy_obj:
         try:
             pafy_obj = pafy.new(url)
-        except OSError:
-            print('OSError in pafy_link, retrying..')
+        except OSError as e:
+            if 'This video is unavailable.' in str(e):
+                send_message(f'{url} is unavailable.')
+                return
+            print('OSError (pafy/youtubedl bug?) in pafy_link, retrying..')
     return pafy_obj
 
 
@@ -668,16 +673,19 @@ def download_clip(url, username, user_duration=None, yt_request=True, folder='da
         g.Main.sr_cooldowns[username] = time.time()
     if yt_request and not ytsearch:
         pafy_obj = get_pafy_obj(url)
+        if not pafy_obj:
+            return
         duration = pafy_obj.length
         user_duration = check_sr_req(user_duration, duration, username)
         if user_duration is False:
             return
         filename = 'None'
         title = pafy_obj.title
-        path = fix_pafy_url(pafy_obj.getbestaudio().url, pafy_obj)
         url = f'https://youtu.be/{pafy_obj.videoid}'
         if save:
-            path = url
+            path = 'None'
+        else:
+            path = fix_pafy_url(pafy_obj.getbestaudio().url, pafy_obj)
     else:
         name = ''.join(random.choices('qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM' + '1234567890', k=10))
         name = while_is_file(folder, name, '.wav')
@@ -707,15 +715,28 @@ def download_clip(url, username, user_duration=None, yt_request=True, folder='da
             search_query = search_query[:-1]
             url = f'https://www.youtube.com/results?search_query={search_query}'
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(url, download=False)
+            try:
+                info_dict = ydl.extract_info(url, download=False)
+            except youtube_dl.utils.DownloadError as e:
+                if 'HTTP Error 404: Not Found' in str(e):
+                    send_message(f'{url} HTTP Error 404: Not Found')
+                else:
+                    send_message(f'{url} is unavailable.')
+                return
             if ytsearch:
-                title = info_dict['entries'][0].get('title', None)
-                duration = info_dict['entries'][0].get('duration', 0)
-                url = f"https://youtu.be/{info_dict['entries'][0].get('id', None)}"
+                try:
+                    entries = info_dict['entries'][0]
+                except IndexError:
+                    send_message(f'{username}, no results for {url}')
+                    return
+                title = entries.get('title', None)
+                duration = entries.get('duration', 0)
+                url = f"https://youtu.be/{entries.get('id', None)}"
             else:
                 title = info_dict.get('title', None)
                 duration = info_dict.get('duration', 0)
-                url = f'https://youtu.be/{info_dict.get("id", None)}'
+                if yt_request:
+                    url = f'https://youtu.be/{info_dict.get("id", None)}'
             user_duration = check_sr_req(user_duration, duration, username)
             if user_duration is False:
                 return
