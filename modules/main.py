@@ -26,6 +26,7 @@ class ThreadMain(threading.Thread):
         self.notify_check_inprogress = []
         self.notify_list = []
         self.sr_cooldowns = {}
+        self.start_time = time.time()
 
     def run(self):
         readbuffer = ''
@@ -52,7 +53,7 @@ class ThreadMain(threading.Thread):
                 self.notify_check_inprogress.remove(username)
 
         while True:
-            line = str(s.recv(1024))
+            line = str(g.s.recv(1024))
             if "End of /NAMES list" in line:
                 break
 
@@ -93,15 +94,13 @@ class ThreadMain(threading.Thread):
 
 
 if __name__ == '__main__':
-    startTime = time.time()  # uptime
     pafy.set_api_key(g.google_key)
     g.max_duration = timecode_convert(g.max_duration)  # to seconds
     g.sr_cooldown = timecode_convert(g.sr_cooldown)
-    s = g.s
-    s.connect((g.HOST, g.PORT))
-    s.send(bytes("PASS " + g.PASS + "\r\n", "UTF-8"))
-    s.send(bytes("NICK " + g.BOT + "\r\n", "UTF-8"))
-    s.send(bytes("JOIN #" + g.CHANNEL + " \r\n", "UTF-8"))
+    g.s.connect((g.HOST, g.PORT))
+    g.s.send(bytes("PASS " + g.PASS + "\r\n", "UTF-8"))
+    g.s.send(bytes("NICK " + g.BOT + "\r\n", "UTF-8"))
+    g.s.send(bytes("JOIN #" + g.CHANNEL + " \r\n", "UTF-8"))
 
     g.Main = ThreadMain("ThreadMain")
     Drawing = threading.Thread(target=ThreadPic)

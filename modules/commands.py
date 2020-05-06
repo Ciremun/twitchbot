@@ -617,7 +617,7 @@ def ren_command(*, username, messagesplit, message):
 
 @bot_command
 def info_command(pipe=False, **kwargs):
-    response = f'uptime: {seconds_convert(time.time() - modules.main.startTime, explicit=True)}'
+    response = f'uptime: {seconds_convert(time.time() - g.Main.start_time, explicit=True)}'
     if pipe:
         return response.split()
     send_message(response)
