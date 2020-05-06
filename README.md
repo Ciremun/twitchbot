@@ -24,7 +24,7 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 
 ## tokens
 
-run `token_setup.py` to add twitch and pixiv tokens  
+run `token_setup.py` to add twitch, pixiv tokens, google api key  
 
 ## youtubedl
 
