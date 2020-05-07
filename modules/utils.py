@@ -7,6 +7,8 @@ import os
 import random
 import typing
 import queue
+import io
+import base64
 import modules.globals as g
 
 from math import floor
@@ -14,6 +16,7 @@ from pathlib import Path
 from datetime import datetime
 from os import listdir
 from os.path import isfile, join
+from PIL import Image
 from modules.regex import *
 from modules.pixiv import Pixiv
 
@@ -26,6 +29,53 @@ class Song(typing.NamedTuple):
     user_duration: int
     link: str
     username: str
+
+
+def imgur_utils_wrap(username, messagesplit, message):
+    file = messagesplit[1]
+    db_link = g.db.get_link(file)
+    if db_link:
+        send_message(f'{username}, {file} - {db_link[0][0]}')
+        return
+    path = f'data/custom/{file}'
+    if not Path(path).is_file():
+        send_message(f'{username}, file {file} not found')
+        return
+    encoded_file = imgur_convert_image(path)
+    link = imgur_upload_image(encoded_file)
+    if not link:
+        send_message(f'{username}, file upload error')
+        return
+    send_message(f'{username}, {file} - {link}')
+    g.db.add_link(f'{link}', file)
+
+
+def imgur_upload_image(byte):
+    result = requests.post('https://api.imgur.com/3/upload',
+                           headers={'Authorization': f'Client-ID {g.imgur_client_id}'}, data={'image': byte}).json()
+    success = result.get('success')
+    status_code = result.get('status')
+    if success and status_code == 200:
+        link = result.get('data').get('link')
+        return link
+    return status_code
+
+
+def imgur_convert_image(file):
+    pil_image = Image.open(file)
+    form = pil_image.format
+    mode = pil_image.mode
+    if any(form == x for x in ['JPEG', 'PNG', 'GIF']):
+        with open(file, "rb") as image_file:
+            return base64.b64encode(image_file.read())
+    elif mode == 'RGBA':
+        form = 'PNG'
+    elif mode == 'RGB':
+        form = 'JPEG'
+    bytearr = io.BytesIO()
+    pil_image.save(bytearr, format=form)
+    bytearr = bytearr.getvalue()
+    return bytearr
 
 
 def resizeimg(ri, rs, image, screenwidth, screenheight):  # resize to fit window

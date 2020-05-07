@@ -1,5 +1,3 @@
-import modules.main
-import modules.decorators
 import modules.info as info
 
 from modules.utils import *
@@ -200,16 +198,13 @@ def srfa_command(*, username, messagesplit, **kwargs):
 
 
 @bot_command
-def srfd_command(*, username, messagesplit, **kwargs):
-    try:
-        if messagesplit[1]:
-            songs = get_srfavs_dictlist(username)
-            if not songs:
-                send_message(f'{username}, no favorite songs found')
-                return
-            g.utils_queue.new_task(sr_favs_del, username, messagesplit, songs)
-    except IndexError:
-        send_message(f'{username}, {g.prefix}srfd <index1> <index2>..')
+def srfd_command(*, username, messagesplit, message):
+    if not message[1:] == 'srfd':
+        songs = get_srfavs_dictlist(username)
+        if not songs:
+            send_message(f'{username}, no favorite songs found')
+            return
+        g.utils_queue.new_task(sr_favs_del, username, messagesplit, songs)
 
 
 @bot_command
@@ -571,11 +566,12 @@ def link_command(*, username, messagesplit, message):
             else:
                 send_message(', '.join(response))
     else:
-        link = g.db.get_link(messagesplit[1])
+        file = messagesplit[1]
+        link = g.db.get_link(file)
         if link:
-            send_message(f'{" , ".join([i[0] for i in link])} - {messagesplit[1]}')
+            send_message(f'{link[0][0]} - {file}')
         else:
-            send_message(f"{username}, {messagesplit[1]} not found")
+            send_message(f"{username}, link for {file} not found")
 
 
 @bot_command
@@ -856,3 +852,9 @@ def when_command(*, username, messagesplit, **kwargs):
         send_message(f'{username}, {response[0]}..')
         return
     send_message(f'{username}, {response_str}')
+
+
+@bot_command
+def imgur_command(*, username, messagesplit, message):
+    if not message[1:] == 'imgur':
+        g.utils_queue.new_task(imgur_utils_wrap, username, messagesplit, message)

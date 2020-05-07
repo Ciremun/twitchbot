@@ -3,11 +3,9 @@ from modules.globals import prefix
 commands_list = [prefix + x for x in
                  ['change', 'save', 'set', 'setrand', 'list', 'search', 'link', 'sr', 'srq', 'srf', 'srfa', 'srfd',
                   'srfp', 'srfl', 'np', 'olist', 'orand', 'ren', 'del', 'cancel', 'help', 'tts:', 'info', 'pipe',
-                  'notify', 'when']]
+                  'notify', 'when', 'imgur']]
 mod_commands_list = [prefix + x for x in
-                     ['ban', 'unban', 'banlist', 'modlist', 'tts', 'srp', 'srs', 'srt', 'src', 'srv', 'sql',
-                      'title',
-                      'game']]
+                     ['ban', 'unban', 'banlist', 'modlist', 'tts', 'srp', 'srs', 'srt', 'src', 'srv', 'sql', 'title', 'game']]
 
 pipe_commands = ['sql', 'info', 'help', 'tts', 'notify', 'tts_colon']
 
@@ -64,4 +62,5 @@ commands_desc = [prefix + x for x in [f'change <link> - change display pic, add 
                                       f'last command gives complete result, supported commands: '
                                       f'{", ".join([x for x in pipe_commands if x != "tts_colon"])}',
                                       f'notify <username> <message> - notify twitch user when they next type in chat',
-                                      f'when - check when requested song is going to play, list all / search by name']]
+                                      f'when - check when requested song is going to play, list all / search by name',
+                                      f'imgur <file> - upload saved image to imgur, get link, add to database']]

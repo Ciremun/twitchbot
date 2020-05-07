@@ -9,6 +9,7 @@ twitch_channel_id = input('twitch_channel_id?\n')
 twitch_app_client_id = input('twitch_app_client_id?\n')
 twitch_app_oauth = input('twitch_app_oauth[channel_editor]?\n')
 google_api_key = input('google_api_key[pafy]?\n')
+imgur_client_id = input('imgur_client_id?\n')
 
 with open('data/special/tokens', 'w') as f:
     f.write(f'twitch_bot_token {twitch_bot_token}\n'
@@ -16,7 +17,8 @@ with open('data/special/tokens', 'w') as f:
             f'twitch_channel_id {twitch_channel_id}\n'
             f'twitch_app_client_id {twitch_app_client_id}\n'
             f'twitch_app_oauth[channel_editor] {twitch_app_oauth}\n'
-            f'google_api_key {google_api_key}')
+            f'google_api_key {google_api_key}\n'
+            f'imgur_client_id {imgur_client_id}')
 with conn:
     c.execute(f'delete from owners')
     c.execute(f'delete from links')

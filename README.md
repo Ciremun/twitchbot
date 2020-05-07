@@ -63,16 +63,16 @@ get account cookies using `cookies.txt` browser extension
 ### everyone
 `change <link> [name]` - change display pic, add name to save  
 `save <link> [name]` - save only  
-`set <name>` - set saved pic  
+`set <file>` - set saved pic  
 `list [page]` - list saved pics  
 `list links [page]` - list pics with saved link  
 `olist` - list of your saved pics  
 `orand [png/gif]` - set random image from olist  
 `setrand [gif/png/pixiv]` - set random saved pic or pixiv art  
-`search <name> [page]` - find image in list (e.g. gif, png) wrap in quotes for startswith search  
-`link [name] [name]..` - get saved pic link, no args - last random pic link, filename  
-`ren <name> <new name>` - change saved pic filename  
-`del <name> [name]..` - delete saved pic(s)  
+`search <file> [page]` - find image in list (e.g. gif, png) wrap in quotes for startswith search  
+`link [file] [file]..` - get saved pic link, no args - last random pic link, filename  
+`ren <file> <new filename>` - change saved pic filename  
+`del <file> [file]..` - delete saved pic(s)  
 `sr <yt/scld> [timecode]` - play music with youtube link/id/search, soundcloud links, optional timecode(start time)  
 `srq [page]` - current queue  
 `srf [page]` - your favorites list  
@@ -88,6 +88,7 @@ get account cookies using `cookies.txt` browser extension
 `help [command]` - view bot commands help, no args - commands list, wrap command in quotes for startswith search  
 `notify <username> <message>` - notify twitch user when they next type in chat  
 `when [name]` - check when requested song is going to play (up to 5)  
+`imgur <file>` - upload saved image to imgur, get link, add to database  
 ### bot moderators
 
 `ban <name> [name]..` - add user(s) to ignore-list  
