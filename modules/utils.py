@@ -43,11 +43,11 @@ def imgur_utils_wrap(username, messagesplit, message):
         return
     encoded_file = imgur_convert_image(path)
     link = imgur_upload_image(encoded_file)
-    if not link:
-        send_message(f'{username}, file upload error')
+    if not re.match(regex, link):
+        send_message(f'{username}, file upload error [{link}]')
         return
     send_message(f'{username}, {file} - {link}')
-    g.db.add_link(f'{link}', file)
+    g.db.add_link(link, file)
 
 
 def imgur_upload_image(byte):
@@ -57,7 +57,7 @@ def imgur_upload_image(byte):
     status_code = result.get('status')
     if success and status_code == 200:
         link = result.get('data').get('link')
-        return link
+        return f'{link}'
     return status_code
 
 
