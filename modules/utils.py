@@ -31,7 +31,7 @@ class Song(typing.NamedTuple):
     username: str
 
 
-def imgur_utils_wrap(username, messagesplit, message):
+def imgur_utils_wrap(username, messagesplit):
     file = messagesplit[1]
     db_link = g.db.get_link(file)
     if db_link:
