@@ -1,7 +1,7 @@
 # shtcd twitch bot
   
 let viewers set images on stream, songrequests, tts, random pixiv arts  
-extra: change twitch title, game, upload images to imgur  
+extra: change twitch stream title&game, upload images to imgur  
 set image: any image link, pixiv links  
 songrequests: youtube link/id/query, soundcloud links  
 
@@ -74,7 +74,7 @@ get account cookies using `cookies.txt` browser extension
 `link [file] [file]..` - get saved pic link, no args - last random pic link, filename  
 `ren <file> <new filename>` - change saved pic filename  
 `del <file> [file]..` - delete saved pic(s)  
-`sr <yt/scld> [timecode]` - play music with youtube link/id/search, soundcloud links, optional start time  
+`sr [yt/scld] [timecode]` - play music with youtube link/id/search, soundcloud links, optional start time  
 `srq [page]` - current queue  
 `srf [page]` - your favorites list  
 `srfa [url] [timecode]` - favorite a song, optional timecode, no url - add now playing song  
