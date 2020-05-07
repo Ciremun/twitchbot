@@ -58,7 +58,7 @@ def imgur_upload_image(byte):
     if success and status_code == 200:
         link = result.get('data').get('link')
         return f'{link}'
-    return status_code
+    return f'{status_code}'
 
 
 def imgur_convert_image(file):
