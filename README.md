@@ -1,6 +1,7 @@
 # shtcd twitch bot
   
-let viewers set images on stream, songrequests, tts, random pixiv arts, change twitch title, game  
+let viewers set images on stream, songrequests, tts, random pixiv arts  
+extra: change twitch title, game, upload images to imgur  
 set image: any image link, pixiv links  
 songrequests: youtube link/id/query, soundcloud links  
 
@@ -24,7 +25,7 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 
 ## tokens
 
-run `token_setup.py` to add twitch, pixiv tokens, google api key  
+run `token_setup.py` to add twitch, pixiv, google, imgur tokens  
 
 ## youtubedl
 
@@ -66,14 +67,14 @@ get account cookies using `cookies.txt` browser extension
 `set <file>` - set saved pic  
 `list [page]` - list saved pics  
 `list links [page]` - list pics with saved link  
-`olist` - list of your saved pics  
+`olist` - your saved pics  
 `orand [png/gif]` - set random image from olist  
 `setrand [gif/png/pixiv]` - set random saved pic or pixiv art  
 `search <file> [page]` - find image in list (e.g. gif, png) wrap in quotes for startswith search  
 `link [file] [file]..` - get saved pic link, no args - last random pic link, filename  
 `ren <file> <new filename>` - change saved pic filename  
 `del <file> [file]..` - delete saved pic(s)  
-`sr <yt/scld> [timecode]` - play music with youtube link/id/search, soundcloud links, optional timecode(start time)  
+`sr <yt/scld> [timecode]` - play music with youtube link/id/search, soundcloud links, optional start time  
 `srq [page]` - current queue  
 `srf [page]` - your favorites list  
 `srfa [url] [timecode]` - favorite a song, optional timecode, no url - add now playing song  
