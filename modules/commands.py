@@ -857,4 +857,4 @@ def when_command(*, username, messagesplit, **kwargs):
 @bot_command
 def imgur_command(*, username, messagesplit, message):
     if not message[1:] == 'imgur':
-        g.utils_queue.new_task(imgur_utils_wrap, username, messagesplit, message)
+        g.utils_queue.new_task(imgur_utils_wrap, username, messagesplit)
