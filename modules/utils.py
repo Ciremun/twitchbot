@@ -610,10 +610,13 @@ def change_save_command(username, messagesplit, do_draw=False, do_save=False, do
         else:
             save_pixiv(pixiv_src_re, r'\4', r'\6', url, messagesplit, username)
     elif re.match(regex, url):
-        content_type = requests.head(url, allow_redirects=True).headers.get('content-type').split(
-            '/')
+        try:
+            content_type = requests.head(url, allow_redirects=True).headers.get('content-type').split('/')
+        except requests.exceptions.ConnectionError:
+            send_message(f'{username}, connection error')
+            return
         if content_type[0] != 'image':
-            send_message(f'{username}, unknown format')
+            send_message(f'{username}, no image')
             return
         if content_type[1] != 'gif':
             file_format = '.png'
@@ -622,8 +625,7 @@ def change_save_command(username, messagesplit, do_draw=False, do_save=False, do
         r = requests.get(url)
         try:
             folder = 'data/custom/'
-            imagename = while_is_file(folder, fixname(messagesplit[2].lower()),
-                                      f'{file_format}')
+            imagename = while_is_file(folder, fixname(messagesplit[2].lower()), f'{file_format}')
             filepath = Path(f'{folder}{imagename}{file_format}')
             do_save = True
         except IndexError:
