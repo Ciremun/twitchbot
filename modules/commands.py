@@ -18,15 +18,6 @@ def exit_command(*, username, message, **kwargs):
     if message[1:] == "exit" and username == g.admin:
         for folder in g.clear_folders:
             clear_folder(folder)
-        result = g.db.get_srfavs_filenames()
-        result = [item[0] for item in result]
-        favorites = [f for f in os.listdir('data/sounds/favs/') if isfile(join('data/sounds/favs/', f))]
-        for f in favorites:
-            try:
-                if not set(f.split()).intersection(result):
-                    os.remove(os.path.join('data/sounds/favs/', f))
-            except:
-                pass
         os._exit(0)
 
 
@@ -177,9 +168,9 @@ def srfa_command(*, username, messagesplit, **kwargs):
             if re.match(timecode_re, url_or_timecode):
                 messagesplit.append(url_or_timecode)
                 messagesplit[1] = g.sr_url
-                sr_download(messagesplit[1], messagesplit, username, 2, save=True, folder='data/sounds/favs/')
+                sr_download(messagesplit[1], messagesplit, username, 2, save=True)
                 return
-            match = sr_download(messagesplit[1], messagesplit, username, 2, save=True, folder='data/sounds/favs/')
+            match = sr_download(messagesplit[1], messagesplit, username, 2, save=True)
             if not match:
                 timecode_pos = None
                 if re.match(timecode_re, messagesplit[-1]):
@@ -187,14 +178,13 @@ def srfa_command(*, username, messagesplit, **kwargs):
                     messagesplit[1] = ' '.join(messagesplit[1:-1])
                 else:
                     messagesplit[1] = ' '.join(messagesplit[1:])
-                try_timecode(messagesplit[1], messagesplit, username, timecode_pos, save=True, ytsearch=True,
-                             folder='data/sounds/favs/')
+                try_timecode(messagesplit[1], messagesplit, username, timecode_pos, save=True, ytsearch=True)
         except IndexError:
             if not player_good_state():
                 send_message(f'{username}, nothing is playing')
             else:
                 messagesplit.append(g.sr_url)
-                sr_download(messagesplit[1], messagesplit, username, 2, save=True, folder='data/sounds/favs/')
+                sr_download(messagesplit[1], messagesplit, username, 2, save=True)
 
 
 @bot_command

@@ -9,8 +9,6 @@ youtube_link_re = re.compile(
 
 youtube_id_re = re.compile(r'^([/]?watch\?v)?=([\w-]{11})$')
 
-soundcloud_re = re.compile(r'^(https://)?(www.)?(m\.)?soundcloud\.com/([\w\-.]+/[\w\-.]+)$')
-
 pixiv_re = re.compile(r'^(https://)?(www.)?pixiv\.net/(en)?(artworks)?/(\d+)?(artworks)?(/(\d+)?)?$')
 
 pixiv_src_re = re.compile(r'^(https://)?(www.)?i\.pximg\.net/[\w\-]+/\w+/\d+/\d+/\d+/\d+/\d+/\d+/(('

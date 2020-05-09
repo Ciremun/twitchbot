@@ -1,5 +1,4 @@
 import pafy
-import youtube_dl
 import time
 import requests
 import threading
@@ -22,8 +21,7 @@ from modules.pixiv import Pixiv
 
 
 class Song(typing.NamedTuple):
-    path: str
-    filename: str
+    vlc_link: str
     title: str
     duration: str
     user_duration: int
@@ -340,18 +338,11 @@ def sr_favs_del(username, messagesplit, songs):
             user_duration = song.user_duration
             if user_duration is None:
                 user_duration = 0
-            remove_tup = (
-                song.path, song.filename, song.title, timecode_convert(song.duration), user_duration, song.link,
-                username)
+            remove_tup = (song.vlc_link, song.title, timecode_convert(song.duration), user_duration, song.link, username)
             if remove_tup not in remove_song:
                 song_removed_response.append(f'{song.title}'
                                              f'{"" if not user_duration else f" [{seconds_convert(user_duration)}]"}')
                 remove_song.append(remove_tup)
-                g.playlist = [x for x in g.playlist if x != song]
-                try:
-                    os.remove(song.path)
-                except:
-                    pass
         except ValueError:
             target = messagesplit[i]
             song_found = False
@@ -361,18 +352,11 @@ def sr_favs_del(username, messagesplit, songs):
                     user_duration = song.user_duration
                     if user_duration is None:
                         user_duration = 0
-                    remove_tup = (
-                        song.path, song.filename, song.title, timecode_convert(song.duration), user_duration, song.link,
-                        username)
+                    remove_tup = (song.vlc_link, song.title, timecode_convert(song.duration), user_duration, song.link, username)
                     if remove_tup not in remove_song:
                         song_removed_response.append(f'{song.title}'
                                                      f'{"" if not user_duration else f" [{seconds_convert(user_duration)}]"}')
                         remove_song.append(remove_tup)
-                        g.playlist = [x for x in g.playlist if x != song]
-                        try:
-                            os.remove(song.path)
-                        except:
-                            pass
             if not song_found:
                 target_not_found.append(messagesplit[i])
     g.db.remove_srfavs(remove_song)
@@ -511,20 +495,17 @@ def np_response(mode):
     send_message(f'{mode}: {g.np} - {g.sr_url} - {current_time}/{g.np_duration}')
 
 
-def try_timecode(url, messagesplit, username, timecode_pos, save=False, yt_request=True, ytsearch=False,
-                 folder='data/sounds/sr/'):
+def try_timecode(url, messagesplit, username, timecode_pos, save=False, ytsearch=False):
     try:
         if timecode_pos is None:
             raise IndexError
         timecode = messagesplit[timecode_pos]
         if re.match(timecode_re, timecode):
-            g.sr_download_queue.new_task(download_clip, url, username, user_duration=timecode, yt_request=yt_request,
-                                         folder=folder, ytsearch=ytsearch, save=save)
+            g.sr_download_queue.new_task(download_clip, url, username, user_duration=timecode, ytsearch=ytsearch, save=save)
             return
         send_message(f'{username}, timecode error')
     except IndexError:
-        g.sr_download_queue.new_task(download_clip, url, username, yt_request=yt_request, folder=folder,
-                                     ytsearch=ytsearch, save=save)
+        g.sr_download_queue.new_task(download_clip, url, username, ytsearch=ytsearch, save=save)
 
 
 def clear_folder(path):
@@ -565,15 +546,13 @@ def save_pixiv(pattern, group, group2, url, messagesplit, username):
         pass
 
 
-def sr_download(url, messagesplit, username, timecode_pos, save=False, folder='data/sounds/sr/'):
+def sr_download(url, messagesplit, username, timecode_pos, save=False):
     if re.match(youtube_link_re, url):
         try_timecode(url, messagesplit, username, timecode_pos, save=save)
     elif re.match(youtube_id_re, url):
         video_id = youtube_id_re.sub(r'\2', url)
         url = f'https://www.youtube.com/watch?v={video_id}'
         try_timecode(url, messagesplit, username, timecode_pos, save=save)
-    elif re.match(soundcloud_re, url):
-        try_timecode(url, messagesplit, username, timecode_pos, folder=folder, save=save, yt_request=False)
     else:
         return False
     return True
@@ -583,8 +562,8 @@ def get_srfavs_dictlist(username):
     result = g.db.check_srfavs_list(username)
     if not result:
         return False
-    return [Song(song[0], song[1], song[2], seconds_convert(song[3]),
-                 (None if song[4] == 0 else song[4]), song[5], username) for song in result]
+    return [Song(song[0], song[1], seconds_convert(song[2]), (None if song[3] == 0 else song[3]), song[4], username)
+            for song in result]
 
 
 def set_random_pic(lst, response):
@@ -677,18 +656,7 @@ def playmusic():  # play song from playlist
     if not g.playlist:
         return
     song = g.playlist.pop(0)
-    if song.path == 'None':
-        pafy_obj = get_pafy_obj(song.link)
-        if not pafy_obj:
-            return
-        pafy_url = pafy_obj.getbestaudio()
-        if not pafy_url:
-            send_message(f'no audio for {song.link}')
-            return
-        url = fix_pafy_url(pafy_url.url, pafy_obj)
-        media = g.PlayerInstance.media_new(url)
-    else:
-        media = g.PlayerInstance.media_new(song.path)
+    media = g.PlayerInstance.media_new(song.vlc_link)
     media.get_mrl()
     g.Player.set_media(media)
     g.Player.play()
@@ -713,21 +681,18 @@ def get_pafy_obj(url: str):
     return pafy_obj
 
 
-def download_clip(url, username, user_duration=None, yt_request=True, folder='data/sounds/sr/', ytsearch=False,
-                  save=False):
+def download_clip(url, username, user_duration=None, ytsearch=False, save=False):
     """
     download .wav song file, add song to favorites, add song to playlist
     :param url: youtube/soundcloud link or youtube search query
     :param username: twitch username
     :param user_duration: timecode (song start time)
-    :param yt_request: youtube url
-    :param folder: .wav file folder
     :param ytsearch: youtube search query
     :param save: add to favorites
     """
     if not checkmodlist(username):
         g.Main.sr_cooldowns[username] = time.time()
-    if yt_request and not ytsearch:
+    if not ytsearch:
         pafy_obj = get_pafy_obj(url)
         if not pafy_obj:
             return
@@ -735,77 +700,46 @@ def download_clip(url, username, user_duration=None, yt_request=True, folder='da
         user_duration = check_sr_req(user_duration, duration, username)
         if user_duration is False:
             return
-        path = 'None'
-        filename = 'None'
+        pafy_url = pafy_obj.getbestaudio()
+        if not pafy_url:
+            send_message(f'no audio for {url}')
+            return
+        vlc_link = fix_pafy_url(pafy_url.url, pafy_obj)
         title = pafy_obj.title
         url = f'https://youtu.be/{pafy_obj.videoid}'
     else:
-        name = ''.join(random.choices('qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM' + '1234567890', k=10))
-        name = while_is_file(folder, name, '.wav')
-        path = f'{folder}{name}.wav'
-        filename = f'{name}.wav'
-        ydl_opts = {
-            'quiet': True,
-            'nocheckcertificate': True,
-            'max_downloads': '1',
-            'cookiefile': 'data/special/cookies.txt',
-            'ratelimit': g.ytdl_rate,
-            'format': 'bestaudio/best',
-            'outtmpl': path,
-            'noplaylist': True,
-            'continue_dl': True,
-            'noprogress': True,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'wav',
-                'preferredquality': '192', }]
-        }
-        if ytsearch:
-            ydl_opts['playlist_items'] = '1'
-            search_query = ''
-            for i in url.split():
-                search_query += i + '+'
-            search_query = search_query[:-1]
-            url = f'https://www.youtube.com/results?search_query={search_query}'
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            try:
-                info_dict = ydl.extract_info(url, download=False)
-            except youtube_dl.utils.DownloadError as e:
-                if 'HTTP Error 404: Not Found' in str(e):
-                    send_message(f'{url} HTTP Error 404: Not Found')
-                else:
-                    send_message(f'{url} is unavailable.')
-                return
-            if ytsearch:
-                try:
-                    entries = info_dict['entries'][0]
-                except IndexError:
-                    send_message(f'{username}, no results for {url}')
-                    return
-                title = entries.get('title', None)
-                duration = entries.get('duration', 0)
-                url = f"https://youtu.be/{entries.get('id', None)}"
-                filename = 'None'
-                path = 'None'
-            else:
-                title = info_dict.get('title', None)
-                duration = info_dict.get('duration', 0)
-            user_duration = check_sr_req(user_duration, duration, username)
-            if user_duration is False:
-                return
-            if not ytsearch:
-                ydl.prepare_filename(info_dict)
-                ydl.download([url])
+        query = requests.utils.quote(url)
+        result = requests.get('https://www.googleapis.com/youtube/v3/search?'
+                              f'part=snippet&maxResults=1&type=video&q={query}&key={g.google_key}',
+                              headers={'Accept': 'application/json'}).json()
+        items = result.get("items")
+        if not items:
+            send_message(f'{username}, no results')
+            return
+        url = f'https://youtu.be/{items[0]["id"]["videoId"]}'
+        pafy_obj = get_pafy_obj(url)
+        if not pafy_obj:
+            return
+        duration = pafy_obj.length
+        user_duration = check_sr_req(user_duration, duration, username)
+        if user_duration is False:
+            return
+        pafy_url = pafy_obj.getbestaudio()
+        if not pafy_url:
+            send_message(f'no audio for {url}')
+            return
+        vlc_link = fix_pafy_url(pafy_url.url, pafy_obj)
+        title = pafy_obj.title
     if save:
         if user_duration is None:
-            g.db.add_srfavs(path, filename, title, duration, 0, url, username)
+            g.db.add_srfavs(vlc_link, title, duration, 0, url, username)
             send_message(f'{username}, {title} - {url} - added to favorites')
         else:
-            g.db.add_srfavs(path, filename, title, duration, user_duration, url, username)
+            g.db.add_srfavs(vlc_link, title, duration, user_duration, url, username)
             send_message(f'{username}, {title} [{seconds_convert(user_duration)}] - {url} - added to favorites')
         return
     duration = seconds_convert(duration)
-    song = Song(path, filename, title, duration, user_duration, url, username)
+    song = Song(vlc_link, title, duration, user_duration, url, username)
     g.playlist.append(song)
     response = new_song_response([], song)
     send_message(f'+ {response[0]}')
