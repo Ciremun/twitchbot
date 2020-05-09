@@ -3,7 +3,7 @@
 let viewers set images on stream, songrequests, tts, random pixiv arts  
 extra: change twitch stream title&game, upload images to imgur  
 set image: any image link, pixiv links  
-songrequests: youtube link/id/query, soundcloud links  
+songrequests: youtube link/id/query
 
 # Install
 
