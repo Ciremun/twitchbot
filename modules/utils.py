@@ -626,23 +626,23 @@ def change_save_command(username, messagesplit, do_draw=False, do_save=False, do
         try:
             folder = 'data/custom/'
             imagename = while_is_file(folder, fixname(messagesplit[2].lower()), f'{file_format}')
-            filepath = Path(f'{folder}{imagename}{file_format}')
             do_save = True
         except IndexError:
             folder = 'data/images/'
             imagename = g.db.numba
             g.db.update_imgcount(int(g.db.numba) + 1)
-            filepath = Path(f'{folder}{imagename}{file_format}')
+        filepath = f'{folder}{imagename}{file_format}'
         with open(filepath, 'wb') as download:
             download.write(r.content)
-        if filepath.is_file():
+        if Path(filepath).is_file():
+            image = f'{imagename}{file_format}'
             if do_draw:
-                call_draw(folder, f'{imagename}{file_format}')
+                call_draw(folder, image)
             if do_save:
-                g.db.add_link(url, f'{imagename}{file_format}')
-                g.db.add_owner(f'{imagename}{file_format}', username)
+                g.db.add_link(url, image)
+                g.db.add_owner(image, username)
             if do_save_response:
-                send_message(f'{username}, {imagename}{file_format} saved')
+                send_message(f'{username}, {image} saved')
         else:
             send_message(f'{username}, download error')
     else:
