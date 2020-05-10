@@ -683,8 +683,8 @@ def get_pafy_obj(url: str):
 
 def download_clip(url, username, user_duration=None, ytsearch=False, save=False):
     """
-    download .wav song file, add song to favorites, add song to playlist
-    :param url: youtube/soundcloud link or youtube search query
+    add song to favorites, add song to playlist
+    :param url: youtube link/id or search query
     :param username: twitch username
     :param user_duration: timecode (song start time)
     :param ytsearch: youtube search query
