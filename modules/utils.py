@@ -670,6 +670,7 @@ def playmusic():  # play song from playlist
 
 def get_pafy_obj(url: str):
     pafy_obj = None
+    i = 0
     while not pafy_obj:
         try:
             pafy_obj = pafy.new(url)
@@ -677,7 +678,10 @@ def get_pafy_obj(url: str):
             if 'This video is unavailable.' in str(e):
                 send_message(f'{url} is unavailable.')
                 return
-            print('OSError (pafy/youtubedl bug?) in pafy_link, retrying..')
+            i += 1
+            if i > 5:
+                return
+            print('OSError (pafy bug?) in get_pafy_obj, retrying..')
     return pafy_obj
 
 
