@@ -1,7 +1,7 @@
 import threading
-import modules.globals as g
+import _globals as g
 
-from modules.utils import checkbanlist, checkmodlist
+from _utils import checkbanlist, checkmodlist
 
 
 def bot_command(func):  # add command functions to commands dict, check if user is mod/banned on call

@@ -1,10 +1,10 @@
 import queue
 import threading
 import pyttsx3
-import modules.globals as g
+import _globals as g
 
-from modules.regex import *
-from modules.utils import checkbanlist, send_message, get_tts_vc_key
+from _regex import regex, re
+from _utils import checkbanlist, send_message, get_tts_vc_key
 
 
 class ThreadTTS(threading.Thread):

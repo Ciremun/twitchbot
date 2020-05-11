@@ -8,7 +8,7 @@ import typing
 import queue
 import io
 import base64
-import modules.globals as g
+import _globals as g
 
 from math import floor
 from pathlib import Path
@@ -16,8 +16,8 @@ from datetime import datetime
 from os import listdir
 from os.path import isfile, join
 from PIL import Image
-from modules.regex import *
-from modules.pixiv import Pixiv
+from _regex import re, regex, timecode_re, youtube_id_re, youtube_link_re, pixiv_re, pixiv_src_re
+from _pixiv import Pixiv
 
 
 class Song(typing.NamedTuple):
@@ -687,7 +687,7 @@ def get_pafy_obj(url: str):
 
 def download_clip(url, username, user_duration=None, ytsearch=False, save=False):
     """
-    add song to favorites, add song to playlist
+    add song to playlist/favorites
     :param url: youtube link/id or search query
     :param username: twitch username
     :param user_duration: timecode (song start time)

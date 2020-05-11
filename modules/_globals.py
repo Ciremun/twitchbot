@@ -1,9 +1,9 @@
 import vlc
 import socket
-import modules.database
+import _database
 
 from pixivapi import Size
-from modules.utils import RunInThread
+from _utils import RunInThread
 
 CHANNEL = "ciremun"
 BOT = "shtcd"
@@ -44,7 +44,7 @@ Player.audio_set_volume(player_last_vol)
 HOST = "irc.twitch.tv"
 PORT = 6667
 s = socket.socket()
-db = modules.database.db
+db = _database.db
 sr_queue = RunInThread('sr')
 sr_download_queue = RunInThread('srdl')
 px_download_queue = RunInThread('pixivdl')

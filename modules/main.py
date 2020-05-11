@@ -1,22 +1,21 @@
 import sys
 import os
 from os.path import realpath
-
-if __name__ == '__main__':
+if os.getcwd().endswith('modules'):
     sys.path.append(realpath('../'))
     os.chdir('../')
 import re
 import time
 import threading
 import pafy
-import modules.globals as g
-import modules.commands
+import _globals as g
+import _commands
 
-from modules.picture import ThreadPic
-from modules.utils import timecode_convert, get_current_date, seconds_convert, divide_chunks, send_message
-from modules.tts import call_tts
-from modules.regex import chat_msg
-from modules.pixiv import Pixiv
+from _picture import ThreadPic
+from _utils import timecode_convert, get_current_date, seconds_convert, divide_chunks, send_message
+from _tts import call_tts
+from _regex import chat_msg
+from _pixiv import Pixiv
 
 
 class ThreadMain(threading.Thread):

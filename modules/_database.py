@@ -1,7 +1,7 @@
 import sqlite3
 import threading
 
-from modules.decorators import conn_query, regular_query
+from _decorators import conn_query, regular_query
 
 
 class ThreadDB(threading.Thread):

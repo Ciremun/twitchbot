@@ -1,11 +1,10 @@
-import modules.info as info
+import _info as info
 
-from modules.utils import *
-from modules.regex import *
-from modules.pixiv import Pixiv
-from modules.tts import call_tts
-from modules.decorators import bot_command, moderator_command
-from modules.info import commands_list, mod_commands_list
+from _utils import *
+from _pixiv import Pixiv
+from _tts import call_tts
+from _decorators import bot_command, moderator_command
+from _info import commands_list, mod_commands_list
 
 
 @moderator_command

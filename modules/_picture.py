@@ -1,7 +1,7 @@
 import pyglet
-import modules.globals as g
+import _globals as g
 
-from modules.utils import resizeimg
+from _utils import resizeimg
 
 
 class ThreadPic:

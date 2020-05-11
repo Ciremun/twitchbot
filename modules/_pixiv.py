@@ -2,8 +2,8 @@ import threading
 import random
 import os
 import time
-import modules.utils as u
-import modules.globals as g
+import _utils as u
+import _globals as g
 
 from pixivapi import Client
 from pixivapi import RankingMode
