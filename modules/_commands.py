@@ -215,6 +215,7 @@ def srfp_command(*, username, messagesplit, **kwargs):
                         song = songs[index - 1]
                         g.sr_download_queue.new_task(download_clip, song.link, username, 
                                                      user_duration=song.user_duration)
+                        response_added.append(song)
                     except ValueError:
                         title = messagesplit[i]
                         title_found = False
@@ -223,6 +224,7 @@ def srfp_command(*, username, messagesplit, **kwargs):
                                 title_found = True
                                 g.sr_download_queue.new_task(download_clip, song.link, username, 
                                                              user_duration=song.user_duration)
+                                response_added.append(song)
                             if len(response_added) >= g.sr_max_per_request:
                                 break
                         if not title_found:
@@ -232,7 +234,6 @@ def srfp_command(*, username, messagesplit, **kwargs):
                 if response_added:
                     if not checkmodlist(username):
                         g.Main.sr_cooldowns[username] = time.time()
-                    response.append(f"+ {'; '.join(response_added)}")
                 if target_not_found:
                     response.append(f"Not found: {', '.join(target_not_found)}")
                 if response:
