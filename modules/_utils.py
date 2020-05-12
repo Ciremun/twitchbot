@@ -660,7 +660,7 @@ def playmusic():  # play song from playlist
     media.get_mrl()
     g.Player.set_media(media)
     g.Player.play()
-    g.np, g.np_duration, g.sr_url = song.title, song.duration, song.link
+    g.np, g.np_duration, g.sr_url, g.sr_user = song.title, song.duration, song.link, song.username
     if song.user_duration is not None:
         g.Player.set_time(song.user_duration * 1000)
     sr_start_playing()

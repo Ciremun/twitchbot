@@ -35,6 +35,7 @@ sr_max_per_request = 5
 np = ''
 np_duration = ''
 sr_url = ''
+sr_user = ''
 lastlink = ''
 last_rand_img = ''
 playlist = []

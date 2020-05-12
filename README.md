@@ -75,7 +75,7 @@ run `token_setup.py` to add twitch, pixiv, google, imgur tokens
 `srfp <name/index> [name/index]..` - play songs from favorites (srf)  
 `srfl <index1> [index]..` - get song link(s)  
 `np` - get current song link, name, time, duration  
-`cancel [name/index] [name/index]..` - cancel your songrequest(s)  
+`skip [name/index] [name/index]..` - skip your songrequest(s) by playlist index or word, no args - skip now playing song, moderators skip any song  
 `tts: <msg>` - say message, even when tts is off  
 `info` - bot uptime  
 `pipe <command> | <command>..` - run commands in chain, transfer result from one command to another, last command gives complete result, supported commands: sql, info, help, tts, notify  
@@ -98,7 +98,6 @@ run `token_setup.py` to add twitch, pixiv, google, imgur tokens
 `sr` - enable/disable songrequests  
 `src` - clear current playlist  
 `srt` - set time for current song  
-`srs [name/index] [name/index]..` - skip queue song by name/index, no args - skip now playing song  
 `srv [value]` - get/change volume  
 `srp` - play/pause  
 `die` - set greenscreen.png  

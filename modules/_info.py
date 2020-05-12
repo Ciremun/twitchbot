@@ -2,10 +2,10 @@ from _globals import prefix
 
 commands_list = [prefix + x for x in
                  ['change', 'save', 'set', 'setrand', 'list', 'search', 'link', 'sr', 'srq', 'srf', 'srfa', 'srfd',
-                  'srfp', 'srfl', 'np', 'olist', 'orand', 'ren', 'del', 'cancel', 'help', 'tts:', 'info', 'pipe',
+                  'srfp', 'srfl', 'np', 'olist', 'orand', 'ren', 'del', 'skip', 'help', 'tts:', 'info', 'pipe',
                   'notify', 'when', 'imgur']]
 mod_commands_list = [prefix + x for x in
-                     ['ban', 'unban', 'banlist', 'modlist', 'tts', 'srp', 'srs', 'srt', 'src', 'srv', 'sql', 'title', 'game']]
+                     ['ban', 'unban', 'banlist', 'modlist', 'tts', 'srp', 'srt', 'src', 'srv', 'sql', 'title', 'game']]
 
 pipe_commands = ['sql', 'info', 'help', 'tts', 'notify', 'tts_colon']
 
@@ -38,8 +38,6 @@ commands_desc = [prefix + x for x in [f'change <link> - change display pic, add 
                                       f'srfl <index1> <index2>.. - get song link',
                                       f'src - clear current playlist',
                                       f'srt - set time for current song',
-                                      f'srs [name/index] [name2/index2].. - '
-                                      f'skip queue song by name/index, no args - skip now playing song',
                                       f'srv [value] - get/change volume',
                                       f'srp - play/pause',
                                       f'olist - list of your saved pics',
@@ -51,7 +49,8 @@ commands_desc = [prefix + x for x in [f'change <link> - change display pic, add 
                                       f'help [command] - view bot commands help, no args - commands list, '
                                       f'wrap command in quotes for startswith search',
                                       f'np - get current song link, name, time, duration',
-                                      f'cancel [name/index] [name2/index2].. - cancel your songrequest(s)',
+                                      f'skip [name/index] [name/index].. - skip your songrequest(s) by playlist index or word, ' 
+                                      f'no args - skip now playing song, moderators skip any song',
                                       f'sql <query> - execute sql query and get result',
                                       f'tts: <msg> - say message, even when tts is off',
                                       f'title <query> - change stream title',

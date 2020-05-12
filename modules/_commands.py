@@ -65,63 +65,6 @@ def srq_command(*, username, messagesplit, **kwargs):
 
 
 @moderator_command
-def srs_command(*, username, messagesplit, **kwargs):
-    if len(messagesplit) == 1:
-        if not player_good_state():
-            send_message(f'{username}, nothing is playing')
-        else:
-            g.Player.stop()
-        return
-    if not g.playlist:
-        send_message(f'{username}, playlist is empty')
-        return
-    skipped_response, skip_title, skip_index, user_response, target_not_found = [], [], [], [], []
-    for i in range(1, len(messagesplit)):
-        try:
-            target = int(messagesplit[i])
-            if not 0 < target <= len(g.playlist):
-                target_not_found.append(f'{target}')
-                continue
-            song = g.playlist[target - 1]
-            skip_index.append(song)
-            skipped_response.append(
-                f'{song.title}'
-                f'{"" if song.user_duration is None else f" [{seconds_convert(song.user_duration)}]"}')
-        except ValueError:
-            target = messagesplit[i]
-            title_skipped = False
-            for song in g.playlist:
-                if song not in skip_index and target.lower() in song.title.lower():
-                    skip_title.append(song)
-                    skipped_response.append(
-                        f'{song.title}'
-                        f'{"" if song.user_duration is None else f" [{seconds_convert(song.user_duration)}]"}')
-                    title_skipped = True
-            if not title_skipped:
-                target_not_found.append(target)
-            for song in skip_title:
-                g.playlist.remove(song)
-            skip_title.clear()
-    for song in skip_index:
-        g.playlist.remove(song)
-    if skipped_response:
-        user_response.append(f'Skip: {", ".join(skipped_response)}')
-    if target_not_found:
-        user_response.append(f'Not found: {", ".join(target_not_found)}')
-    if user_response:
-        user_response_str = "; ".join(user_response)
-        if len(user_response_str) > 470:
-            user_response *= 0
-            if skipped_response:
-                user_response.append(f'Skip: {len(skipped_response)}')
-            if target_not_found:
-                user_response.append(f'Not found: {len(target_not_found)}')
-            send_message(f'{username}, {"; ".join(user_response)}')
-        else:
-            send_message(user_response_str)
-
-
-@moderator_command
 def src_command(*, username, **kwargs):
     if not g.playlist:
         send_message(f'{username} playlist is empty')
@@ -362,46 +305,51 @@ def sql_command(*, username, messagesplit, pipe=False, **kwargs):
 
 
 @bot_command
-def cancel_command(*, username, messagesplit, **kwargs):
-    if not any(username == i.username for i in g.playlist):
-        send_message(f'{username}, nothing to cancel')
-        return
+def skip_command(*, username, messagesplit, **kwargs):
+    moderator = checkmodlist(username)
     if len(messagesplit) == 1:
-        for song in g.playlist:
-            if username == song.username:
-                g.playlist.remove(song)
-                send_message(f'{username}, Cancelled: {song.title}'
-                             f'{"" if song.user_duration is None else f" [{seconds_convert(song.user_duration)}]"}')
-                return
-    playlist_cancelled, playlist_to_del, playlist_not_found, response = [], [], [], []
+        if not player_good_state():
+            send_message(f'{username}, nothing is playing')
+        elif moderator or g.sr_user == username:
+            g.Player.stop()
+        else:
+            send_message(f'{username}, cant skip others song :3')
+        return
+    elif not moderator and not any(username == i.username for i in g.playlist):
+        send_message(f'{username}, nothing to skip in playlist')
+        return
+    playlist_cancelled, skip_title, skip_index, playlist_not_found, response = [], [], [], [], []
     for i in range(1, len(messagesplit)):
-        song_cancelled_title = False
         try:
             target = int(messagesplit[i])
             if not 0 < target <= len(g.playlist):
                 playlist_not_found.append(f'{target}')
                 continue
             song = g.playlist[target - 1]
-            if username == song.username and song not in playlist_to_del:
-                playlist_to_del.append(song)
+            if song not in skip_index + skip_title and moderator or username == song.username:
+                skip_index.append(song)
                 playlist_cancelled.append(f'{song.title}'
                                           f'{"" if song.user_duration is None else f"  [{seconds_convert(song.user_duration)}]"}')
             else:
                 playlist_not_found.append(f'{target}')
         except ValueError:
+            song_cancelled_title = False
             target = messagesplit[i]
             for song in g.playlist:
-                if username == song.username and song not in playlist_to_del and target.lower() in song.title.lower():
+                if song not in skip_title + skip_index and target.lower() in song.title.lower() and moderator or username == song.username:
                     playlist_cancelled.append(f'{song.title}'
                                               f'{"" if song.user_duration is None else f"  [{seconds_convert(song.user_duration)}]"}')
-                    playlist_to_del.append(song)
+                    skip_title.append(song)
                     song_cancelled_title = True
             if not song_cancelled_title:
                 playlist_not_found.append(target)
-    for i in playlist_to_del:
+            for song in skip_title:
+                g.playlist.remove(song)
+            skip_title.clear()
+    for i in skip_index:
         g.playlist.remove(i)
     if playlist_cancelled:
-        response.append(f'Cancelled: {", ".join(playlist_cancelled)}')
+        response.append(f'Skip: {", ".join(playlist_cancelled)}')
     if playlist_not_found:
         response.append(f'Not found: {", ".join(playlist_not_found)}')
     if response:
@@ -409,7 +357,7 @@ def cancel_command(*, username, messagesplit, **kwargs):
         if len(responsestr) > 480:
             response *= 0
             if playlist_cancelled:
-                response.append(f'Cancelled: {len(playlist_cancelled)}')
+                response.append(f'Skip: {len(playlist_cancelled)}')
             if playlist_not_found:
                 response.append(f'Not found: {len(playlist_not_found)}')
             send_message(f'{username}, {" ".join(response)}')
