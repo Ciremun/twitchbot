@@ -213,18 +213,16 @@ def srfp_command(*, username, messagesplit, **kwargs):
                             target_not_found.append(messagesplit[i])
                             continue
                         song = songs[index - 1]
-                        g.playlist.append(song)
-                        response_added = new_song_response(response_added, song)
-                        g.sr_queue.new_task(playmusic)
+                        g.sr_download_queue.new_task(download_clip, song.link, username, 
+                                                     user_duration=song.user_duration)
                     except ValueError:
                         title = messagesplit[i]
                         title_found = False
                         for j in songs:
                             if title.lower() in j.title.lower():
                                 title_found = True
-                                g.playlist.append(j)
-                                response_added = new_song_response(response_added, j)
-                                g.sr_queue.new_task(playmusic)
+                                g.sr_download_queue.new_task(download_clip, song.link, username, 
+                                                             user_duration=song.user_duration)
                             if len(response_added) >= g.sr_max_per_request:
                                 break
                         if not title_found:

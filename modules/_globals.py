@@ -8,12 +8,12 @@ from _utils import RunInThread
 CHANNEL = "ciremun"
 BOT = "shtcd"
 admin = "ciremun"
-screenwidth = 390
-screenheight = 645
+screenwidth = 430
+screenheight = 440
 pixiv_artratio = 1.3
 res = 'data/custom/'
 drawfile = 'rempls.gif'
-prefix = '!'
+prefix = '$'
 banned_tags = ['Pokémon', 'how to draw', 'oshinagaki', 'subarashikihokkorinosekai', 'catalog']
 pixiv_size = Size.MEDIUM
 clear_folders = ['data/sounds/sr/', 'data/pixiv/', 'data/images/']

@@ -338,7 +338,7 @@ def sr_favs_del(username, messagesplit, songs):
             user_duration = song.user_duration
             if user_duration is None:
                 user_duration = 0
-            remove_tup = (song.vlc_link, song.title, timecode_convert(song.duration), user_duration, song.link, username)
+            remove_tup = (song.title, timecode_convert(song.duration), user_duration, song.link, username)
             if remove_tup not in remove_song:
                 song_removed_response.append(f'{song.title}'
                                              f'{"" if not user_duration else f" [{seconds_convert(user_duration)}]"}')
@@ -352,7 +352,7 @@ def sr_favs_del(username, messagesplit, songs):
                     user_duration = song.user_duration
                     if user_duration is None:
                         user_duration = 0
-                    remove_tup = (song.vlc_link, song.title, timecode_convert(song.duration), user_duration, song.link, username)
+                    remove_tup = (song.title, timecode_convert(song.duration), user_duration, song.link, username)
                     if remove_tup not in remove_song:
                         song_removed_response.append(f'{song.title}'
                                                      f'{"" if not user_duration else f" [{seconds_convert(user_duration)}]"}')
@@ -562,7 +562,7 @@ def get_srfavs_dictlist(username):
     result = g.db.check_srfavs_list(username)
     if not result:
         return False
-    return [Song(song[0], song[1], seconds_convert(song[2]), (None if song[3] == 0 else song[3]), song[4], username)
+    return [Song(None, song[0], seconds_convert(song[1]), (None if song[2] == 0 else song[2]), song[3], username)
             for song in result]
 
 
@@ -736,10 +736,10 @@ def download_clip(url, username, user_duration=None, ytsearch=False, save=False)
         title = pafy_obj.title
     if save:
         if user_duration is None:
-            g.db.add_srfavs(vlc_link, title, duration, 0, url, username)
+            g.db.add_srfavs(title, duration, 0, url, username)
             send_message(f'{username}, {title} - {url} - added to favorites')
         else:
-            g.db.add_srfavs(vlc_link, title, duration, user_duration, url, username)
+            g.db.add_srfavs(title, duration, user_duration, url, username)
             send_message(f'{username}, {title} [{seconds_convert(user_duration)}] - {url} - added to favorites')
         return
     duration = seconds_convert(duration)
@@ -752,7 +752,8 @@ def download_clip(url, username, user_duration=None, ytsearch=False, save=False)
 
 def check_sr_req(user_duration, duration, username):
     if user_duration is not None:
-        user_duration = timecode_convert(user_duration)
+        if not isinstance(user_duration, int):
+            user_duration = timecode_convert(user_duration)
         if user_duration > duration:
             send_message(f'{username}, time exceeds duration! [{seconds_convert(duration)}]')
             return False

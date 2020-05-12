@@ -23,20 +23,20 @@ class ThreadDB(threading.Thread):
         self.c.executemany('DELETE FROM owners WHERE filename = ?', filename)
 
     @conn_query
-    def add_srfavs(self, vlc_link, title, duration, user_duration, link, username):
-        self.c.execute('INSERT INTO srfavs (vlc_link, title, duration, user_duration, link, username) '
-                       'VALUES (:vlc_link, :title, :duration, :user_duration, :link, :username)',
-                       {'vlc_link': vlc_link, 'title': title, 'duration': duration,
-                        'user_duration': user_duration, 'link': link, 'username': username})
+    def add_srfavs(self, title, duration, user_duration, link, username):
+        self.c.execute('INSERT INTO srfavs (title, duration, user_duration, link, username) '
+                       'VALUES (:title, :duration, :user_duration, :link, :username)',
+                       {'title': title, 'duration': duration, 'user_duration': user_duration, 
+                       'link': link, 'username': username})
 
     @conn_query
     def remove_srfavs(self, data):
-        self.c.executemany("DELETE FROM srfavs WHERE vlc_link = ? and title = ? and duration = ? and user_duration = ? "
+        self.c.executemany("DELETE FROM srfavs WHERE title = ? and duration = ? and user_duration = ? "
                            "and link = ? and username = ?", data)
 
     @regular_query
     def check_srfavs_list(self, username):
-        self.c.execute('SELECT vlc_link, title, duration, user_duration, link FROM srfavs WHERE username = :username',
+        self.c.execute('SELECT title, duration, user_duration, link FROM srfavs WHERE username = :username',
                        {'username': username})
         return self.c.fetchall()
 
