@@ -273,34 +273,26 @@ def sr_command(*, username, messagesplit, message):
 
 
 @moderator_command
-def sql_command(*, username, messagesplit, pipe=False, **kwargs):
-    try:
-        if not messagesplit[1]:
-            raise IndexError
-        result = g.db.sql_query(" ".join(messagesplit[1:]))
-        if result:
-            result = [' - '.join(str(j) for j in i) for i in result]
-            result_str = " , ".join(result)
-            if pipe:
-                return result_str.split()
-            if len(result_str) > 480:
-                result_arr = divide_chunks(result_str, 470, result, joinparam=' , ')
-                for i in result_arr:
-                    send_message(i)
-            else:
-                send_message(result_str)
-        elif not result and 'select' == messagesplit[1].lower():
-            if pipe:
-                return f'{username}, no results'.split()
-            send_message(f'{username}, no results')
-        elif not result:
-            if pipe:
-                return f'{username}, done'.split()
-            send_message(f'{username}, done')
-    except IndexError:
+def sql_command(*, username, messagesplit, message, pipe=False):
+    if message[1:] == 'sql':
+        return send_message(f'{username}, no query', pipe=pipe)
+    result = g.db.sql_query(" ".join(messagesplit[1:]))
+    if result:
+        result = [' - '.join(str(j) for j in i) for i in result]
+        result_str = " , ".join(result)
         if pipe:
-            return f'{username}, no query'.split()
-        send_message(f'{username}, no query')
+            return result_str.split()
+        if len(result_str) > 480:
+            result_arr = divide_chunks(result_str, 470, result, joinparam=' , ')
+            for i in result_arr:
+                send_message(i)
+        else:
+            send_message(result_str)
+    elif not result and 'select' == messagesplit[1].lower():
+        return send_message(f'{username}, no results', pipe=pipe)
+    elif not result:
+        return send_message(f'{username}, done', pipe=pipe)
+        
 
 
 @bot_command
@@ -549,9 +541,7 @@ def ren_command(*, username, messagesplit, message):
 @bot_command
 def info_command(pipe=False, **kwargs):
     response = f'uptime: {seconds_convert(time.time() - g.Main.start_time, explicit=True)}'
-    if pipe:
-        return response.split()
-    send_message(response)
+    return send_message(response, pipe=pipe)
 
 
 @bot_command
@@ -592,10 +582,7 @@ def help_command(*, username, messagesplit, pipe=False, **kwargs):
         if not set(command.split()).intersection(commands_list + mod_commands_list +
                                                  [i[1:] for i in commands_list] +
                                                  [i[1:] for i in mod_commands_list]):
-            if pipe:
-                return f'{username}, unknown command'.split()
-            send_message(f'{username}, unknown command')
-            return
+            return send_message(f'{username}, unknown command', pipe=pipe)
         response = []
         if help_command_quoted:
             for i in info.commands_desc:
@@ -616,15 +603,10 @@ def help_command(*, username, messagesplit, pipe=False, **kwargs):
             else:
                 send_message(response_str)
         else:
-            if pipe:
-                return f'{username}, no results'.split()
-            send_message(f'{username}, no results')
+            return send_message(f'{username}, no results', pipe=pipe)
     except IndexError:
-        if pipe:
-            return f'Public command list: {", ".join(i[1:] for i in commands_list)} ; ' \
-                   f'Mod: {", ".join(i[1:] for i in mod_commands_list)}'.split()
-        send_message(f'Public command list: {", ".join(i[1:] for i in commands_list)} ; '
-                     f'Mod: {", ".join(i[1:] for i in mod_commands_list)}')
+        return send_message(f'Public command list: {", ".join(i[1:] for i in commands_list)}; '
+                     f'Mod: {", ".join(i[1:] for i in mod_commands_list)}', pipe=pipe)
 
 
 @moderator_command

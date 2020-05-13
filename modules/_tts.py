@@ -38,8 +38,8 @@ class ThreadTTS(threading.Thread):
             self.say_message(messagesplit)
 
     def say_message(self, messagesplit):
-        f_messagesplit = self.remove_links(messagesplit)
-        self.engine.say(' '.join(f_messagesplit))
+        messagesplit = self.remove_links(messagesplit)
+        self.engine.say(' '.join(messagesplit))
         self.engine.runAndWait()
 
     def send_set_tts_vc(self, username, messagesplit):

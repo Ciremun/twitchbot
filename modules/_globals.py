@@ -23,7 +23,7 @@ tts_voices = {'haruka': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\To
               'ivy': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\Ivy RSI Harpo 22kHz'}
 tts_default_vc = tts_voices['ivy']
 tts = False
-tts_volume = 0.15
+tts_volume = 0.07
 logs = False
 sr = True
 player_last_vol = 23

@@ -628,7 +628,9 @@ def change_save_command(username, messagesplit, do_draw=False, do_save=False, do
         send_message(f"{username}, no link")
 
 
-def send_message(message):  # bot message to twitch chat
+def send_message(message, pipe=False):  # bot message to twitch chat
+    if pipe:
+        return message.split()
     g.s.send(bytes("PRIVMSG #" + g.CHANNEL + " :" + message + "\r\n", "UTF-8"))
 
 
