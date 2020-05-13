@@ -140,58 +140,54 @@ def srfd_command(*, username, messagesplit, message):
 
 
 @bot_command
-def srfp_command(*, username, messagesplit, **kwargs):
-    if sr(username):
-        try:
-            if messagesplit[1]:
-                songs = get_srfavs_dictlist(username)
-                if not songs:
-                    send_message(f'{username}, no favorite songs found')
-                    return
-                response, target_not_found, response_added = [], [], []
-                for i in range(1, len(messagesplit)):
-                    try:
-                        index = int(messagesplit[i])
-                        if not 0 < index <= len(songs):
-                            target_not_found.append(messagesplit[i])
-                            continue
-                        song = songs[index - 1]
+def srfp_command(*, username, messagesplit, message):
+    if not message[1:] == 'srfp' and sr(username):
+        songs = get_srfavs_dictlist(username)
+        if not songs:
+            send_message(f'{username}, no favorite songs found')
+            return
+        response, target_not_found, response_added = [], [], []
+        for i in range(1, len(messagesplit)):
+            try:
+                index = int(messagesplit[i])
+                if not 0 < index <= len(songs):
+                    target_not_found.append(messagesplit[i])
+                    continue
+                song = songs[index - 1]
+                g.sr_download_queue.new_task(download_clip, song.link, username, 
+                                             user_duration=song.user_duration)
+                response_added.append(song)
+            except ValueError:
+                title = messagesplit[i]
+                title_found = False
+                for song in songs:
+                    if title.lower() in song.title.lower():
+                        title_found = True
                         g.sr_download_queue.new_task(download_clip, song.link, username, 
                                                      user_duration=song.user_duration)
                         response_added.append(song)
-                    except ValueError:
-                        title = messagesplit[i]
-                        title_found = False
-                        for j in songs:
-                            if title.lower() in j.title.lower():
-                                title_found = True
-                                g.sr_download_queue.new_task(download_clip, song.link, username, 
-                                                             user_duration=song.user_duration)
-                                response_added.append(song)
-                            if len(response_added) >= g.sr_max_per_request:
-                                break
-                        if not title_found:
-                            target_not_found.append(title)
                     if len(response_added) >= g.sr_max_per_request:
                         break
+                if not title_found:
+                    target_not_found.append(title)
+            if len(response_added) >= g.sr_max_per_request:
+                break
+        if response_added:
+            if not checkmodlist(username):
+                g.Main.sr_cooldowns[username] = time.time()
+        if target_not_found:
+            response.append(f"Not found: {', '.join(target_not_found)}")
+        if response:
+            response_str = '; '.join(response)
+            if len(response_str) > 470:
+                response *= 0
                 if response_added:
-                    if not checkmodlist(username):
-                        g.Main.sr_cooldowns[username] = time.time()
+                    response.append(f"Added: {len(response_added)}")
                 if target_not_found:
-                    response.append(f"Not found: {', '.join(target_not_found)}")
-                if response:
-                    response_str = '; '.join(response)
-                    if len(response_str) > 470:
-                        response *= 0
-                        if response_added:
-                            response.append(f"Added: {len(response_added)}")
-                        if target_not_found:
-                            response.append(f"Not found: {len(target_not_found)}")
-                        send_message(' '.join(response))
-                    else:
-                        send_message(response_str)
-        except IndexError:
-            send_message(f'{username}, {g.prefix}srfp <word/index>')
+                    response.append(f"Not found: {len(target_not_found)}")
+                send_message(' '.join(response))
+            else:
+                send_message(response_str)
 
 
 @bot_command
