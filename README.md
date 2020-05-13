@@ -29,7 +29,7 @@ run `token_setup.py` to add twitch, pixiv, google, imgur tokens
 
 ## image window
 
-flask app running on localhost:5000  
+flask app running on `localhost:5000`  
 
 ## globals.py
 
