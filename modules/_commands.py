@@ -156,7 +156,9 @@ def srfp_command(*, username, messagesplit, message):
                 song = songs[index - 1]
                 g.sr_download_queue.new_task(download_clip, song.link, username, 
                                              user_duration=song.user_duration)
-                response_added.append(song)
+                response_added.append(f'{song.title} '
+                                      f'{"" if song.user_duration is None else f"[{seconds_convert(song.user_duration)}]"}'
+                                      f' - {song.link}')
             except ValueError:
                 title = messagesplit[i]
                 title_found = False
@@ -165,7 +167,9 @@ def srfp_command(*, username, messagesplit, message):
                         title_found = True
                         g.sr_download_queue.new_task(download_clip, song.link, username, 
                                                      user_duration=song.user_duration)
-                        response_added.append(song)
+                        response_added.append(f'{song.title} '
+                                              f'{"" if song.user_duration is None else f"[{seconds_convert(song.user_duration)}]"}'
+                                              f' - {song.link}')
                     if len(response_added) >= g.sr_max_per_request:
                         break
                 if not title_found:
@@ -177,17 +181,16 @@ def srfp_command(*, username, messagesplit, message):
                 g.Main.sr_cooldowns[username] = time.time()
         if target_not_found:
             response.append(f"Not found: {', '.join(target_not_found)}")
-        if response:
-            response_str = '; '.join(response)
-            if len(response_str) > 470:
-                response *= 0
-                if response_added:
-                    response.append(f"Added: {len(response_added)}")
-                if target_not_found:
-                    response.append(f"Not found: {len(target_not_found)}")
-                send_message(' '.join(response))
-            else:
-                send_message(response_str)
+        response_str = '; '.join(response)
+        if len(response_str) > 470:
+            response *= 0
+            if response_added:
+                response.append(f"Added: {len(response_added)}")
+            if target_not_found:
+                response.append(f"Not found: {len(target_not_found)}")
+            send_message(' '.join(response))
+        else:
+            send_message(response_str)
 
 
 @bot_command
@@ -322,7 +325,7 @@ def skip_command(*, username, messagesplit, **kwargs):
                 playlist_not_found.append(f'{target}')
                 continue
             song = g.playlist[target - 1]
-            if song not in skip_index + skip_title and moderator or username == song.username:
+            if song not in skip_index + skip_title and (moderator or username == song.username):
                 skip_index.append(song)
                 playlist_cancelled.append(f'{song.title}'
                                           f'{"" if song.user_duration is None else f"  [{seconds_convert(song.user_duration)}]"}')
@@ -332,7 +335,7 @@ def skip_command(*, username, messagesplit, **kwargs):
             song_cancelled_title = False
             target = messagesplit[i]
             for song in g.playlist:
-                if song not in skip_title + skip_index and target.lower() in song.title.lower() and moderator or username == song.username:
+                if song not in skip_title + skip_index and target.lower() in song.title.lower() and (moderator or username == song.username):
                     playlist_cancelled.append(f'{song.title}'
                                               f'{"" if song.user_duration is None else f"  [{seconds_convert(song.user_duration)}]"}')
                     skip_title.append(song)
