@@ -1,8 +1,9 @@
 ffmpeg>=1.4
 Pillow>=7.0.0
 pixiv-api>=0.3.1
-pyglet>=1.4.10
 python-vlc>=3.0.7110
 pyttsx3>=2.81
 requests>=2.22.0
 pafy>=0.5.5
+Flask>=1.1.2
+Flask-SocketIO>=4.3.0

@@ -11,7 +11,7 @@ import pafy
 import _globals as g
 import _commands
 
-from _picture import ThreadPic
+from _picture import flask_app
 from _utils import timecode_convert, get_current_date, seconds_convert, divide_chunks, send_message
 from _tts import call_tts
 from _regex import chat_msg
@@ -102,10 +102,9 @@ if __name__ == '__main__':
     g.s.send(bytes("JOIN #" + g.CHANNEL + " \r\n", "UTF-8"))
 
     g.Main = ThreadMain("ThreadMain")
-    Drawing = threading.Thread(target=ThreadPic)
 
     g.Main.start()
-    Drawing.start()
+    flask_app.start()
     Pixiv.start()
     call_tts.start()
     g.db.start()

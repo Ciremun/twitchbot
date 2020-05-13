@@ -18,7 +18,7 @@ from os.path import isfile, join
 from PIL import Image
 from _regex import re, regex, timecode_re, youtube_id_re, youtube_link_re, pixiv_re, pixiv_src_re
 from _pixiv import Pixiv
-
+from _picture import flask_app
 
 class Song(typing.NamedTuple):
     vlc_link: str
@@ -573,7 +573,7 @@ def set_random_pic(lst, response):
     selected = random.choice(lst)
     updatelastlink(selected)
     g.last_rand_img = selected
-    call_draw('data/custom/', selected)
+    call_draw('custom/', selected)
 
 
 def change_save_command(username, messagesplit, do_draw=False, do_save=False, do_save_response=False):
@@ -603,14 +603,14 @@ def change_save_command(username, messagesplit, do_draw=False, do_save=False, do
             file_format = f'.{content_type[1]}'
         r = requests.get(url)
         try:
-            folder = 'data/custom/'
+            folder = 'custom/'
             imagename = while_is_file(folder, fixname(messagesplit[2].lower()), f'{file_format}')
             do_save = True
         except IndexError:
-            folder = 'data/images/'
+            folder = 'images/'
             imagename = g.db.numba
             g.db.update_imgcount(int(g.db.numba) + 1)
-        filepath = f'{folder}{imagename}{file_format}'
+        filepath = f'data/{folder}{imagename}{file_format}'
         with open(filepath, 'wb') as download:
             download.write(r.content)
         if Path(filepath).is_file():
@@ -635,8 +635,7 @@ def send_message(message, pipe=False):  # bot message to twitch chat
 
 
 def call_draw(folder, selected):  # update global var for pyglet update method, changes image
-    g.res = folder
-    g.drawfile = selected
+    flask_app.set_image(folder, selected)
 
 
 def sr_start_playing():  # wait for vlc player to start

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>shtcd-twitch</title>
+    <style>
+        div.outer img {
+            position: absolute;
+            right: 0px;
+            bottom: 0px;
+        }
+    </style>
+    <script type=text/javascript>
+        function set_image(folder, filename) {
+            var img = document.getElementById('img');
+            var src = '{{url_for("static", filename='')}}' + folder + filename
+            img.setAttribute('src', src)
+        }
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="utf-8">
+        var socket = io();
+        socket.on('connect', function() {
+            var css = 'img { max-width: {{screenwidth}}px; max-height: {{screenheight}}px; } div.outer { position: relative; height: {{screenheight}}px; }',
+                head = document.head || document.getElementsByTagName('head')[0],
+                style = document.createElement('style');
+            head.appendChild(style);
+            style.appendChild(document.createTextNode(css));
+        });
+        socket.on('setimage', function(data) {
+            set_image(data['folder'], data['filename']);
+        });
+    </script>
+</head>
+<body style="background: url({{url_for('static', filename='src/greenscreen.png')}}); width: {{screenwidth}}px; height: {{screenheight}}px; margin: 0;">
+    <div class="outer">
+        <img id="img"></img>
+    </div>
+</body>
+</html>
+

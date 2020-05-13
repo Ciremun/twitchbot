@@ -6,5 +6,6 @@ modules/*
 !data/*.db
 !data/special/sans.gif
 !data/special/greenscreen.png
+!data/special/index.html
 !data/custom/git.keep
 !data/*.keep

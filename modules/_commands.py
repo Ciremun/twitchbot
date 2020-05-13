@@ -9,7 +9,7 @@ from _info import commands_list, mod_commands_list
 
 @moderator_command
 def die_command(**kwargs):
-    call_draw('data/special/', 'greenscreen.png')
+    call_draw('404', 'not_found.png')
 
 
 @bot_command
@@ -391,7 +391,7 @@ def set_command(*, username, messagesplit, message):
         if selected.endswith('.png') or selected.endswith('.gif'):
             my_file = Path("data/custom/" + selected)
             if my_file.is_file():
-                call_draw('data/custom/', selected)
+                call_draw('custom/', selected)
             else:
                 send_message(f'{username}, {selected} not found ')
         else:
@@ -565,7 +565,7 @@ def orand_command(*, username, messagesplit, **kwargs):
         selected = random.choice(result)
         updatelastlink(selected)
         g.last_rand_img = selected
-        call_draw('data/custom/', selected)
+        call_draw('custom/', selected)
 
 
 @bot_command

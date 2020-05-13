@@ -13,11 +13,12 @@ songrequests: youtube link/id/query
 ffmpeg>=1.4
 Pillow>=7.0.0
 pixiv-api>=0.3.1
-pyglet>=1.4.10
 python-vlc>=3.0.7110
 pyttsx3>=2.81
 requests>=2.22.0
 pafy>=0.5.5
+Flask>=1.1.2
+Flask-SocketIO>=4.3.0
 ```
 
 requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
@@ -25,6 +26,10 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 ## tokens
 
 run `token_setup.py` to add twitch, pixiv, google, imgur tokens  
+
+## image window
+
+flask app running on localhost:5000  
 
 ## globals.py
 

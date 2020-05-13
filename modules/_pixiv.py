@@ -53,7 +53,7 @@ class ThreadPixiv(threading.Thread):
                 self.download_art(illustration, g.pixiv_size, artid)
                 if not art.is_file():
                     os.rename(f'data/pixiv/{artid}.jpg', f'data/pixiv/{artid}.png')
-            u.call_draw('data/pixiv/', f'{artid}.png')
+            u.call_draw('pixiv/', f'{artid}.png')
         except BadApiResponse as pixiv_exception:  # reconnect
             if 'Status code: 400' in str(pixiv_exception):
                 self.pixiv_init()
@@ -62,7 +62,7 @@ class ThreadPixiv(threading.Thread):
             if 'RemoteDisconnected' in str(e):
                 self.random_pixiv_art()
 
-    def save_pixiv_art(self, namesave, owner, artid, folder='data/custom/', setpic=False, save=False, save_msg=False):
+    def save_pixiv_art(self, namesave, owner, artid, folder='custom/', setpic=False, save=False, save_msg=False):
         """
         save pixiv art by art id
         :param save_msg: whether send <image saved> message
@@ -71,7 +71,7 @@ class ThreadPixiv(threading.Thread):
         :param namesave: filename
         :param owner: twitch username
         :param artid: pixiv art id
-        :param folder: save folder
+        :param folder: image save folder inside flask app static folder
         """
         try:
             print(f'art id: {artid}')
@@ -83,7 +83,7 @@ class ThreadPixiv(threading.Thread):
                 mypath2 = 'data/pixiv/' + namesave
                 onlyfiles = [f for f in listdir(mypath2) if isfile(join(mypath2, f))]
                 for i in onlyfiles:
-                    os.rename(f'data/pixiv/{namesave}/{i}', f'{folder}{namesave}{i[8:-4]}.png')
+                    os.rename(f'data/pixiv/{namesave}/{i}', f'data/{folder}{namesave}{i[8:-4]}.png')
                     if save:
                         g.db.add_link(f'https://www.pixiv.net/en/artworks/{artid}', f'{namesave}{i[8:-4]}.png')
                         g.db.add_owner(f'{namesave}{i[8:-4]}.png', owner)
@@ -98,7 +98,7 @@ class ThreadPixiv(threading.Thread):
             filepath = f'data/pixiv/{namesave}.png'
             if not art.is_file():
                 filepath = f'data/pixiv/{namesave}.jpg'
-            os.rename(filepath, f'{folder}{namesave}.png')
+            os.rename(filepath, f'data/{folder}{namesave}.png')
             if save:
                 g.db.add_link(f'https://www.pixiv.net/en/artworks/{artid}', f'{namesave}.png')
                 g.db.add_owner(f'{namesave}.png', owner)
