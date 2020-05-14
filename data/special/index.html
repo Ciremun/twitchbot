@@ -13,8 +13,8 @@
     <script type=text/javascript>
         function set_image(folder, filename) {
             var img = document.getElementById('img');
-            var src = '{{url_for("static", filename='')}}' + folder + filename
-            img.setAttribute('src', src)
+            var src = '{{url_for("static", filename='')}}' + folder + filename;
+            img.setAttribute('src', src);
         }
     </script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
