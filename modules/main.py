@@ -32,24 +32,24 @@ class ThreadMain(threading.Thread):
         nowdate = get_current_date()
         date = str(nowdate).replace(':', '.', 3)
 
-        def check_chat_notify(message):
-            if any(d['recipient'] == message.author for d in self.notify_list):
-                self.notify_check_inprogress.append(message.author)
+        def check_chat_notify(username):
+            if any(d['recipient'] == username for d in self.notify_list):
+                self.notify_check_inprogress.append(username)
                 response = []
                 for i in self.notify_list:
-                    if i['recipient'] == message.author:
+                    if i['recipient'] == username:
                         response.append(f'{i["sender"]}: {i["message"]} '
                                         f'[{seconds_convert(time.time() - i["date"], explicit=True)} ago]')
                 if response:
-                    response_str = f'{message.author}, {"; ".join(response)}'
+                    response_str = f'{username}, {"; ".join(response)}'
                     if len(response_str) > 480:
                         for i in divide_chunks(response_str, 480, response, joinparam='; '):
                             send_message(i)
                             time.sleep(1)
                     else:
                         send_message(response_str)
-                self.notify_list = [d for d in self.notify_list if d['recipient'] != message.author]
-                self.notify_check_inprogress.remove(message.author)
+                self.notify_list = [d for d in self.notify_list if d['recipient'] != username]
+                self.notify_check_inprogress.remove(username)
 
         while True:
             line = str(g.s.recv(1024))

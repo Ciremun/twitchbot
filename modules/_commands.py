@@ -636,19 +636,6 @@ def pipe_command(message):
             return
         pipesplit = [f'{g.prefix}{i}' for i in pipesplit]
         result = pipesplit[0].split()[1:]
-
-        def lookahead(iterable):
-            """Pass through all values from the given iterable, augmented by the
-            information if there are more values to come after the current one
-            (True), or if it is the last value (False).
-            """
-            it = iter(iterable)
-            last = next(it)
-            for val in it:
-                yield last, False
-                last = val
-            yield last, True
-
         pipe = True
         for i, last_item in lookahead(pipesplit):
             i = i.split()
@@ -686,8 +673,9 @@ def pipe_command(message):
 
 
 @bot_command
-def tts_colon_command(message):
+def tts_colon_command(message, **kwargs):
     message.parts[0] = 'tts:'
+    message.content = ' '.join(message.parts)
     call_tts.new_task(call_tts.new_message, message)
 
 

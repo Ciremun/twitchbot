@@ -21,6 +21,19 @@ from _pixiv import Pixiv
 from _picture import flask_app
 
 
+def lookahead(iterable):
+    """Pass through all values from the given iterable, augmented by the
+    information if there are more values to come after the current one
+    (True), or if it is the last value (False).
+    """
+    it = iter(iterable)
+    last = next(it)
+    for val in it:
+        yield last, False
+        last = val
+    yield last, True
+
+
 class Message:
 
     def __init__(self, message, author):
