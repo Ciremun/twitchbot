@@ -14,8 +14,8 @@
         function set_image(folder, filename, imgwidth, imgheight) {
             var img = document.getElementById('img');
             var new_img = new Image();
-            new_img.setAttribute('id', 'img');
-            new_img.setAttribute('style', 'width: ' + imgwidth + 'px; height: ' + imgheight + 'px;');
+            new_img.id = 'img';
+            new_img.style = 'width: ' + imgwidth + 'px; height: ' + imgheight + 'px;';
             new_img.src = '{{url_for("static", filename='')}}' + folder + filename;
             document.getElementById('imgdiv').appendChild(new_img);
             img.parentNode.removeChild(img);
@@ -25,7 +25,7 @@
     <script type="text/javascript" charset="utf-8">
         var socket = io();
         socket.on('connect', function() {
-            var css = 'img { max-width: {{screenwidth}}px; max-height: {{screenheight}}px; } div.outer { position: relative; height: {{screenheight}}px; }',
+            var css = 'body { width: {{screenwidth}}px; height: {{screenheight}}px; margin: 0; } img { max-width: {{screenwidth}}px; max-height: {{screenheight}}px; } div.outer { position: relative; height: {{screenheight}}px; }',
                 head = document.head || document.getElementsByTagName('head')[0],
                 style = document.createElement('style');
             head.appendChild(style);
@@ -36,7 +36,7 @@
         });
     </script>
 </head>
-<body style="width: {{screenwidth}}px; height: {{screenheight}}px; margin: 0;">
+<body>
     <div id="imgdiv" class="outer">
         <img id="img"></img>
     </div>
