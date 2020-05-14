@@ -28,29 +28,29 @@ class ThreadTTS(threading.Thread):
     def new_task(self, func, *args, **kwargs):
         self.q.put({'func': func, 'args': args, 'kwargs': kwargs})
 
-    def remove_links(self, messagesplit):
-        return [x for x in messagesplit if not re.match(regex, x)]
+    def remove_links(self, parts):
+        return [x for x in parts if not re.match(regex, x)]
 
-    def new_message(self, message: str, messagesplit: list, username: str):
-        if message.startswith('tts:') and not checkbanlist(username):
-            self.say_message(messagesplit[1:])
-        elif g.tts and username != g.BOT and not message.startswith(g.prefix) and not checkbanlist(username):
-            self.say_message(messagesplit)
+    def new_message(self, message: object):
+        if message.content.startswith('tts:') and not checkbanlist(message.author):
+            self.say_message(message.parts[1:])
+        elif g.tts and message.author != g.BOT and not message.startswith(g.prefix) and not checkbanlist(message.author):
+            self.say_message(message.parts)
 
-    def say_message(self, messagesplit):
-        messagesplit = self.remove_links(messagesplit)
-        self.engine.say(' '.join(messagesplit))
+    def say_message(self, parts):
+        parts = self.remove_links(parts)
+        self.engine.say(' '.join(parts))
         self.engine.runAndWait()
 
-    def send_set_tts_vc(self, username, messagesplit):
+    def send_set_tts_vc(self, message):
         tts_voices = g.tts_voices
         try:
             for k, v in tts_voices.items():
-                if messagesplit[2] == k:
+                if message.parts[2] == k:
                     self.engine.setProperty('voice', v)
                     send_message(f'tts vc={k}')
                     return
-            send_message(f'{username}, [{messagesplit[2]}] not found, available: {", ".join(tts_voices.keys())}')
+            send_message(f'{message.author}, [{message.parts[2]}] not found, available: {", ".join(tts_voices.keys())}')
         except IndexError:
             send_message(f'tts vc={get_tts_vc_key(self.engine.getProperty("voice"))} available: '
                          f'{", ".join(tts_voices.keys())}')

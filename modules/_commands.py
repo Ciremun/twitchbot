@@ -8,16 +8,16 @@ from _info import commands_list, mod_commands_list
 
 
 @bot_command
-def exit_command(*, username, message, **kwargs):
-    if message[1:] == "exit" and username == g.admin:
+def exit_command(message):
+    if message.content[1:] == "exit" and message.author == g.admin:
         for folder in g.clear_folders:
             clear_folder(folder)
         os._exit(0)
 
 
 @bot_command
-def log_command(*, username, **kwargs):
-    if username == g.admin:
+def log_command(message):
+    if message.author == g.admin:
         if g.logs:
             g.logs = False
             send_message('logs off')
@@ -27,9 +27,9 @@ def log_command(*, username, **kwargs):
 
 
 @bot_command
-def np_command(*, username, **kwargs):
+def np_command(message):
     if not player_good_state():
-        send_message(f'{username}, nothing is playing')
+        send_message(f'{message.author}, nothing is playing')
     elif str(g.Player.get_state()) == 'State.Paused':
         np_response('Paused')
     else:
@@ -37,131 +37,135 @@ def np_command(*, username, **kwargs):
 
 
 @moderator_command
-def srv_command(*, username, messagesplit, **kwargs):
+def srv_command(message):
     try:
-        value = int(messagesplit[1])
+        value = int(message.parts[1])
         if not 0 <= value <= 100:
             raise ValueError
         if player_good_state():
             g.player_last_vol = value
             g.Player.audio_set_volume(g.player_last_vol)
             return
-        send_message(f'{username}, nothing is playing')
+        send_message(f'{message.author}, nothing is playing')
     except IndexError:
         send_message(f'{g.prefix}sr vol={g.player_last_vol}')
     except ValueError:
-        send_message(f'{username}, vol 0-100')
+        send_message(f'{message.author}, vol 0-100')
 
 
 @bot_command
-def srq_command(*, username, messagesplit, **kwargs):
+def srq_command(message):
     if g.sr:
-        sr_get_list(username, messagesplit)
+        if not g.playlist:
+            send_message(f'{message.author}, playlist is empty')
+            return
+        sr_list = [f'{x.title} [{seconds_convert(x.user_duration)}] #{i}'
+                if x.user_duration is not None else f'{x.title} #{i}' for i, x in enumerate(g.playlist, start=1)]
+        sr_str = ", ".join(sr_list)
+        sr_list = divide_chunks(sr_str, 470, sr_list, joinparam=', ')
+        send_list(message, sr_str, sr_list, 1, "list")
 
 
 @moderator_command
-def src_command(*, username, **kwargs):
+def src_command(message):
     if not g.playlist:
-        send_message(f'{username} playlist is empty')
+        send_message(f'{message.author} playlist is empty')
         return
     g.playlist.clear()
     send_message(f'queue wiped')
 
 
 @moderator_command
-def srp_command(*, username, **kwargs):
+def srp_command(message):
     if str(g.Player.get_state()) == 'State.Playing':
         g.Player.pause()
     elif str(g.Player.get_state()) == 'State.Paused':
         g.Player.play()
     else:
-        send_message(f'{username}, nothing is playing')
+        send_message(f'{message.author}, nothing is playing')
 
 
 @moderator_command
-def srt_command(*, username, messagesplit, **kwargs):
+def srt_command(message):
     if not player_good_state():
-        send_message(f'{username}, nothing is playing')
+        send_message(f'{message.author}, nothing is playing')
         return
     try:
-        timecode = messagesplit[1]
+        timecode = message.parts[1]
         if re.match(timecode_re, timecode):
             seconds = timecode_convert(timecode)
             if seconds > timecode_convert(g.np_duration):
-                send_message(f'{username}, time exceeds duration! [{g.np_duration}]')
+                send_message(f'{message.author}, time exceeds duration! [{g.np_duration}]')
             else:
                 g.Player.set_time(seconds * 1000)
         else:
-            send_message(f'{username}, timecode error')
+            send_message(f'{message.author}, timecode error')
     except IndexError:
-        send_message(f'{username}, no timecode')
+        send_message(f'{message.author}, no timecode')
 
 
 @bot_command
-def srfa_command(*, username, messagesplit, **kwargs):
-    if not sr_user_cooldown(username):
+def srfa_command(message):
+    if not sr_user_cooldown(message.author):
         try:
-            url_or_timecode = messagesplit[1]
+            url_or_timecode = message.parts[1]
             if re.match(timecode_re, url_or_timecode):
-                messagesplit.append(url_or_timecode)
-                messagesplit[1] = g.sr_url
-                sr_download(messagesplit[1], messagesplit, username, 2, save=True)
+                message.parts.append(url_or_timecode)
+                sr_download(message, g.sr_url, 2, save=True)
                 return
-            match = sr_download(messagesplit[1], messagesplit, username, 2, save=True)
+            match = sr_download(message, url_or_timecode, 2, save=True)
             if not match:
                 timecode_pos = None
-                if re.match(timecode_re, messagesplit[-1]):
-                    timecode_pos = len(messagesplit) - 1
-                    messagesplit[1] = ' '.join(messagesplit[1:-1])
+                if re.match(timecode_re, message.parts[-1]):
+                    timecode_pos = len(message.parts) - 1
+                    message.parts[1] = ' '.join(message.parts[1:-1])
                 else:
-                    messagesplit[1] = ' '.join(messagesplit[1:])
-                try_timecode(messagesplit[1], messagesplit, username, timecode_pos, save=True, ytsearch=True)
+                    message.parts[1] = ' '.join(message.parts[1:])
+                try_timecode(message, message.parts[1], timecode_pos, save=True, ytsearch=True)
         except IndexError:
             if not player_good_state():
-                send_message(f'{username}, nothing is playing')
+                send_message(f'{message.author}, nothing is playing')
             else:
-                messagesplit.append(g.sr_url)
-                sr_download(messagesplit[1], messagesplit, username, 2, save=True)
+                message.parts.append(g.sr_url)
+                sr_download(message, message.parts[1], 2, save=True)
 
 
 @bot_command
-def srfd_command(*, username, messagesplit, message):
-    if not message[1:] == 'srfd':
-        songs = get_srfavs_dictlist(username)
+def srfd_command(message):
+    if not message.content[1:] == 'srfd':
+        songs = get_srfavs_dictlist(message.author)
         if not songs:
-            send_message(f'{username}, no favorite songs found')
+            send_message(f'{message.author}, no favorite songs found')
             return
-        g.utils_queue.new_task(sr_favs_del, username, messagesplit, songs)
+        g.utils_queue.new_task(sr_favs_del, message, songs)
 
 
 @bot_command
-def srfp_command(*, username, messagesplit, message):
-    if not message[1:] == 'srfp' and sr(username):
-        songs = get_srfavs_dictlist(username)
+def srfp_command(message):
+    if not message.content[1:] == 'srfp' and sr(message.author):
+        songs = get_srfavs_dictlist(message.author)
         if not songs:
-            send_message(f'{username}, no favorite songs found')
+            send_message(f'{message.author}, no favorite songs found')
             return
         response, target_not_found, response_added = [], [], []
-        for i in range(1, len(messagesplit)):
+        for i in range(1, len(message.parts)):
             try:
-                index = int(messagesplit[i])
+                index = int(message.parts[i])
                 if not 0 < index <= len(songs):
-                    target_not_found.append(messagesplit[i])
+                    target_not_found.append(message.parts[i])
                     continue
                 song = songs[index - 1]
-                g.sr_download_queue.new_task(download_clip, song.link, username, 
-                                             user_duration=song.user_duration)
+                g.sr_download_queue.new_task(download_clip, song.link, message.author,  user_duration=song.user_duration)
                 response_added.append(f'{song.title} '
                                       f'{"" if song.user_duration is None else f"[{seconds_convert(song.user_duration)}]"}'
                                       f' - {song.link}')
             except ValueError:
-                title = messagesplit[i]
+                title = message.parts[i]
                 title_found = False
                 for song in songs:
                     if title.lower() in song.title.lower():
                         title_found = True
-                        g.sr_download_queue.new_task(download_clip, song.link, username, 
-                                                     user_duration=song.user_duration)
+                        g.sr_download_queue.new_task(download_clip, song.link, message.author, user_duration=song.user_duration)
                         response_added.append(f'{song.title} '
                                               f'{"" if song.user_duration is None else f"[{seconds_convert(song.user_duration)}]"}'
                                               f' - {song.link}')
@@ -172,8 +176,8 @@ def srfp_command(*, username, messagesplit, message):
             if len(response_added) >= g.sr_max_per_request:
                 break
         if response_added:
-            if not checkmodlist(username):
-                g.Main.sr_cooldowns[username] = time.time()
+            if not checkmodlist(message.author):
+                g.Main.sr_cooldowns[message.author] = time.time()
         if target_not_found:
             response.append(f"Not found: {', '.join(target_not_found)}")
         response_str = '; '.join(response)
@@ -189,25 +193,25 @@ def srfp_command(*, username, messagesplit, message):
 
 
 @bot_command
-def srfl_command(*, username, messagesplit, **kwargs):
+def srfl_command(message):
     try:
-        if messagesplit[1]:
-            songs = get_srfavs_dictlist(username)
+        if message.parts[1]:
+            songs = get_srfavs_dictlist(message.author)
             if not songs:
-                send_message(f'{username}, no favorite songs found')
+                send_message(f'{message.author}, no favorite songs found')
                 return
             target_not_found = []
             response = []
-            for i in range(1, len(messagesplit)):
+            for i in range(1, len(message.parts)):
                 try:
-                    index = int(messagesplit[i])
+                    index = int(message.parts[i])
                     if not 0 < index <= len(songs):
-                        target_not_found.append(messagesplit[i])
+                        target_not_found.append(message.parts[i])
                         continue
                     song = songs[index - 1]
                     response.append(f'{song.title} - {song.link}')
                 except ValueError:
-                    title = messagesplit[i]
+                    title = message.parts[i]
                     title_found = False
                     for j in songs:
                         if title.lower() in j.title.lower():
@@ -226,27 +230,27 @@ def srfl_command(*, username, messagesplit, **kwargs):
                 else:
                     send_message(' ; '.join(response))
     except IndexError:
-        send_message(f'{username}, {g.prefix}srfl <word/index>')
+        send_message(f'{message.author}, {g.prefix}srfl <word/index>')
 
 
 @bot_command
-def srf_command(*, username, messagesplit, **kwargs):
-    songs = get_srfavs_dictlist(username)
+def srf_command(message):
+    songs = get_srfavs_dictlist(message.author)
     if not songs:
-        send_message(f'{username}, no favorite songs found')
+        send_message(f'{message.author}, no favorite songs found')
         return
     songs_arr = [f'{song.title} [{seconds_convert(song.user_duration)}] - #{count}'
                  if song.user_duration is not None else f'{song.title} - #{count}'
                  for count, song in enumerate(songs, start=1)]
     songs_str = ", ".join(songs_arr)
     songs_arr = divide_chunks(songs_str, 470, lst=songs_arr, joinparam=', ')
-    send_list(username, messagesplit, songs_str, songs_arr, 1, "list")
+    send_list(message, songs_str, songs_arr, 1, "list")
 
 
 @bot_command
-def sr_command(*, username, messagesplit, message):
-    if message[1:] == "sr":
-        if checkmodlist(username):
+def sr_command(message):
+    if message.content[1:] == "sr":
+        if checkmodlist(message.author):
             if g.sr:
                 g.sr = False
                 send_message(f'songrequests off')
@@ -254,24 +258,23 @@ def sr_command(*, username, messagesplit, message):
                 g.sr = True
                 send_message(f'songrequests on')
         elif g.sr:
-            np_command(username=username, messagesplit=messagesplit, message=message)
-    elif sr(username):
-        match = sr_download(messagesplit[1], messagesplit, username, 2)
+            np_command(message)
+    elif sr(message.author):
+        match = sr_download(message, message.parts[1], 2)
         if not match:
-            if re.match(timecode_re, messagesplit[-1]):
-                query = ' '.join(messagesplit[1:-1])
-                g.sr_download_queue.new_task(download_clip, query, username, user_duration=messagesplit[-1],
-                                             ytsearch=True)
+            if re.match(timecode_re, message.parts[-1]):
+                query = ' '.join(message.parts[1:-1])
+                g.sr_download_queue.new_task(download_clip, query, message.author, user_duration=message.parts[-1], ytsearch=True)
             else:
-                query = ' '.join(messagesplit[1:])
-                g.sr_download_queue.new_task(download_clip, query, username, user_duration=None, ytsearch=True)
+                query = ' '.join(message.parts[1:])
+                g.sr_download_queue.new_task(download_clip, query, message.author, user_duration=None, ytsearch=True)
 
 
 @moderator_command
-def sql_command(*, username, messagesplit, message, pipe=False):
-    if message[1:] == 'sql':
-        return send_message(f'{username}, no query', pipe=pipe)
-    result = g.db.sql_query(" ".join(messagesplit[1:]))
+def sql_command(message, pipe=False):
+    if message.content[1:] == 'sql':
+        return send_message(f'{message.author}, no query', pipe=pipe)
+    result = g.db.sql_query(" ".join(message.parts[1:]))
     if result:
         result = [' - '.join(str(j) for j in i) for i in result]
         result_str = " , ".join(result)
@@ -283,36 +286,36 @@ def sql_command(*, username, messagesplit, message, pipe=False):
                 send_message(i)
         else:
             send_message(result_str)
-    elif not result and 'select' == messagesplit[1].lower():
-        return send_message(f'{username}, no results', pipe=pipe)
+    elif not result and 'select' == message.parts[1].lower():
+        return send_message(f'{message.author}, no results', pipe=pipe)
     elif not result:
-        return send_message(f'{username}, done', pipe=pipe)
+        return send_message(f'{message.author}, done', pipe=pipe)
         
 
 
 @bot_command
-def skip_command(*, username, messagesplit, **kwargs):
-    moderator = checkmodlist(username)
-    if len(messagesplit) == 1:
+def skip_command(message):
+    moderator = checkmodlist(message.author)
+    if len(message.parts) == 1:
         if not player_good_state():
-            send_message(f'{username}, nothing is playing')
-        elif moderator or g.sr_user == username:
+            send_message(f'{message.author}, nothing is playing')
+        elif moderator or g.sr_user == message.author:
             g.Player.stop()
         else:
-            send_message(f'{username}, cant skip others song :3')
+            send_message(f'{message.author}, cant skip others song :3')
         return
-    elif not moderator and not any(username == i.username for i in g.playlist):
-        send_message(f'{username}, nothing to skip in playlist')
+    elif not moderator and not any(message.author == i.message.author for i in g.playlist):
+        send_message(f'{message.author}, nothing to skip in playlist')
         return
     playlist_cancelled, skip_title, skip_index, playlist_not_found, response = [], [], [], [], []
-    for i in range(1, len(messagesplit)):
+    for i in range(1, len(message.parts)):
         try:
-            target = int(messagesplit[i])
+            target = int(message.parts[i])
             if not 0 < target <= len(g.playlist):
                 playlist_not_found.append(f'{target}')
                 continue
             song = g.playlist[target - 1]
-            if song not in skip_index + skip_title and (moderator or username == song.username):
+            if song not in skip_index + skip_title and (moderator or message.author == song.message.author):
                 skip_index.append(song)
                 playlist_cancelled.append(f'{song.title}'
                                           f'{"" if song.user_duration is None else f"  [{seconds_convert(song.user_duration)}]"}')
@@ -320,9 +323,9 @@ def skip_command(*, username, messagesplit, **kwargs):
                 playlist_not_found.append(f'{target}')
         except ValueError:
             song_cancelled_title = False
-            target = messagesplit[i]
+            target = message.parts[i]
             for song in g.playlist:
-                if song not in skip_title + skip_index and target.lower() in song.title.lower() and (moderator or username == song.username):
+                if song not in skip_title + skip_index and target.lower() in song.title.lower() and (moderator or message.author == song.message.author):
                     playlist_cancelled.append(f'{song.title}'
                                               f'{"" if song.user_duration is None else f"  [{seconds_convert(song.user_duration)}]"}')
                     skip_title.append(song)
@@ -346,128 +349,128 @@ def skip_command(*, username, messagesplit, **kwargs):
                 response.append(f'Skip: {len(playlist_cancelled)}')
             if playlist_not_found:
                 response.append(f'Not found: {len(playlist_not_found)}')
-            send_message(f'{username}, {" ".join(response)}')
+            send_message(f'{message.author}, {" ".join(response)}')
         else:
-            send_message(f'{username}, {responsestr}')
+            send_message(f'{message.author}, {responsestr}')
 
 
 @moderator_command
-def ban_command(*, username, messagesplit, message):
-    if message[1:] != "ban":
-        g.utils_queue.new_task(ban_mod_commands, username, messagesplit, 'users banned', 'already banned',
+def ban_command(message):
+    if message.content[1:] != "ban":
+        g.utils_queue.new_task(ban_mod_commands, message, 'users banned', 'already banned',
                                checkbanlist, g.db.add_ban, True)
 
 
 @moderator_command
-def unban_command(*, username, messagesplit, message):
-    if message[1:] != "unban":
-        g.utils_queue.new_task(ban_mod_commands, username, messagesplit, 'users unbanned', f'not in the list',
+def unban_command(message):
+    if message.content[1:] != "unban":
+        g.utils_queue.new_task(ban_mod_commands, message, 'users unbanned', f'not in the list',
                                checkbanlist, g.db.remove_ban, False)
 
 
 @bot_command
-def mod_command(*, username, messagesplit, message):
-    if message[1:] != "mod" and username == g.admin:
-        g.utils_queue.new_task(ban_mod_commands, username, messagesplit, 'users modded', 'already modded',
+def mod_command(message):
+    if message.content[1:] != "mod" and message.author == g.admin:
+        g.utils_queue.new_task(ban_mod_commands, message, 'users modded', 'already modded',
                                checkmodlist, g.db.add_mod, True)
 
 
 @bot_command
-def unmod_command(*, username, messagesplit, message):
-    if message[1:] != "unmod" and username == g.admin:
-        g.utils_queue.new_task(ban_mod_commands, username, messagesplit, 'users unmodded', f'not in the list',
+def unmod_command(message):
+    if message.content[1:] != "unmod" and message.author == g.admin:
+        g.utils_queue.new_task(ban_mod_commands, message, 'users unmodded', f'not in the list',
                                checkmodlist, g.db.remove_mod, False)
 
 
 @bot_command
-def set_command(*, username, messagesplit, message):
-    if message[1:] != "set":
-        selected = messagesplit[1].lower()
+def set_command(message):
+    if message.content[1:] != "set":
+        selected = message.parts[1].lower()
         if selected.endswith('.png') or selected.endswith('.gif'):
             my_file = Path("data/custom/" + selected)
             if my_file.is_file():
                 call_draw('custom/', selected)
             else:
-                send_message(f'{username}, {selected} not found ')
+                send_message(f'{message.author}, {selected} not found ')
         else:
-            send_message(f'{username}, names include extensions [png/gif]')
+            send_message(f'{message.author}, names include extensions [png/gif]')
 
 
 @bot_command
-def setrand_command(*, username, messagesplit, **kwargs):
+def setrand_command(message):
     try:
-        randsrc = messagesplit[1]
+        randsrc = message.parts[1]
         if not any(x == randsrc for x in ['png', 'gif', 'pixiv']):
-            send_message(f'{username}, {g.prefix}setrand [png/gif/pixiv]')
+            send_message(f'{message.author}, {g.prefix}setrand [png/gif/pixiv]')
         elif randsrc == 'gif':
             onlygif = [f for f in os.listdir('data/custom/') if f.endswith('.gif')]
-            set_random_pic(onlygif, f'{username}, gif not found')
+            set_random_pic(onlygif, f'{message.author}, gif not found')
         elif randsrc == 'png':
             onlypng = [f for f in os.listdir('data/custom/') if f.endswith('.png')]
-            set_random_pic(onlypng, f'{username}, png not found')
+            set_random_pic(onlypng, f'{message.author}, png not found')
         elif randsrc == 'pixiv':
             g.px_download_queue.new_task(Pixiv.random_pixiv_art)
     except IndexError:
         onlyfiles = [f for f in os.listdir('data/custom/') if isfile(join('data/custom/', f))]
-        set_random_pic(onlyfiles, f'{username}, {g.prefix}list is empty')
+        set_random_pic(onlyfiles, f'{message.author}, {g.prefix}list is empty')
 
 
 @bot_command
-def search_command(*, username, messagesplit, message):
-    if message[1:] != 'search':
+def search_command(message):
+    if message.content[1:] != 'search':
         words = checkifnolink('!search')
-        if messagesplit[1].startswith(("'", '"')) and messagesplit[1].endswith(("'", '"')):
-            search_words = [x for x in words if x.startswith(messagesplit[1][1:-1])]
+        if message.parts[1].startswith(("'", '"')) and message.parts[1].endswith(("'", '"')):
+            search_words = [x for x in words if x.startswith(message.parts[1][1:-1])]
         else:
-            search_words = [x for x in words if messagesplit[1].lower() in x]
+            search_words = [x for x in words if message.parts[1].lower() in x]
         str1 = ' '.join(search_words)
         allpages = divide_chunks(str1, 470)
-        send_list(username, messagesplit, str1, allpages, 2, "search")
+        send_list(message, str1, allpages, 2, "search")
 
 
 @bot_command
-def list_command(*, username, messagesplit, **kwargs):
+def list_command(message):
     words, linkwords = checkifnolink('!list')
     linkstr1 = ' '.join(linkwords)
     linkallpages = divide_chunks(linkstr1, 470)
     str1 = ' '.join(words)
     allpages = divide_chunks(str1, 470)
     try:
-        int(messagesplit[2])
-        if messagesplit[0][1:] == "list" and messagesplit[1] == "links":
-            send_list(username, messagesplit, linkstr1, linkallpages, 2, "list")
+        int(message.parts[2])
+        if message.parts[0][1:] == "list" and message.parts[1] == "links":
+            send_list(message, linkstr1, linkallpages, 2, "list")
     except IndexError:
         try:
-            if messagesplit[1] == "links":
-                send_list(username, messagesplit, linkstr1, linkallpages, 2, "list")
+            if message.parts[1] == "links":
+                send_list(message, linkstr1, linkallpages, 2, "list")
                 return
-            send_list(username, messagesplit, str1, allpages, 1, "list")
+            send_list(message, str1, allpages, 1, "list")
         except IndexError:
-            send_list(username, messagesplit, str1, allpages, 1, "list")
+            send_list(message, str1, allpages, 1, "list")
 
 
 @moderator_command
-def banlist_command(*, username, messagesplit, **kwargs):
-    checklist(username, messagesplit, g.db.check_banned)
+def banlist_command(message):
+    checklist(message, g.db.check_banned)
 
 
 @moderator_command
-def modlist_command(*, username, messagesplit, **kwargs):
-    checklist(username, messagesplit, g.db.check_moderators)
+def modlist_command(message):
+    checklist(message, g.db.check_moderators)
 
 
 @bot_command
-def link_command(*, username, messagesplit, message):
-    if message[1:] == "link":
+def link_command(message):
+    if message.content[1:] == "link":
         if g.lastlink:
-            send_message('{}, {} - {}'.format(username, g.lastlink, g.last_rand_img))
+            send_message('{}, {} - {}'.format(message.author, g.lastlink, g.last_rand_img))
         else:
             send_message(f'nothing here')
-    elif len(messagesplit) > 2:
+    elif len(message.parts) > 2:
         links_filenames = [{'link': j[0], 'filename': j[1]} for j in g.db.get_links_and_filenames()]
         target_not_found = []
         response = []
-        for i in messagesplit[1:]:
+        for i in message.parts[1:]:
             link = None
             for lnk in links_filenames:
                 if i == lnk.get('filename'):
@@ -488,74 +491,78 @@ def link_command(*, username, messagesplit, message):
             else:
                 send_message(', '.join(response))
     else:
-        file = messagesplit[1]
-        link = g.db.get_link(file)
+        filename = message.parts[1]
+        link = g.db.get_link(filename)
         if link:
-            send_message(f'{link[0][0]} - {file}')
+            send_message(f'{link[0][0]} - {filename}')
         else:
-            send_message(f"{username}, link for {file} not found")
+            send_message(f"{message.author}, link for {filename} not found")
 
 
 @bot_command
-def save_command(*, username, messagesplit, message):
-    if message[1:] == 'save':
+def save_command(message):
+    if message.content[1:] == 'save':
         if re.match(regex, g.lastlink):
-            messagesplit.append(g.lastlink)
-            messagesplit.append(''.join(random.choices(
+            message.parts.append(g.lastlink)
+            message.parts.append(''.join(random.choices(
                 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM' + '1234567890', k=10)))
-            change_save_command(username, messagesplit, do_save_response=True)
+            change_save_command(message, do_save_response=True)
         else:
-            send_message(f'{username}, nothing to save')
+            send_message(f'{message.author}, nothing to save')
     else:
         try:
-            if messagesplit[2]:
-                change_save_command(username, messagesplit, do_save_response=True)
+            if message.parts[2]:
+                change_save_command(message, do_save_response=True)
         except IndexError:
-            messagesplit.append(''.join(random.choices(
+            message.parts.append(''.join(random.choices(
                 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM' + '1234567890', k=10)))
-            change_save_command(username, messagesplit, do_save_response=True)
+            change_save_command(message, do_save_response=True)
 
 
 @bot_command
-def olist_command(*, username, messagesplit, **kwargs):
-    owner_list(username, messagesplit)
+def olist_command(message):
+    result = g.db.check_ownerlist(message.author)
+    result = [item[0] for item in result]
+    result = " ".join(result)
+    allpages = divide_chunks(result, 480)
+    send_list(message, result, allpages, 1, "list")
 
 
 @bot_command
-def del_command(*, username, messagesplit, message):
-    if message[1:] != "del":
-        g.utils_queue.new_task(del_chat_command, username, messagesplit)
+def del_command(message):
+    if message.content[1:] != "del":
+        g.utils_queue.new_task(del_chat_command, message)
 
 
 @bot_command
-def ren_command(*, username, messagesplit, message):
-    if message[1:] != "ren":
-        g.utils_queue.new_task(rename_command, username, messagesplit)
+def ren_command(message):
+    if message.content[1:] != "ren":
+        g.utils_queue.new_task(rename_command, message)
 
 
 @bot_command
-def info_command(pipe=False, **kwargs):
+def info_command(*args, pipe=False):
     response = f'uptime: {seconds_convert(time.time() - g.Main.start_time, explicit=True)}'
     return send_message(response, pipe=pipe)
 
 
 @bot_command
-def orand_command(*, username, messagesplit, **kwargs):
-    result = g.db.check_ownerlist(username)
+def orand_command(message):
+    result = g.db.check_ownerlist(message.author)
     try:
         if not result:
-            send_message(f'{username}, nothing to set')
+            send_message(f'{message.author}, nothing to set')
             return
         result = [item[0] for item in result]
-        randsrc = messagesplit[1]
+        randsrc = message.parts[1]
         if all(randsrc != x for x in ['gif', 'png']):
-            send_message(f'{username}, png/gif only')
+            send_message(f'{message.author}, png/gif only')
         elif randsrc == 'gif':
             onlygif = [f for f in result if f.endswith('.gif')]
-            set_random_pic(onlygif, f'{username}, gif not found')
+            set_random_pic(onlygif, f'{message.author}, gif not found')
         elif randsrc == 'png':
             onlypng = [f for f in result if f.endswith('.png')]
-            set_random_pic(onlypng, f'{username}, png not found')
+            set_random_pic(onlypng, f'{message.author}, png not found')
     except IndexError:
         selected = random.choice(result)
         updatelastlink(selected)
@@ -564,11 +571,11 @@ def orand_command(*, username, messagesplit, **kwargs):
 
 
 @bot_command
-def help_command(*, username, messagesplit, pipe=False, **kwargs):
+def help_command(message, pipe=False):
     try:
         help_command_quoted = False
-        help_command = " ".join(messagesplit[1:])
-        command = messagesplit[1]
+        help_command = " ".join(message.parts[1:])
+        command = message.parts[1]
         if command.startswith(("'", '"')) and command.endswith(("'", '"')):
             command = command[1:-1]
         if help_command.startswith(("'", '"')) and help_command.endswith(("'", '"')):
@@ -577,7 +584,7 @@ def help_command(*, username, messagesplit, pipe=False, **kwargs):
         if not set(command.split()).intersection(commands_list + mod_commands_list +
                                                  [i[1:] for i in commands_list] +
                                                  [i[1:] for i in mod_commands_list]):
-            return send_message(f'{username}, unknown command', pipe=pipe)
+            return send_message(f'{message.author}, unknown command', pipe=pipe)
         response = []
         if help_command_quoted:
             for i in info.commands_desc:
@@ -598,34 +605,34 @@ def help_command(*, username, messagesplit, pipe=False, **kwargs):
             else:
                 send_message(response_str)
         else:
-            return send_message(f'{username}, no results', pipe=pipe)
+            return send_message(f'{message.author}, no results', pipe=pipe)
     except IndexError:
         return send_message(f'Public command list: {", ".join(i[1:] for i in commands_list)}; '
                      f'Mod: {", ".join(i[1:] for i in mod_commands_list)}', pipe=pipe)
 
 
 @moderator_command
-def title_command(*, username, messagesplit, **kwargs):
-    g.utils_queue.new_task(change_stream_settings, username, messagesplit, 'title')
+def title_command(message):
+    g.utils_queue.new_task(change_stream_settings, message, 'title')
 
 
 @moderator_command
-def game_command(*, username, messagesplit, **kwargs):
-    g.utils_queue.new_task(change_stream_settings, username, messagesplit, 'game')
+def game_command(message):
+    g.utils_queue.new_task(change_stream_settings, message, 'game')
 
 
 @bot_command
-def change_command(*, username, messagesplit, message):
-    if message[1:] != "change":
-        g.utils_queue.new_task(change_save_command, username, messagesplit, do_draw=True)
+def change_command(message):
+    if message.content[1:] != "change":
+        g.utils_queue.new_task(change_save_command, message, do_draw=True)
 
 
 @bot_command
-def pipe_command(*, username, messagesplit, message):
-    if message[1:] != "pipe":
-        pipesplit = " ".join(messagesplit[1:]).split(' | ')
+def pipe_command(message):
+    if message.content[1:] != "pipe":
+        pipesplit = " ".join(message.parts[1:]).split(' | ')
         if len(pipesplit) < 2:
-            send_message(f'{username}, you need at least two commands')
+            send_message(f'{message.author}, you need at least two commands')
             return
         pipesplit = [f'{g.prefix}{i}' for i in pipesplit]
         result = pipesplit[0].split()[1:]
@@ -661,52 +668,54 @@ def pipe_command(*, username, messagesplit, message):
                     raise TypeError
                 command = g.commands_dict[i[0][1:]]
                 result.insert(0, i[0])  # insert command string at the beginning, so it looks like chat message
-                result = command(username=username, messagesplit=result, message=" ".join(result), pipe=pipe)
+                message.parts = result
+                message.content = " ".join(result)
+                result = command(message, pipe=pipe)
                 if not last_item:
                     if result is False:
-                        send_message(f'{username}, {i[0][1:]} - mod command')
+                        send_message(f'{message.author}, {i[0][1:]} - mod command')
                         return
                     elif result is None:
                         return
             except TypeError:
-                send_message(f'{username}, {i[0][1:]} - unsupported command')
+                send_message(f'{message.author}, {i[0][1:]} - unsupported command')
                 return
             except KeyError:
-                send_message(f'{username}, {i[0][1:]} - unknown command')
+                send_message(f'{message.author}, {i[0][1:]} - unknown command')
                 return
 
 
 @bot_command
-def tts_colon_command(*, username, messagesplit, **kwargs):
-    messagesplit[0] = 'tts:'
-    call_tts.new_task(call_tts.new_message, " ".join(messagesplit), messagesplit, username)
+def tts_colon_command(message):
+    message.parts[0] = 'tts:'
+    call_tts.new_task(call_tts.new_message, message)
 
 
 @moderator_command
-def tts_command(*, username, messagesplit, **kwargs):
+def tts_command(message):
     try:
-        if messagesplit[1] == 'vc':
-            call_tts.new_task(call_tts.send_set_tts_vc, username, messagesplit)
-        elif messagesplit[1] == 'vol':
+        if message.parts[1] == 'vc':
+            call_tts.new_task(call_tts.send_set_tts_vc, message)
+        elif message.parts[1] == 'vol':
             try:
-                vol = float(messagesplit[2])
+                vol = float(message.parts[2])
                 if not 0 <= vol <= 1:
-                    send_message(f'{username}, volume 0-1')
+                    send_message(f'{message.author}, volume 0-1')
                     return
                 call_tts.new_task(call_tts.change_volume, vol)
             except IndexError:
-                send_message(f'{username}, vol={call_tts.engine.getProperty("volume")}')
+                send_message(f'{message.author}, vol={call_tts.engine.getProperty("volume")}')
             except ValueError:
-                send_message(f'{username}, error converting to float! [{messagesplit[2]}]')
-        elif messagesplit[1] == 'rate':
+                send_message(f'{message.author}, error converting to float! [{message.parts[2]}]')
+        elif message.parts[1] == 'rate':
             try:
-                rate = int(messagesplit[2])
+                rate = int(message.parts[2])
                 call_tts.new_task(call_tts.change_rate, rate)
             except IndexError:
-                send_message(f'{username}, rate={call_tts.engine.getProperty("rate")}')
+                send_message(f'{message.author}, rate={call_tts.engine.getProperty("rate")}')
             except ValueError:
-                send_message(f'{username}, error converting to int! [{messagesplit[2]}]')
-        elif messagesplit[1] == 'cfg':
+                send_message(f'{message.author}, error converting to int! [{message.parts[2]}]')
+        elif message.parts[1] == 'cfg':
             send_message(f"vol={call_tts.engine.getProperty('volume')}, rate="
                          f"{call_tts.engine.getProperty('rate')}, "
                          f"vc={get_tts_vc_key(call_tts.engine.getProperty('voice'))}")
@@ -720,31 +729,31 @@ def tts_command(*, username, messagesplit, **kwargs):
 
 
 @bot_command
-def notify_command(*, username, messagesplit, message, **kwargs):
-    if message[1:] != "notify":
-        if not 4 <= len(messagesplit[1]) <= 25:
-            send_message(f'{username}, username must be between 4 and 25 characters')
+def notify_command(message, **kwargs):
+    if message.content[1:] != "notify":
+        if not 4 <= len(message.parts[1]) <= 25:
+            send_message(f'{message.author}, message.author must be between 4 and 25 characters')
             return
-        notify_message = " ".join(messagesplit[2:])
+        notify_message = " ".join(message.parts[2:])
         if not notify_message:
-            send_message(f'{username}, no notify message')
+            send_message(f'{message.author}, no notify message')
             return
-        g.Main.notify_list.append({'recipient': messagesplit[1].lower(),
+        g.Main.notify_list.append({'recipient': message.parts[1].lower(),
                                    'message': notify_message,
                                    'date': time.time(),
-                                   'sender': username})
+                                   'sender': message.author})
 
 
 @bot_command
-def when_command(*, username, messagesplit, **kwargs):
-    if not any(username == i.username for i in g.playlist):
-        send_message(f'{username}, no queue song')
+def when_command(message):
+    if not any(message.author == i.message.author for i in g.playlist):
+        send_message(f'{message.author}, no queue song')
         return
     response = []
     np_end = next_song_in()
     next_in = np_end
     for count, i in enumerate(g.playlist):
-        if i.username == username:
+        if i.message.author == message.author:
             if g.playlist[:count]:
                 next_in += sum(
                     timecode_convert(j.duration) - j.user_duration if j.user_duration else timecode_convert(
@@ -753,20 +762,20 @@ def when_command(*, username, messagesplit, **kwargs):
             next_in = 0
             if len(response) > 4:
                 break
-    if messagesplit[1:]:
-        response = [song for song in response if " ".join(messagesplit[1:]).lower() in song.lower()]
+    if message.parts[1:]:
+        response = [song for song in response if " ".join(message.parts[1:]).lower() in song.lower()]
         if not response:
-            send_message(f'{username}, no results')
+            send_message(f'{message.author}, no results')
             return
     response_str = "; ".join(response)
     if len(response_str) > 470:
         response = divide_chunks(response_str, 470, lst=response, joinparam='; ')
-        send_message(f'{username}, {response[0]}..')
+        send_message(f'{message.author}, {response[0]}..')
         return
-    send_message(f'{username}, {response_str}')
+    send_message(f'{message.author}, {response_str}')
 
 
 @bot_command
-def imgur_command(*, username, messagesplit, message):
-    if not message[1:] == 'imgur':
-        g.utils_queue.new_task(imgur_utils_wrap, username, messagesplit)
+def imgur_command(message):
+    if not message.content[1:] == 'imgur':
+        g.utils_queue.new_task(imgur_utils_wrap, message)

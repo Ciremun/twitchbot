@@ -1,6 +1,5 @@
 import logging
 import threading
-import time
 import _utils as u
 import _globals as g
 
@@ -32,5 +31,6 @@ class FlaskImageApp(threading.Thread):
         ri, rs = img.width / img.height, g.screenwidth / g.screenheight
         width, height = u.resizeimg(ri, rs, img.width, img.height, g.screenwidth, g.screenheight)
         self.socketio.emit('setimage', {'folder': folder, 'filename': filename, 'imgwidth': width, 'imgheight': height})
-    
+
+
 flask_app = FlaskImageApp()
