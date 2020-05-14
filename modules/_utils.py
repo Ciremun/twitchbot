@@ -76,18 +76,18 @@ def imgur_convert_image(file):
     return bytearr
 
 
-def resizeimg(ri, rs, image, screenwidth, screenheight):  # resize to fit window
+def resizeimg(ri, rs, imgwidth, imgheight , screenwidth, screenheight):  # resize to fit window
     if rs > ri:
-        resized = image.width * screenheight / image.height, screenheight
+        resized = imgwidth * screenheight / imgheight, screenheight
         return resized[0], resized[1]
     elif rs < ri:
-        resized = screenwidth, image.height * screenwidth / image.width
+        resized = screenwidth, imgheight * screenwidth / imgwidth
         return resized[0], resized[1]
     else:
-        imagescale = screenwidth / image.width
-        image.width *= imagescale
-        image.height *= imagescale
-        return image.width, image.height
+        imagescale = screenwidth / imgwidth
+        imgwidth *= imagescale
+        imgheight *= imagescale
+        return imgwidth, imgheight
 
 
 def checkmodlist(username):  # check if user is mod

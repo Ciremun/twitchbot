@@ -11,10 +11,14 @@
         }
     </style>
     <script type=text/javascript>
-        function set_image(folder, filename) {
+        function set_image(folder, filename, imgwidth, imgheight) {
             var img = document.getElementById('img');
-            var src = '{{url_for("static", filename='')}}' + folder + filename;
-            img.setAttribute('src', src);
+            var new_img = new Image();
+            new_img.setAttribute('id', 'img');
+            new_img.setAttribute('style', 'width: ' + imgwidth + 'px; height: ' + imgheight + 'px;');
+            new_img.src = '{{url_for("static", filename='')}}' + folder + filename;
+            document.getElementById('imgdiv').appendChild(new_img);
+            img.parentNode.removeChild(img);
         }
     </script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
@@ -28,12 +32,12 @@
             style.appendChild(document.createTextNode(css));
         });
         socket.on('setimage', function(data) {
-            set_image(data['folder'], data['filename']);
+            set_image(data['folder'], data['filename'], data['imgwidth'], data['imgheight']);
         });
     </script>
 </head>
 <body style="width: {{screenwidth}}px; height: {{screenheight}}px; margin: 0;">
-    <div class="outer">
+    <div id="imgdiv" class="outer">
         <img id="img"></img>
     </div>
 </body>
