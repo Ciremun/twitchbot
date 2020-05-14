@@ -45,15 +45,12 @@ flask app running on `localhost:5000`
 `sr` (boolean): enable/disable songrequests  
 `screenwidth` (int): pic window width in px  
 `screenheight` (int): pic window height in px  
-`res` (string): init image folder  
-`drawfile` (string): init image  
 `prefix` (string): chat command prefix  
 `banned_tags` (list of strings): exclude pixiv tags you dont want to see  
 `pixiv_size` (pixivapi.Size): pixiv download size  
 `pixiv_artratio` (numeric): max pixiv art width/height ratio  
 `clear_folders` (list of strings): clear folders on !exit  
 `player_last_vol` (int): startup songrequests volume (0-100)  
-`ytdl_rate` (int): songrequests download speed in bytes/s  
 `max_duration` (string): songrequests non-mod max song duration, timecode string (ex. 10:00)  
 `sr_cooldown` (string): songrequests non-mod cooldown, timecode string  
 `sr_max_per_request` (int): max number of songs per request (ex. using srfp command)  
