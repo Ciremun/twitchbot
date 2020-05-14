@@ -304,7 +304,7 @@ def skip_command(message):
         else:
             send_message(f'{message.author}, cant skip others song :3')
         return
-    elif not moderator and not any(message.author == i.message.author for i in g.playlist):
+    elif not moderator and not any(message.author == i.username for i in g.playlist):
         send_message(f'{message.author}, nothing to skip in playlist')
         return
     playlist_cancelled, skip_title, skip_index, playlist_not_found, response = [], [], [], [], []
@@ -734,14 +734,14 @@ def notify_command(message, **kwargs):
 
 @bot_command
 def when_command(message):
-    if not any(message.author == i.message.author for i in g.playlist):
+    if not any(message.author == i.username for i in g.playlist):
         send_message(f'{message.author}, no queue song')
         return
     response = []
     np_end = next_song_in()
     next_in = np_end
     for count, i in enumerate(g.playlist):
-        if i.message.author == message.author:
+        if i.username == message.author:
             if g.playlist[:count]:
                 next_in += sum(
                     timecode_convert(j.duration) - j.user_duration if j.user_duration else timecode_convert(
