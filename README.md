@@ -103,7 +103,6 @@ flask app running on `localhost:5000`
 `srt` - set time for current song  
 `srv [value]` - get/change volume  
 `srp` - play/pause  
-`die` - set greenscreen.png  
 
 ### bot admin
 

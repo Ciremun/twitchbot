@@ -7,11 +7,6 @@ from _decorators import bot_command, moderator_command
 from _info import commands_list, mod_commands_list
 
 
-@moderator_command
-def die_command(**kwargs):
-    call_draw('404', 'not_found.png')
-
-
 @bot_command
 def exit_command(*, username, message, **kwargs):
     if message[1:] == "exit" and username == g.admin:

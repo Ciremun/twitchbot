@@ -42,7 +42,6 @@ commands_desc = [prefix + x for x in [f'change <link> - change display pic, add 
                                       f'srp - play/pause',
                                       f'olist - list of your saved pics',
                                       f'orand [png/gif] - set random image from {prefix}olist',
-                                      f'die - set greenscreen.png, mod command',
                                       f'log - enable/disable chat logging, admin command',
                                       f'mod/unmod - add user to mod-list, admin command',
                                       f'exit - clear folders, exit bot',
