@@ -32,7 +32,7 @@ class ThreadMain(threading.Thread):
         nowdate = get_current_date()
         date = str(nowdate).replace(':', '.', 3)
 
-        def check_chat_notify(username):
+        def check_chat_notify(username: str):
             if any(d['recipient'] == username for d in self.notify_list):
                 self.notify_check_inprogress.append(username)
                 response = []

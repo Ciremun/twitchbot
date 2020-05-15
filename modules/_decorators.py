@@ -1,25 +1,17 @@
 import threading
 import _globals as g
 
-from _utils import checkbanlist, checkmodlist
+from _utils import no_ban
 
-
-def bot_command(func):  # add command functions to commands dict, check if user is mod/banned on call
-    def wrapper(message, **kwargs):
-        if checkbanlist(message.author):
-            return False
-        return func(message, **kwargs)
-    g.commands_dict[func.__code__.co_name[:-8]] = wrapper
-    return wrapper
-
-
-def moderator_command(func):
-    def wrapper(message, **kwargs):
-        if not checkmodlist(message.author):
-            return False
-        return func(message, **kwargs)
-    g.commands_dict[func.__code__.co_name[:-8]] = wrapper
-    return wrapper
+def bot_command(*, name, check_func=no_ban):
+    def decorator(func):
+        def wrapper(message, **kwargs):
+            if not check_func(message.author):
+                return False
+            return func(message, **kwargs)
+        g.commands_dict[name] = wrapper
+        return wrapper
+    return decorator
 
 
 lock = threading.Lock()

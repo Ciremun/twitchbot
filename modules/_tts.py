@@ -4,7 +4,7 @@ import pyttsx3
 import _globals as g
 
 from _regex import regex, re
-from _utils import checkbanlist, send_message, get_tts_vc_key
+from _utils import no_ban, send_message, get_tts_vc_key
 
 
 class ThreadTTS(threading.Thread):
@@ -28,21 +28,21 @@ class ThreadTTS(threading.Thread):
     def new_task(self, func, *args, **kwargs):
         self.q.put({'func': func, 'args': args, 'kwargs': kwargs})
 
-    def remove_links(self, parts):
+    def remove_links(self, parts: list):
         return [x for x in parts if not re.match(regex, x)]
 
     def new_message(self, message: object):
-        if message.content.startswith('tts:') and not checkbanlist(message.author):
+        if message.content.startswith('tts:') and no_ban(message.author):
             self.say_message(message.parts[1:])
-        elif g.tts and message.author != g.BOT and not message.startswith(g.prefix) and not checkbanlist(message.author):
+        elif g.tts and message.author != g.BOT and not message.startswith(g.prefix) and no_ban(message.author):
             self.say_message(message.parts)
 
-    def say_message(self, parts):
+    def say_message(self, parts: list):
         parts = self.remove_links(parts)
         self.engine.say(' '.join(parts))
         self.engine.runAndWait()
 
-    def send_set_tts_vc(self, message):
+    def send_set_tts_vc(self, message: object):
         tts_voices = g.tts_voices
         try:
             for k, v in tts_voices.items():

@@ -3,11 +3,11 @@ import _info as info
 from _utils import *
 from _pixiv import Pixiv
 from _tts import call_tts
-from _decorators import bot_command, moderator_command
+from _decorators import bot_command
 from _info import commands_list, mod_commands_list
 
 
-@bot_command
+@bot_command(name='exit')
 def exit_command(message):
     if message.content[1:] == "exit" and message.author == g.admin:
         for folder in g.clear_folders:
@@ -15,7 +15,7 @@ def exit_command(message):
         os._exit(0)
 
 
-@bot_command
+@bot_command(name='log')
 def log_command(message):
     if message.author == g.admin:
         if g.logs:
@@ -26,7 +26,7 @@ def log_command(message):
             send_message('logs on')
 
 
-@bot_command
+@bot_command(name='np')
 def np_command(message):
     if not player_good_state():
         send_message(f'{message.author}, nothing is playing')
@@ -36,7 +36,7 @@ def np_command(message):
         np_response('Now playing')
 
 
-@moderator_command
+@bot_command(name='srv', check_func=is_mod)
 def srv_command(message):
     try:
         value = int(message.parts[1])
@@ -53,7 +53,7 @@ def srv_command(message):
         send_message(f'{message.author}, vol 0-100')
 
 
-@bot_command
+@bot_command(name='srq')
 def srq_command(message):
     if g.sr:
         if not g.playlist:
@@ -66,7 +66,7 @@ def srq_command(message):
         send_list(message, sr_str, sr_list, 1, "list")
 
 
-@moderator_command
+@bot_command(name='src', check_func=is_mod)
 def src_command(message):
     if not g.playlist:
         send_message(f'{message.author} playlist is empty')
@@ -75,7 +75,7 @@ def src_command(message):
     send_message(f'queue wiped')
 
 
-@moderator_command
+@bot_command(name='srp', check_func=is_mod)
 def srp_command(message):
     if str(g.Player.get_state()) == 'State.Playing':
         g.Player.pause()
@@ -85,7 +85,7 @@ def srp_command(message):
         send_message(f'{message.author}, nothing is playing')
 
 
-@moderator_command
+@bot_command(name='srt', check_func=is_mod)
 def srt_command(message):
     if not player_good_state():
         send_message(f'{message.author}, nothing is playing')
@@ -104,7 +104,7 @@ def srt_command(message):
         send_message(f'{message.author}, no timecode')
 
 
-@bot_command
+@bot_command(name='srfa')
 def srfa_command(message):
     if not sr_user_cooldown(message.author):
         try:
@@ -130,7 +130,7 @@ def srfa_command(message):
                 sr_download(message, message.parts[1], 2, save=True)
 
 
-@bot_command
+@bot_command(name='srfd')
 def srfd_command(message):
     if not message.content[1:] == 'srfd':
         songs = get_srfavs_dictlist(message.author)
@@ -140,7 +140,7 @@ def srfd_command(message):
         g.utils_queue.new_task(sr_favs_del, message, songs)
 
 
-@bot_command
+@bot_command(name='srfp')
 def srfp_command(message):
     if not message.content[1:] == 'srfp' and sr(message.author):
         songs = get_srfavs_dictlist(message.author)
@@ -176,7 +176,7 @@ def srfp_command(message):
             if len(response_added) >= g.sr_max_per_request:
                 break
         if response_added:
-            if not checkmodlist(message.author):
+            if not is_mod(message.author):
                 g.Main.sr_cooldowns[message.author] = time.time()
         if target_not_found:
             response.append(f"Not found: {', '.join(target_not_found)}")
@@ -192,7 +192,7 @@ def srfp_command(message):
             send_message(response_str)
 
 
-@bot_command
+@bot_command(name='srfl')
 def srfl_command(message):
     try:
         if message.parts[1]:
@@ -233,7 +233,7 @@ def srfl_command(message):
         send_message(f'{message.author}, {g.prefix}srfl <word/index>')
 
 
-@bot_command
+@bot_command(name='srf')
 def srf_command(message):
     songs = get_srfavs_dictlist(message.author)
     if not songs:
@@ -247,10 +247,10 @@ def srf_command(message):
     send_list(message, songs_str, songs_arr, 1, "list")
 
 
-@bot_command
+@bot_command(name='sr')
 def sr_command(message):
     if message.content[1:] == "sr":
-        if checkmodlist(message.author):
+        if is_mod(message.author):
             if g.sr:
                 g.sr = False
                 send_message(f'songrequests off')
@@ -270,7 +270,7 @@ def sr_command(message):
                 g.sr_download_queue.new_task(download_clip, query, message.author, user_duration=None, ytsearch=True)
 
 
-@moderator_command
+@bot_command(name='sql', check_func=is_mod)
 def sql_command(message, pipe=False):
     if message.content[1:] == 'sql':
         return send_message(f'{message.author}, no query', pipe=pipe)
@@ -293,9 +293,9 @@ def sql_command(message, pipe=False):
         
 
 
-@bot_command
+@bot_command(name='skip')
 def skip_command(message):
-    moderator = checkmodlist(message.author)
+    moderator = is_mod(message.author)
     if len(message.parts) == 1:
         if not player_good_state():
             send_message(f'{message.author}, nothing is playing')
@@ -354,35 +354,35 @@ def skip_command(message):
             send_message(f'{message.author}, {responsestr}')
 
 
-@moderator_command
+@bot_command(name='ban', check_func=is_mod)
 def ban_command(message):
     if message.content[1:] != "ban":
         g.utils_queue.new_task(ban_mod_commands, message, 'users banned', 'already banned',
-                               checkbanlist, g.db.add_ban, True)
+                               no_ban, g.db.add_ban, True)
 
 
-@moderator_command
+@bot_command(name='unban', check_func=is_mod)
 def unban_command(message):
     if message.content[1:] != "unban":
         g.utils_queue.new_task(ban_mod_commands, message, 'users unbanned', f'not in the list',
-                               checkbanlist, g.db.remove_ban, False)
+                               no_ban, g.db.remove_ban, False)
 
 
-@bot_command
+@bot_command(name='mod')
 def mod_command(message):
     if message.content[1:] != "mod" and message.author == g.admin:
         g.utils_queue.new_task(ban_mod_commands, message, 'users modded', 'already modded',
-                               checkmodlist, g.db.add_mod, True)
+                               is_mod, g.db.add_mod, False)
 
 
-@bot_command
+@bot_command(name='unmod')
 def unmod_command(message):
     if message.content[1:] != "unmod" and message.author == g.admin:
         g.utils_queue.new_task(ban_mod_commands, message, 'users unmodded', f'not in the list',
-                               checkmodlist, g.db.remove_mod, False)
+                               is_mod, g.db.remove_mod, True)
 
 
-@bot_command
+@bot_command(name='set')
 def set_command(message):
     if message.content[1:] != "set":
         selected = message.parts[1].lower()
@@ -396,7 +396,7 @@ def set_command(message):
             send_message(f'{message.author}, names include extensions [png/gif]')
 
 
-@bot_command
+@bot_command(name='setrand')
 def setrand_command(message):
     try:
         randsrc = message.parts[1]
@@ -415,7 +415,7 @@ def setrand_command(message):
         set_random_pic(onlyfiles, f'{message.author}, {g.prefix}list is empty')
 
 
-@bot_command
+@bot_command(name='search')
 def search_command(message):
     if message.content[1:] != 'search':
         words = checkifnolink('!search')
@@ -428,7 +428,7 @@ def search_command(message):
         send_list(message, str1, allpages, 2, "search")
 
 
-@bot_command
+@bot_command(name='list')
 def list_command(message):
     words, linkwords = checkifnolink('!list')
     linkstr1 = ' '.join(linkwords)
@@ -449,17 +449,17 @@ def list_command(message):
             send_list(message, str1, allpages, 1, "list")
 
 
-@moderator_command
+@bot_command(name='banlist', check_func=is_mod)
 def banlist_command(message):
     checklist(message, g.db.check_banned)
 
 
-@moderator_command
+@bot_command(name='modlist', check_func=is_mod)
 def modlist_command(message):
     checklist(message, g.db.check_moderators)
 
 
-@bot_command
+@bot_command(name='link')
 def link_command(message):
     if message.content[1:] == "link":
         if g.lastlink:
@@ -499,7 +499,7 @@ def link_command(message):
             send_message(f"{message.author}, link for {filename} not found")
 
 
-@bot_command
+@bot_command(name='save')
 def save_command(message):
     if message.content[1:] == 'save':
         if re.match(regex, g.lastlink):
@@ -519,7 +519,7 @@ def save_command(message):
             change_save_command(message, do_save_response=True)
 
 
-@bot_command
+@bot_command(name='olist')
 def olist_command(message):
     result = g.db.check_ownerlist(message.author)
     result = [item[0] for item in result]
@@ -528,25 +528,25 @@ def olist_command(message):
     send_list(message, result, allpages, 1, "list")
 
 
-@bot_command
+@bot_command(name='del')
 def del_command(message):
     if message.content[1:] != "del":
         g.utils_queue.new_task(del_chat_command, message)
 
 
-@bot_command
+@bot_command(name='ren')
 def ren_command(message):
     if message.content[1:] != "ren":
         g.utils_queue.new_task(rename_command, message)
 
 
-@bot_command
+@bot_command(name='info')
 def info_command(*args, pipe=False):
     response = f'uptime: {seconds_convert(time.time() - g.Main.start_time, explicit=True)}'
     return send_message(response, pipe=pipe)
 
 
-@bot_command
+@bot_command(name='orand')
 def orand_command(message):
     result = g.db.check_ownerlist(message.author)
     try:
@@ -570,7 +570,7 @@ def orand_command(message):
         call_draw('custom/', selected)
 
 
-@bot_command
+@bot_command(name='help')
 def help_command(message, pipe=False):
     try:
         help_command_quoted = False
@@ -611,23 +611,23 @@ def help_command(message, pipe=False):
                      f'Mod: {", ".join(i[1:] for i in mod_commands_list)}', pipe=pipe)
 
 
-@moderator_command
+@bot_command(name='title', check_func=is_mod)
 def title_command(message):
     g.utils_queue.new_task(change_stream_settings, message, 'title')
 
 
-@moderator_command
+@bot_command(name='game', check_func=is_mod)
 def game_command(message):
     g.utils_queue.new_task(change_stream_settings, message, 'game')
 
 
-@bot_command
+@bot_command(name='change')
 def change_command(message):
     if message.content[1:] != "change":
         g.utils_queue.new_task(change_save_command, message, do_draw=True)
 
 
-@bot_command
+@bot_command(name='pipe')
 def pipe_command(message):
     if message.content[1:] != "pipe":
         pipesplit = " ".join(message.parts[1:]).split(' | ')
@@ -672,14 +672,14 @@ def pipe_command(message):
                 return
 
 
-@bot_command
+@bot_command(name='tts_colon')
 def tts_colon_command(message, **kwargs):
     message.parts[0] = 'tts:'
     message.content = ' '.join(message.parts)
     call_tts.new_task(call_tts.new_message, message)
 
 
-@moderator_command
+@bot_command(name='tts', check_func=is_mod)
 def tts_command(message):
     try:
         if message.parts[1] == 'vc':
@@ -716,7 +716,7 @@ def tts_command(message):
             send_message(f'tts on')
 
 
-@bot_command
+@bot_command(name='notify')
 def notify_command(message, **kwargs):
     if message.content[1:] != "notify":
         if not 4 <= len(message.parts[1]) <= 25:
@@ -732,7 +732,7 @@ def notify_command(message, **kwargs):
                                    'sender': message.author})
 
 
-@bot_command
+@bot_command(name='when')
 def when_command(message):
     if not any(message.author == i.username for i in g.playlist):
         send_message(f'{message.author}, no queue song')
@@ -763,7 +763,7 @@ def when_command(message):
     send_message(f'{message.author}, {response_str}')
 
 
-@bot_command
+@bot_command(name='imgur')
 def imgur_command(message):
     if not message.content[1:] == 'imgur':
         g.utils_queue.new_task(imgur_utils_wrap, message)

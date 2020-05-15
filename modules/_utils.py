@@ -115,7 +115,7 @@ def resizeimg(ri, rs, imgwidth, imgheight , screenwidth, screenheight):  # resiz
         return imgwidth, imgheight
 
 
-def checkmodlist(username):  # check if user is mod
+def is_mod(username):  # check if user is mod
     if username == g.admin:
         return True
     result = g.db.check_if_mod(username)
@@ -124,15 +124,15 @@ def checkmodlist(username):  # check if user is mod
     return False
 
 
-def checkbanlist(username):  # check if user is bad
+def no_ban(username):  # check if user is bad
     if username == g.admin:
-        return False
-    if checkmodlist(username):
-        return False
+        return True
+    if is_mod(username):
+        return True
     result = g.db.check_if_banned(username)
     if result:
-        return True
-    return False
+        return False
+    return True
 
 
 def timecode_convert(timecode):
@@ -218,7 +218,7 @@ def rename_command(message):  # rename function for image owners
     try:
         imagename = message.parts[1].lower()
         newimagename = fixname(message.parts[2].lower())
-        moderator = checkmodlist(message.author)
+        moderator = is_mod(message.author)
         if not moderator and not check_owner(message.author, imagename):
             onlyfiles = [f for f in listdir('data/custom/') if isfile(join('data/custom/', f))]
             words = onlyfiles
@@ -397,7 +397,7 @@ def sr_favs_del(message, songs):
 def del_chat_command(message):
     response_not_found, response_denied, response_deleted, remove_links, remove_owners = [], [], [], [], []
     file_deleted = False
-    moderator = checkmodlist(message.author)
+    moderator = is_mod(message.author)
     for i in message.parts[1:]:
         imagename = i.lower()
         if not moderator and not check_owner(message.author, imagename):
@@ -457,7 +457,7 @@ def ban_mod_commands(message, str1, str2, check_func, db_call, check_func_result
     boolean = False
     for i in message.parts[1:]:
         user = i.lower()
-        if check_func(user) == check_func_result:
+        if not check_func(user) == check_func_result:
             response.append(user)
         else:
             users.append((user,))
@@ -634,14 +634,14 @@ def change_save_command(message, do_draw=False, do_save=False, do_save_response=
         send_message(f"{message.author}, no link")
 
 
-def send_message(message, pipe=False):  # bot message to twitch chat
+def send_message(message: str, pipe=False):  # bot message to twitch chat
     if pipe:
         return message.split()
-    g.s.send(bytes("PRIVMSG #" + g.CHANNEL + " :" + message + "\r\n", "UTF-8"))
+    g.s.send(bytes(f"PRIVMSG #{g.CHANNEL} :{message}\r\n", "UTF-8"))
 
 
-def call_draw(folder, selected):  # update global var for pyglet update method, changes image
-    flask_app.set_image(folder, selected)
+def call_draw(folder: str, filename: str):  # change image
+    flask_app.set_image(folder, filename)
 
 
 def sr_start_playing():  # wait for vlc player to start
@@ -692,7 +692,7 @@ def get_pafy_obj(url: str):
     return pafy_obj
 
 
-def download_clip(url, username, user_duration=None, ytsearch=False, save=False):
+def download_clip(url: str, username: str, user_duration=None, ytsearch=False, save=False):
     """
     add song to playlist/favorites
     :param url: youtube link/id or search query
@@ -701,7 +701,7 @@ def download_clip(url, username, user_duration=None, ytsearch=False, save=False)
     :param ytsearch: youtube search query
     :param save: add to favorites
     """
-    if not checkmodlist(username):
+    if not is_mod(username):
         g.Main.sr_cooldowns[username] = time.time()
     if not ytsearch:
         pafy_obj = get_pafy_obj(url)
@@ -764,7 +764,7 @@ def check_sr_req(user_duration, duration, username):
         if user_duration > duration:
             send_message(f'{username}, time exceeds duration! [{seconds_convert(duration)}]')
             return False
-    if duration > g.max_duration and not checkmodlist(username):
+    if duration > g.max_duration and not is_mod(username):
         send_message(f'{username}, '
                      f'{seconds_convert(duration)} > max duration[{seconds_convert(g.max_duration)}]')
         return False
