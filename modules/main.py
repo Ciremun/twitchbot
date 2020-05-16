@@ -75,8 +75,6 @@ class ThreadMain(threading.Thread):
                 if all(x != message.author for x in self.notify_check_inprogress):
                     g.utils_queue.new_task(check_chat_notify, message.author)
 
-                call_tts.new_task(call_tts.new_message, message)
-
                 if g.logs:
                     strdate = get_current_date()
                     strdate = str(strdate).replace(':', '.', 3)

@@ -2,12 +2,12 @@ from _globals import prefix
 
 commands_list = [prefix + x for x in
                  ['change', 'save', 'set', 'setrand', 'list', 'search', 'link', 'sr', 'srq', 'srf', 'srfa', 'srfd',
-                  'srfp', 'srfl', 'np', 'olist', 'orand', 'ren', 'del', 'skip', 'help', 'tts:', 'info', 'pipe',
+                  'srfp', 'srfl', 'np', 'olist', 'orand', 'ren', 'del', 'skip', 'help', 'tts', 'info', 'pipe',
                   'notify', 'when', 'imgur']]
 mod_commands_list = [prefix + x for x in
-                     ['ban', 'unban', 'banlist', 'modlist', 'tts', 'srp', 'srt', 'src', 'srv', 'sql', 'title', 'game']]
+                     ['ban', 'unban', 'banlist', 'modlist', 'ttscfg', 'srp', 'srt', 'src', 'srv', 'sql', 'title', 'game']]
 
-pipe_commands = ['sql', 'info', 'help', 'tts', 'notify', 'tts_colon']
+pipe_commands = ['sql', 'info', 'help', 'tts', 'notify']
 
 commands_desc = [prefix + x for x in [f'change <link> - change display pic, add name to save',
                                       f'save <link> [name] - save only',
@@ -25,9 +25,8 @@ commands_desc = [prefix + x for x in [f'change <link> - change display pic, add 
                                       f'ren <name> <new name> - change saved pic filename',
                                       f'del <name> [name2].. - delete saved pic(s)',
                                       f'modlist - get bot mod-list',
-                                      f'tts - enable/disable tts',
-                                      f'tts cfg - current tts config',
-                                      f'tts vol/rate/vc [value] - get/change tts volume/speech rate/voice',
+                                      f'tts [msg] - message text-to-speech, no args - get voices',
+                                      f'ttscfg [vol/rate/vc/toggle] [value] - get/change tts volume/speech rate/voice, toggle tts, no args - current tts config',
                                       f'sr <yt/scld> [timecode] - play music with youtube link/id/search, '
                                       f'soundcloud links, optional timecode(start time)',
                                       f'srq [page] - current queue',
@@ -51,14 +50,13 @@ commands_desc = [prefix + x for x in [f'change <link> - change display pic, add 
                                       f'skip [name/index] [name/index].. - skip your songrequest(s) by playlist index or word, ' 
                                       f'no args - skip now playing song, moderators skip any song',
                                       f'sql <query> - execute sql query and get result',
-                                      f'tts: <msg> - say message, even when tts is off',
                                       f'title <query> - change stream title',
                                       f'game <query> - change stream game',
                                       f'info - get bot version, uptime',
                                       f'pipe <command1> | <command2>.. - run commands in chain, '
                                       f'transfer result from one command to another, '
                                       f'last command gives complete result, supported commands: '
-                                      f'{", ".join([x for x in pipe_commands if x != "tts_colon"])}',
+                                      f'{", ".join([x for x in pipe_commands])}',
                                       f'notify <username> <message> - notify twitch user when they next type in chat',
                                       f'when - check when requested song is going to play, list all / search by name',
                                       f'imgur <file> - upload saved image to imgur, get link, add to database']]

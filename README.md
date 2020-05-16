@@ -79,7 +79,7 @@ flask app running on `localhost:5000`
 `srfl <index1> [index]..` - get song link(s)  
 `np` - get current song link, name, time, duration  
 `skip [name/index] [name/index]..` - skip your songrequest(s) by playlist index or word, no args - skip now playing song, moderators skip any song  
-`tts: <msg>` - say message, even when tts is off  
+`tts [msg]` - message text-to-speech, no args - get voices  
 `info` - bot uptime  
 `pipe <command> | <command>..` - run commands in chain, transfer result from one command to another, last command gives complete result, supported commands: sql, info, help, tts, notify  
 `help [command]` - view bot commands help, no args - commands list, wrap command in quotes for startswith search  
@@ -95,9 +95,7 @@ flask app running on `localhost:5000`
 `sql <query>` - execute sql query and get result  
 `title [query]` - change stream title, no args - get current title  
 `game [query]` - change stream game, no args - get current game  
-`tts` - enable/disable tts  
-`tts cfg` - current tts config  
-`tts vol/rate/vc [value]` - get/change tts volume/speech rate/voice  
+`ttscfg [vol/rate/vc/toggle] [value]` - get/change tts volume/speech rate/voice, toggle tts, no args - current tts config  
 `sr` - enable/disable songrequests  
 `src` - clear current playlist  
 `srt` - set time for current song  

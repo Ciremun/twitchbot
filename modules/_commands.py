@@ -643,8 +643,6 @@ def pipe_command(message):
             i = i.split()
             if last_item:
                 pipe = False
-                if i[0][1:] == 'tts':
-                    i[0] += '_colon'
                 if i[1:]:
                     for last_arg in i[:0:-1]:
                         result.insert(0, last_arg)
@@ -674,15 +672,17 @@ def pipe_command(message):
                 return
 
 
-@bot_command(name='tts_colon')
-def tts_colon_command(message, **kwargs):
-    message.parts[0] = 'tts:'
-    message.content = ' '.join(message.parts)
-    call_tts.new_task(call_tts.new_message, message)
+@bot_command(name='tts')
+def tts_command(message, **kwargs):
+    if g.tts:
+        if message.content[1:] != 'tts':
+            del message.parts[0]
+            call_tts.new_task(call_tts.say_message, message.parts)
+            return
+        call_tts.new_task(call_tts.send_set_tts_vc, message)
 
-
-@bot_command(name='tts', check_func=is_mod)
-def tts_command(message):
+@bot_command(name='ttscfg', check_func=is_mod)
+def ttscfg_command(message):
     try:
         if message.parts[1] == 'vc':
             call_tts.new_task(call_tts.send_set_tts_vc, message)
@@ -705,17 +705,17 @@ def tts_command(message):
                 send_message(f'{message.author}, rate={call_tts.engine.getProperty("rate")}')
             except ValueError:
                 send_message(f'{message.author}, error converting to int! [{message.parts[2]}]')
-        elif message.parts[1] == 'cfg':
-            send_message(f"vol={call_tts.engine.getProperty('volume')}, rate="
+        elif message.parts[1] == 'toggle':
+            if g.tts:
+                g.tts = False
+                send_message(f'tts off')
+            else:
+                g.tts = True
+                send_message(f'tts on')
+    except IndexError:
+        send_message(f"vol={call_tts.engine.getProperty('volume')}, rate="
                          f"{call_tts.engine.getProperty('rate')}, "
                          f"vc={get_tts_vc_key(call_tts.engine.getProperty('voice'))}")
-    except IndexError:
-        if g.tts:
-            g.tts = False
-            send_message(f'tts off')
-        else:
-            g.tts = True
-            send_message(f'tts on')
 
 
 @bot_command(name='notify')
