@@ -78,7 +78,7 @@ flask app running on `localhost:5000`
 `srfp <name/index> [name/index]..` - play songs from favorites (srf)  
 `srfl <index1> [index]..` - get song link(s)  
 `np` - get current song link, name, time, duration  
-`skip [name/index] [name/index]..` - skip your songrequest(s) by playlist index or word, no args - skip now playing song, moderators skip any song  
+`skip [name/index] [name/index]..` - skip your songrequest(s) by playlist index or word, no args - skip now playing song, bot moderators skip any song  
 `tts [msg]` - message text-to-speech, no args - get voices  
 `info` - bot uptime  
 `pipe <command> | <command>..` - run commands in chain, transfer result from one command to another, last command gives complete result, supported commands: sql, info, help, tts, notify  
