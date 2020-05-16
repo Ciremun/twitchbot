@@ -424,23 +424,6 @@ def del_chat_command(message):
             send_message(i)
 
 
-def delete_ban_mod(response, boolean, str1, str2, username):
-    if response:
-        response = ', '.join(response)
-        if boolean:
-            response = f'{username}, {str1}, except: {response} - {str2}'
-        else:
-            response = f'{username}, {response} - {str2}'
-        if len(response) <= 490:
-            send_message(response)
-        else:
-            response = divide_chunks(response, 400)
-            for i in response:
-                send_message(i)
-    else:
-        send_message(f'{username}, {str1}')
-
-
 def ban_mod_commands(message, str1, str2, check_func, db_call, check_func_result):
     response = []
     users = []
@@ -453,7 +436,20 @@ def ban_mod_commands(message, str1, str2, check_func, db_call, check_func_result
             users.append((user,))
             boolean = True
     db_call(users)
-    delete_ban_mod(response, boolean, str1, str2, message.author)
+    if response:
+        response = ', '.join(response)
+        if boolean:
+            response = f'{message.author}, {str1}, except: {response} - {str2}'
+        else:
+            response = f'{message.author}, {response} - {str2}'
+        if len(response) <= 490:
+            send_message(response)
+        else:
+            response = divide_chunks(response, 400)
+            for i in response:
+                send_message(i)
+    else:
+        send_message(f'{message.author}, {str1}')
 
 
 def change_stream_settings(message, setting):
