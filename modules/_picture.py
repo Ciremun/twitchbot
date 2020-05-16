@@ -3,7 +3,7 @@ import threading
 import _utils as u
 import _globals as g
 
-from flask import Flask, render_template, url_for
+from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 from PIL import Image
 

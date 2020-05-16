@@ -13,9 +13,8 @@ socket.on('connect_', function(data) {
 
 function set_image(width, height, src) {
     var img = document.getElementById('img');
-    var new_img = new Image();
+    var new_img = new Image(width, height);
     new_img.id = 'img';
-    new_img.style = 'width: ' + width + 'px; height: ' + height + 'px;';
     new_img.src = src;
     document.getElementById('imgdiv').appendChild(new_img);
     img.parentNode.removeChild(img);
