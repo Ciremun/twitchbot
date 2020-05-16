@@ -1,11 +1,10 @@
 .vscode/
-*.bat
-data/*
+start.bat
 modules/*
+data/*
+data/special/tokens
 !modules/*.py
 !data/*.db
-!data/special/sans.gif
-!data/special/greenscreen.png
-!data/special/index.html
 !data/custom/git.keep
 !data/*.keep
+!data/special/
