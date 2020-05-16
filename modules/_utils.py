@@ -333,16 +333,6 @@ def check_owner(message, imagename):  # check if user owns image
     return False
 
 
-def updatelastlink(selected):
-    result = g.db.get_link(selected)
-    result = " ".join([item[0] for item in result])
-    if result:
-        g.lastlink = result
-        return
-    g.lastlink = f'no link saved'
-    return
-
-
 def sr_favs_del(message, songs):
     response, remove_song, target_not_found, song_removed_response = [], [], [], []
     for i in range(1, len(message.parts)):
@@ -577,8 +567,8 @@ def set_random_pic(lst, response):
         send_message(response)
         return
     selected = random.choice(lst)
-    updatelastlink(selected)
     g.last_rand_img = selected
+    g.lastlink = None
     call_draw('custom/', selected)
 
 

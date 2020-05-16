@@ -462,10 +462,12 @@ def modlist_command(message):
 @bot_command(name='link')
 def link_command(message):
     if message.content[1:] == "link":
-        if g.lastlink:
-            send_message(f'{message.author}, {g.lastlink} - {g.last_rand_img}')
-        else:
-            send_message(f'nothing here')
+        if not g.last_rand_img:
+            send_message(f'{message.author}, nothing here')
+            return
+        link = g.db.get_link(g.last_rand_img)
+        response = f'{link[0][0]} - {g.last_rand_img}' if link else f'{g.lastlink} - {g.last_rand_img}' if g.lastlink else f'no link for {g.last_rand_img}'
+        send_message(f'{message.author}, {response}')
     elif len(message.parts) > 2:
         links_filenames = [{'link': j[0], 'filename': j[1]} for j in g.db.get_links_and_filenames()]
         target_not_found = []
@@ -565,8 +567,8 @@ def orand_command(message):
             set_random_pic(onlypng, f'{message.author}, png not found')
     except IndexError:
         selected = random.choice(result)
-        updatelastlink(selected)
         g.last_rand_img = selected
+        g.lastlink = None
         call_draw('custom/', selected)
 
 
