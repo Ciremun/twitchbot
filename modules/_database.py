@@ -73,11 +73,6 @@ class ThreadDB(threading.Thread):
                                                                                                     new_filename})
 
     @regular_query
-    def check_filename_has_link(self, filename):
-        self.c.execute('SELECT filename FROM links WHERE filename = :filename', {'filename': filename})
-        return self.c.fetchall()
-
-    @regular_query
     def get_links_filenames(self):
         self.c.execute('SELECT filename FROM links')
         return self.c.fetchall()
