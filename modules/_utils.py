@@ -231,7 +231,7 @@ def rename_command(message):  # rename function for image owners
         else:
             my_file = Path("data/custom/" + newimagename)
             if my_file.is_file():
-                send_message("{}, {} already exists".format(message.author, newimagename))
+                send_message(f"{message.author}, {newimagename} already exists")
                 return
             if imagename[-4:] != newimagename[-4:] and not moderator:
                 send_message(f"{message.author}, sowwy, format change isn't allowed")
@@ -240,7 +240,7 @@ def rename_command(message):  # rename function for image owners
                 os.rename('data/custom/' + imagename, 'data/custom/' + newimagename)
                 g.db.update_link_filename(imagename, newimagename)
                 g.db.update_owner_filename(imagename, newimagename)
-                send_message('{}, {} --> {}'.format(message.author, imagename, newimagename))
+                send_message(f'{message.author}, {imagename} --> {newimagename}')
             except:
                 send_message(f'{message.author}, file not found')
     except IndexError:
@@ -249,7 +249,7 @@ def rename_command(message):  # rename function for image owners
 
 def send_list(message, list_str, list_arr, list_page_pos, list_type):
     if 490 >= len(list_str) > 0:
-        send_message("{}".format(list_str))
+        send_message(f"{list_str}")
         return
     if len(list_str) == 0:
         if list_type == "search":
@@ -263,10 +263,10 @@ def send_list(message, list_str, list_arr, list_page_pos, list_type):
         if pagenum <= 0 or pagenum > len(list_arr):
             send_message(f'{message.author}, page not found')
             return
-        send_message("{} {}/{}".format(list_arr[pagenum - 1], pagenum, len(list_arr)))
+        send_message(f"{list_arr[pagenum - 1]} {pagenum}/{len(list_arr)}")
     except (IndexError, ValueError):
         if len(list_str) > 490 or len(list_str) <= 490:
-            send_message('{} 1/{}'.format(list_arr[0], len(list_arr)))
+            send_message(f'{list_arr[0]} 1/{len(list_arr)}')
 
 
 def divide_chunks(string, length, lst=None, joinparam=' '):  # divide string into chunks

@@ -463,7 +463,7 @@ def modlist_command(message):
 def link_command(message):
     if message.content[1:] == "link":
         if g.lastlink:
-            send_message('{}, {} - {}'.format(message.author, g.lastlink, g.last_rand_img))
+            send_message(f'{message.author}, {g.lastlink} - {g.last_rand_img}')
         else:
             send_message(f'nothing here')
     elif len(message.parts) > 2:
