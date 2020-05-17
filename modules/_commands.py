@@ -147,7 +147,8 @@ def srfp_command(message):
         if not songs:
             send_message(f'{message.author}, no favorite songs found')
             return
-        response, target_not_found, response_added = [], [], []
+        response, target_not_found = [], []
+        response_added = 0
         for i in range(1, len(message.parts)):
             try:
                 index = int(message.parts[i])
@@ -156,9 +157,7 @@ def srfp_command(message):
                     continue
                 song = songs[index - 1]
                 g.sr_download_queue.new_task(download_clip, song.link, message.author,  user_duration=song.user_duration)
-                response_added.append(f'{song.title} '
-                                      f'{"" if song.user_duration is None else f"[{seconds_convert(song.user_duration)}]"}'
-                                      f' - {song.link}')
+                response_added += 1
             except ValueError:
                 title = message.parts[i]
                 title_found = False
@@ -166,29 +165,24 @@ def srfp_command(message):
                     if title.lower() in song.title.lower():
                         title_found = True
                         g.sr_download_queue.new_task(download_clip, song.link, message.author, user_duration=song.user_duration)
-                        response_added.append(f'{song.title} '
-                                              f'{"" if song.user_duration is None else f"[{seconds_convert(song.user_duration)}]"}'
-                                              f' - {song.link}')
-                    if len(response_added) >= g.sr_max_per_request:
+                        response_added += 1
+                    if response_added >= g.sr_max_per_request:
                         break
                 if not title_found:
                     target_not_found.append(title)
-            if len(response_added) >= g.sr_max_per_request:
+            if response_added >= g.sr_max_per_request:
                 break
         if response_added:
             if not is_mod(message.author):
                 g.Main.sr_cooldowns[message.author] = time.time()
         if target_not_found:
             response.append(f"Not found: {', '.join(target_not_found)}")
-        response_str = '; '.join(response)
-        if len(response_str) > 470:
-            response *= 0
-            if response_added:
-                response.append(f"Added: {len(response_added)}")
-            if target_not_found:
-                response.append(f"Not found: {len(target_not_found)}")
-            send_message(' '.join(response))
-        else:
+            response_str = '; '.join(response)
+            if len(response_str) > 470:
+                response *= 0
+                if target_not_found:
+                    response.append(f"Not found: {len(target_not_found)}")
+                return send_message(' '.join(response))
             send_message(response_str)
 
 
