@@ -55,22 +55,22 @@ class Song(typing.NamedTuple):
 
 
 def imgur_utils_wrap(message):
-    file = message.parts[1]
-    db_link = g.db.get_link(file)
+    filename = message.parts[1]
+    db_link = g.db.get_link(filename)
     if db_link:
-        send_message(f'{message.author}, {file} - {db_link[0][0]}')
-        return
-    path = f'data/custom/{file}'
+        if is_mod(message.author):
+            g.db.remove_link([(filename,)])
+            return imgur_utils_wrap(message)
+        return send_message(f'{message.author}, {filename} - {db_link[0][0]}')
+    path = f'data/custom/{filename}'
     if not Path(path).is_file():
-        send_message(f'{message.author}, file {file} not found')
-        return
+        return send_message(f'{message.author}, file {filename} not found')
     encoded_file = imgur_convert_image(path)
     link = imgur_upload_image(encoded_file)
     if not re.match(regex, link):
-        send_message(f'{message.author}, file upload error [{link}]')
-        return
-    send_message(f'{message.author}, {file} - {link}')
-    g.db.add_link(link, file)
+        return send_message(f'{message.author}, file upload error [{link}]')
+    send_message(f'{message.author}, {filename} - {link}')
+    g.db.add_link(link, filename)
 
 
 def imgur_upload_image(byte):
