@@ -85,7 +85,7 @@ flask app running on `localhost:5000`
 `help [command]` - view bot commands help, no args - commands list, wrap command in quotes for startswith search  
 `notify <username> <message>` - notify twitch user when they next type in chat  
 `when [name]` - check when requested song is going to play (up to 5)  
-`imgur <file>` - upload saved image to imgur, get link, add to database  
+`imgur <file>` - upload saved image to imgur, update link if exists (mods), get link, add to database  
 ### bot moderators
 
 `ban <name> [name]..` - add user(s) to ignore-list  

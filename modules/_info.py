@@ -59,4 +59,4 @@ commands_desc = [prefix + x for x in [f'change <link> - change display pic, add 
                                       f'{", ".join([x for x in pipe_commands])}',
                                       f'notify <username> <message> - notify twitch user when they next type in chat',
                                       f'when - check when requested song is going to play, list all / search by name',
-                                      f'imgur <file> - upload saved image to imgur, get link, add to database']]
+                                      f'imgur <file> - upload saved image to imgur, update link if exists (mods), get link, add to database']]
