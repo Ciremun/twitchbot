@@ -44,7 +44,7 @@ class ThreadTTS(threading.Thread):
             if voices.get(pos) is None:
                 voices[pos] = {voice: []}
             voices[pos][voice].append(part)
-        for pos, pos_value in voices.items():
+        for pos_value in voices.values():
             voice, parts = next(iter(pos_value.items()))
             tts_key = g.tts_default_vc if voice == 'default' else g.tts_voices[voice]
             self.engine.setProperty('voice', tts_key)
