@@ -249,23 +249,18 @@ def rename_command(message):  # rename function for image owners
 
 def send_list(message, list_str, list_arr, list_page_pos, list_type):
     if 490 >= len(list_str) > 0:
-        send_message(f"{list_str}")
-        return
-    if len(list_str) == 0:
+        return send_message(f"{list_str}")
+    if not list_str:
         if list_type == "search":
-            send_message(f'{message.author}, no results')
-            return
-        else:
-            send_message(f'{message.author}, list is empty')
-            return
+            return send_message(f'{message.author}, no results')
+        return send_message(f'{message.author}, list is empty')
     try:
         pagenum = int(message.parts[list_page_pos])
         if pagenum <= 0 or pagenum > len(list_arr):
-            send_message(f'{message.author}, page not found')
-            return
+            return send_message(f'{message.author}, page not found')
         send_message(f"{list_arr[pagenum - 1]} {pagenum}/{len(list_arr)}")
     except (IndexError, ValueError):
-        if len(list_str) > 490 or len(list_str) <= 490:
+        if list_arr:
             send_message(f'{list_arr[0]} 1/{len(list_arr)}')
 
 
