@@ -4,7 +4,7 @@ import pyttsx3
 import _globals as g
 
 from _regex import regex, re
-from _utils import no_ban, send_message, get_tts_vc_key
+from _utils import no_ban, send_message
 
 
 class ThreadTTS(threading.Thread):
@@ -32,21 +32,42 @@ class ThreadTTS(threading.Thread):
         return [x for x in parts if not re.match(regex, x)]
 
     def say_message(self, parts: list):
+        voices = {}
+        voice = 'default'
+        pos = 0
         parts = self.remove_links(parts)
-        self.engine.say(' '.join(parts))
-        self.engine.runAndWait()
+        for counter, part in enumerate(parts):
+            if part.startswith('vc:') and any(part[3:] == x for x in g.tts_voices.keys()):
+                voice = part[3:]
+                pos = counter
+                continue
+            if voices.get(pos) is None:
+                voices[pos] = {voice: []}
+            voices[pos][voice].append(part)
+        for pos, pos_value in voices.items():
+            voice, parts = next(iter(pos_value.items()))
+            tts_key = g.tts_default_vc if voice == 'default' else g.tts_voices[voice]
+            self.engine.setProperty('voice', tts_key)
+            self.engine.say(' '.join(parts))
+            self.engine.runAndWait()
+        self.engine.setProperty('voice', g.tts_default_vc)
+
+    @staticmethod
+    def get_tts_vc_key(vc):  # get voice name by registry key
+        for k, v in g.tts_voices.items():
+            if v == vc:
+                return k
 
     def send_set_tts_vc(self, message: object):
         tts_voices = g.tts_voices
         try:
             for k, v in tts_voices.items():
                 if message.parts[2] == k:
-                    self.engine.setProperty('voice', v)
-                    send_message(f'tts vc={k}')
-                    return
+                    g.tts_default_vc = v
+                    return send_message(f'tts vc={k}')
             send_message(f'{message.author}, [{message.parts[2]}] not found, available: {", ".join(tts_voices.keys())}')
         except IndexError:
-            send_message(f'tts vc={get_tts_vc_key(self.engine.getProperty("voice"))} available: '
+            send_message(f'tts vc={self.get_tts_vc_key(self.engine.getProperty("voice"))} available: '
                          f'{", ".join(tts_voices.keys())}')
 
     def change_volume(self, vol: float):
@@ -58,4 +79,4 @@ class ThreadTTS(threading.Thread):
         send_message(f'tts rate={rate}')
 
 
-call_tts = ThreadTTS("calltts")
+call_tts = ThreadTTS("TTS")

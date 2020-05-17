@@ -25,7 +25,7 @@ commands_desc = [prefix + x for x in [f'change <link> - change display pic, add 
                                       f'ren <name> <new name> - change saved pic filename',
                                       f'del <name> [name2].. - delete saved pic(s)',
                                       f'modlist - get bot mod-list',
-                                      f'tts [msg] - message text-to-speech, no args - get voices',
+                                      f'tts [vc:name] [msg] - message text-to-speech, vc:name to change voice dynamically, no args - get voices',
                                       f'ttscfg [vol/rate/vc/toggle] [value] - get/change tts volume/speech rate/voice, toggle tts, no args - current tts config',
                                       f'sr <yt/scld> [timecode] - play music with youtube link/id/search, '
                                       f'soundcloud links, optional timecode(start time)',

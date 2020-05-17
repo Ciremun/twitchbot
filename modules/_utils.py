@@ -196,13 +196,6 @@ def while_is_file(folder, filename, form):  # change filename if path exists
     return filename
 
 
-def get_tts_vc_key(vc):  # get voice name by registry key
-    for k, v in g.tts_voices.items():
-        if v == vc:
-            return k
-    return None
-
-
 def sort_pixiv_arts(arts_list, result_list):
     for i in arts_list:
         artratio = i.width / i.height

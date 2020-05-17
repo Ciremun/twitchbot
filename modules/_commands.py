@@ -709,7 +709,7 @@ def ttscfg_command(message):
     except IndexError:
         send_message(f"vol={call_tts.engine.getProperty('volume')}, rate="
                          f"{call_tts.engine.getProperty('rate')}, "
-                         f"vc={get_tts_vc_key(call_tts.engine.getProperty('voice'))}")
+                         f"vc={call_tts.get_tts_vc_key(call_tts.engine.getProperty('voice'))}")
 
 
 @bot_command(name='notify')
