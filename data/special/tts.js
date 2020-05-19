@@ -1,3 +1,7 @@
+let available_voices = window.speechSynthesis.getVoices();
+let available_voicesURI = available_voices.map(voice => `\n${voice.voiceURI}`);
+
+console.log(`found voices:${available_voicesURI}`);
 
 if(window.speechSynthesis.getVoices().length == 0) {
 	window.speechSynthesis.addEventListener('voiceschanged', function() {
@@ -5,11 +9,10 @@ if(window.speechSynthesis.getVoices().length == 0) {
 }
 
 function prepareTextToSpeechMsg(data) {
-	let available_voices = window.speechSynthesis.getVoices();
     let voice = available_voices.find(SpeechSynthesisVoice => SpeechSynthesisVoice.voiceURI === data['voice']);
 
     if (voice === undefined) {
-        return console.log(`voice is undefined, found voices:${available_voices.map(voice => `\n${voice.voiceURI}`)}`);
+        return console.log(`voice is undefined, found voices:${available_voicesURI}`);
     }
 
 	let utter = new SpeechSynthesisUtterance();
