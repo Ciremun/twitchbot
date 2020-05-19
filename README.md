@@ -14,7 +14,6 @@ ffmpeg>=1.4
 Pillow>=7.0.0
 pixiv-api>=0.3.1
 python-vlc>=3.0.7110
-pyttsx3>=2.81
 requests>=2.22.0
 youtube-dl>=2020.5.3
 pafy>=0.5.5
@@ -28,9 +27,10 @@ requires ffmpeg and vlc, tested on Python 3.7.5, Windows 10
 
 run `token_setup.py` to add twitch, pixiv, google, imgur tokens  
 
-## image window
+## images, text-to-speech
 
 flask app running on `localhost:5000`  
+`Chromium`: allow page Sound or click anywhere for tts  
 
 ## globals.py
 
@@ -38,9 +38,10 @@ flask app running on `localhost:5000`
 `BOT` (string): twitch bot username  
 `admin` (string): bot admin, twitch username  
 `tts` (boolean): enable/disable tts  
-`tts_voices` (dict): dictionary of tts voices, keys are names, values are voice registry keys  
-`tts_default_vc` (string): startup tts voice, registry key  
+`tts_voices` (dict): dictionary of tts voices, keys are names, values are voiceURI  
+`tts_default_vc` (string): startup tts voice, voiceURI  
 `tts_volume` (numeric): startup tts volume in percent (0-1)  
+`tts_rate` (numeric): startup tts rate (1-normal)  
 `logs` (boolean): enable/disable chat logging  
 `sr` (boolean): enable/disable songrequests  
 `screenwidth` (int): pic window width in px  
@@ -55,9 +56,9 @@ flask app running on `localhost:5000`
 `sr_cooldown` (string): songrequests non-mod cooldown, timecode string  
 `sr_max_per_request` (int): max number of songs per request (ex. using srfp command)  
 
-## commands.py
+# Commands
 
-### everyone
+## everyone
 `change <link> [name]` - change display pic, add name to save  
 `save <link> [name]` - save only  
 `set <file>` - set saved pic  
@@ -86,8 +87,8 @@ flask app running on `localhost:5000`
 `notify <username> <message>` - notify twitch user when they next type in chat  
 `when [name]` - check when requested song is going to play (up to 5)  
 `imgur <file>` - upload saved image to imgur, update link if exists (mods), get link, add to database  
-### bot moderators
 
+## bot moderators
 `ban <name> [name]..` - add user(s) to ignore-list  
 `unban <name> [name]..` - remove user(s) from ignore-list  
 `banlist` - get bot ignore-list  
@@ -102,8 +103,7 @@ flask app running on `localhost:5000`
 `srv [value]` - get/change volume  
 `srp` - play/pause  
 
-### bot admin
-
+## bot admin
 `log` - enable/disable chat logging  
 `mod/unmod` - remove/add user to bot modlist  
 `exit` - clear folders, exit bot  

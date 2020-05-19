@@ -2,7 +2,6 @@ ffmpeg>=1.4
 Pillow>=7.0.0
 pixiv-api>=0.3.1
 python-vlc>=3.0.7110
-pyttsx3>=2.81
 requests>=2.22.0
 youtube-dl>=2020.5.3
 pafy>=0.5.5
