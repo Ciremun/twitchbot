@@ -34,6 +34,12 @@ class FlaskImageApp(threading.Thread):
     def tts_PropertyResponse(data):
         u.send_message(f'{data["attr"]}={data["value"]}')
 
+    @staticmethod
+    @socketio.on('tts_getConfig')
+    def tts_getConfigResponse(data):
+        voice = u.get_tts_vc_key(data['vc'])
+        u.send_message(f"{data['vol_rate']}, vc={voice}")
+
     def run(self):
         self.socketio.run(self.app)
 
@@ -54,5 +60,8 @@ class FlaskImageApp(threading.Thread):
 
     def tts_getProperty(self, attr):
         self.socketio.emit('tts_getProperty', {'attr': attr})
+
+    def tts_getConfig(self):
+        self.socketio.emit('tts_getConfig')
 
 flask_app = FlaskImageApp()

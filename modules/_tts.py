@@ -3,7 +3,7 @@ import threading
 import _globals as g
 
 from _regex import regex, re
-from _utils import no_ban, send_message
+from _utils import no_ban, send_message, get_tts_vc_key
 from _picture import flask_app
 
 
@@ -44,12 +44,6 @@ class ThreadTTS(threading.Thread):
             flask_app.say_message(' '.join(parts), tts_voiceuri)
         flask_app.tts_setProperty('tts_voice', g.tts_default_vc, response=False)
 
-    @staticmethod
-    def get_tts_vc_key(vc):  # get voice name by registry key
-        for k, v in g.tts_voices.items():
-            if v == vc:
-                return k
-
     def send_set_tts_vc(self, message: object):
         tts_voices = g.tts_voices
         try:
@@ -59,7 +53,7 @@ class ThreadTTS(threading.Thread):
                     return send_message(f'tts vc={k}')
             send_message(f'{message.author}, [{message.parts[2]}] not found, available: {", ".join(tts_voices.keys())}')
         except IndexError:
-            send_message(f'tts vc={self.get_tts_vc_key(g.tts_default_vc)} available: '
+            send_message(f'tts vc={get_tts_vc_key(g.tts_default_vc)} available: '
                          f'{", ".join(tts_voices.keys())}')
 
 

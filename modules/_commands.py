@@ -707,7 +707,7 @@ def ttscfg_command(message):
                 g.tts = True
                 send_message(f'tts on')
     except IndexError:
-        pass
+        flask_app.tts_getConfig()
 
 
 @bot_command(name='notify')

@@ -30,6 +30,10 @@ socket.on('tts_getProperty', function(data) {
     socket.emit('tts_PropertyResponse', {'attr': data['attr'], 'value': window[data['attr']]});
 });
 
+socket.on('tts_getConfig', function() {
+    socket.emit('tts_getConfig', {'vol_rate': `vol=${window.tts_volume}, rate=${window.tts_rate}`, 'vc': `${window.tts_voice}`});
+});
+
 function set_image(width, height, src) {
     let img = document.getElementById('img');
     let new_img = new Image(width, height);

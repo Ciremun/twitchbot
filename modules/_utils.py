@@ -21,6 +21,12 @@ from _pixiv import Pixiv
 from _picture import flask_app
 
 
+def get_tts_vc_key(vc):
+    for k, v in g.tts_voices.items():
+        if v == vc:
+            return k
+
+
 def lookahead(iterable):
     """Pass through all values from the given iterable, augmented by the
     information if there are more values to come after the current one
