@@ -31,6 +31,7 @@ run `token_setup.py` to add twitch, pixiv, google, imgur tokens
 
 flask app running on `localhost:5000`  
 `Chromium`: allow page Sound or click anywhere for tts  
+`window.speechSynthesis.getVoices()` returns all the available voices  
 
 ## globals.py
 
@@ -38,7 +39,7 @@ flask app running on `localhost:5000`
 `BOT` (string): twitch bot username  
 `admin` (string): bot admin, twitch username  
 `tts` (boolean): enable/disable tts  
-`tts_voices` (dict): dictionary of tts voices, keys are names, values are voiceURI  
+`tts_voices` (dict): dictionary of tts voices, keys are aliases, values are voiceURI  
 `tts_default_vc` (string): startup tts voice, voiceURI  
 `tts_volume` (numeric): startup tts volume in percent (0-1)  
 `tts_rate` (numeric): startup tts rate (1-normal)  
