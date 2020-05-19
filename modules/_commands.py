@@ -686,17 +686,17 @@ def ttscfg_command(message):
                 if not 0 <= vol <= 1:
                     send_message(f'{message.author}, volume 0-1')
                     return
-                call_tts.new_task(call_tts.change_volume, vol)
+                flask_app.tts_setProperty('tts_volume', vol)
             except IndexError:
-                send_message(f'{message.author}, vol={call_tts.engine.getProperty("volume")}')
+                flask_app.tts_getProperty('tts_voice')
             except ValueError:
                 send_message(f'{message.author}, error converting to float! [{message.parts[2]}]')
         elif message.parts[1] == 'rate':
             try:
                 rate = int(message.parts[2])
-                call_tts.new_task(call_tts.change_rate, rate)
+                flask_app.tts_setProperty('rate', rate)
             except IndexError:
-                send_message(f'{message.author}, rate={call_tts.engine.getProperty("rate")}')
+                flask_app.tts_getProperty('rate')
             except ValueError:
                 send_message(f'{message.author}, error converting to int! [{message.parts[2]}]')
         elif message.parts[1] == 'toggle':
@@ -707,9 +707,7 @@ def ttscfg_command(message):
                 g.tts = True
                 send_message(f'tts on')
     except IndexError:
-        send_message(f"vol={call_tts.engine.getProperty('volume')}, rate="
-                         f"{call_tts.engine.getProperty('rate')}, "
-                         f"vc={call_tts.get_tts_vc_key(call_tts.engine.getProperty('voice'))}")
+        pass
 
 
 @bot_command(name='notify')

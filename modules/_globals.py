@@ -15,13 +15,14 @@ prefix = '$'
 banned_tags = ['Pokémon', 'how to draw', 'oshinagaki', 'subarashikihokkorinosekai', 'catalog']
 pixiv_size = Size.MEDIUM
 clear_folders = ['data/pixiv/', 'data/images/']
-tts_voices = {'haruka': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\TTS_MS_JA-JP_HARUKA_11.0',
-              'mizuki': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\VE_Japanese_Mizuki_22kHz',
-              'yuri': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\VE_Russian_Yuri_22kHz',
-              'ivy': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\Ivy RSI Harpo 22kHz'}
+tts_voices = {'haruka': 'Microsoft Haruka Desktop - Japanese',
+              'mizuki': 'VE_Japanese_Mizuki_22kHz',
+              'yuri': 'VE_Russian_Yuri_22kHz',
+              'ivy': 'IVONA 2 Ivy OEM'}
 tts_default_vc = tts_voices['ivy']
-tts = False
+tts = True
 tts_volume = 0.07
+tts_rate = 1.3
 logs = False
 sr = True
 player_last_vol = 23

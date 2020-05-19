@@ -26,7 +26,13 @@ class FlaskImageApp(threading.Thread):
     @staticmethod
     @socketio.on('connect')
     def connect_():
-        emit('connect_', {'screenwidth': g.screenwidth, 'screenheight': g.screenheight})
+        emit('connect_', {'screenwidth': g.screenwidth, 'screenheight': g.screenheight, 
+             'tts_volume': g.tts_volume, 'tts_rate': g.tts_rate, 'tts_voice': g.tts_default_vc})
+
+    @staticmethod
+    @socketio.on('tts_PropertyResponse')
+    def tts_PropertyResponse(data):
+        u.send_message(f'{data["attr"]}={data["value"]}')
 
     def run(self):
         self.socketio.run(self.app)
@@ -35,11 +41,18 @@ class FlaskImageApp(threading.Thread):
         try:
             img = Image.open(f'data/{folder}{filename}')
         except UnidentifiedImageError:
-            print(f'UnidentifiedImageError - data/{folder}{filename}')
-            return
+            return print(f'UnidentifiedImageError - data/{folder}{filename}')  
         ri, rs = img.width / img.height, g.screenwidth / g.screenheight
         width, height = u.resizeimg(ri, rs, img.width, img.height, g.screenwidth, g.screenheight)
         self.socketio.emit('setimage', {'width': width, 'height': height, 'src': f'{folder}{filename}'})
 
+    def say_message(self, message, voice):
+        self.socketio.emit('tts', {'message': message, 'voice': voice})
+
+    def tts_setProperty(self, attr, value, response=True):
+        self.socketio.emit('tts_setProperty', {'attr': attr, 'value': value, 'response': f'{response}'})
+
+    def tts_getProperty(self, attr):
+        self.socketio.emit('tts_getProperty', {'attr': attr})
 
 flask_app = FlaskImageApp()

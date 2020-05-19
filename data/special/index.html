@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <title>shtcd-twitch</title>
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='special/index.js') }}" charset="utf-8"></script>
-    <script type="text/javascript" charset="utf-8">
-        socket.on('setimage', function(data) { set_image(data['width'], data['height'], "{{ url_for('static', filename='') }}" + data['src']); });
-    </script>
+    <script src="{{ url_for('static', filename='special/tts.js') }}"></script>
+    <script src="{{ url_for('static', filename='special/index.js') }}"></script>
 </head>
 <body>
     <div id="imgdiv" class="outer">
-        <img id="img"></img>
+        <img id="img">
     </div>
+    <script>socket.on('setimage', function(data) { set_image(data['width'], data['height'], "{{ url_for('static', filename='') }}" + data['src']); });</script>
 </body>
 </html>
 

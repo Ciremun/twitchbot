@@ -1,25 +1,19 @@
 import queue
 import threading
-import pyttsx3
 import _globals as g
 
 from _regex import regex, re
 from _utils import no_ban, send_message
+from _picture import flask_app
 
 
 class ThreadTTS(threading.Thread):
     def __init__(self, name):
         threading.Thread.__init__(self)
         self.name = name
-        self.engine = None
         self.q = queue.Queue()
 
     def run(self):
-
-        self.engine = pyttsx3.init()
-        self.engine.setProperty('volume', g.tts_volume)
-        self.engine.setProperty('rate', 160)
-        self.engine.setProperty('voice', g.tts_default_vc)
         while True:
             task = self.q.get(block=True)
             task['func'](*task['args'], **task['kwargs'])
@@ -46,11 +40,9 @@ class ThreadTTS(threading.Thread):
             voices[pos][voice].append(part)
         for pos_value in voices.values():
             voice, parts = next(iter(pos_value.items()))
-            tts_key = g.tts_default_vc if voice == 'default' else g.tts_voices[voice]
-            self.engine.setProperty('voice', tts_key)
-            self.engine.say(' '.join(parts))
-            self.engine.runAndWait()
-        self.engine.setProperty('voice', g.tts_default_vc)
+            tts_voiceuri = g.tts_default_vc if voice == 'default' else g.tts_voices[voice]
+            flask_app.say_message(' '.join(parts), tts_voiceuri)
+        flask_app.tts_setProperty('tts_voice', g.tts_default_vc, response=False)
 
     @staticmethod
     def get_tts_vc_key(vc):  # get voice name by registry key
@@ -67,16 +59,8 @@ class ThreadTTS(threading.Thread):
                     return send_message(f'tts vc={k}')
             send_message(f'{message.author}, [{message.parts[2]}] not found, available: {", ".join(tts_voices.keys())}')
         except IndexError:
-            send_message(f'tts vc={self.get_tts_vc_key(self.engine.getProperty("voice"))} available: '
+            send_message(f'tts vc={self.get_tts_vc_key(g.tts_default_vc)} available: '
                          f'{", ".join(tts_voices.keys())}')
-
-    def change_volume(self, vol: float):
-        self.engine.setProperty('volume', vol)
-        send_message(f'tts vol={vol}')
-
-    def change_rate(self, rate: int):
-        self.engine.setProperty('rate', rate)
-        send_message(f'tts rate={rate}')
 
 
 call_tts = ThreadTTS("TTS")
