@@ -693,12 +693,12 @@ def ttscfg_command(message):
                 send_message(f'{message.author}, error converting to float! [{message.parts[2]}]')
         elif message.parts[1] == 'rate':
             try:
-                rate = int(message.parts[2])
+                rate = float(message.parts[2])
                 flask_app.tts_setProperty('tts_rate', rate)
             except IndexError:
                 flask_app.tts_getProperty('tts_rate')
             except ValueError:
-                send_message(f'{message.author}, error converting to int! [{message.parts[2]}]')
+                send_message(f'{message.author}, error converting to float! [{message.parts[2]}]')
         elif message.parts[1] == 'toggle':
             if g.tts:
                 g.tts = False
