@@ -14,7 +14,7 @@ pixiv_artratio = 1.3
 prefix = '$'
 banned_tags = ['Pokémon', 'how to draw', 'oshinagaki', 'subarashikihokkorinosekai', 'catalog']
 pixiv_size = Size.MEDIUM
-clear_folders = ['data/sounds/sr/', 'data/pixiv/', 'data/images/']
+clear_folders = ['data/pixiv/', 'data/images/']
 tts_voices = {'haruka': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\TTS_MS_JA-JP_HARUKA_11.0',
               'mizuki': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\VE_Japanese_Mizuki_22kHz',
               'yuri': r'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\VE_Russian_Yuri_22kHz',
