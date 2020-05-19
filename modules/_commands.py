@@ -688,7 +688,7 @@ def ttscfg_command(message):
                     return
                 flask_app.tts_setProperty('tts_volume', vol)
             except IndexError:
-                flask_app.tts_getProperty('tts_voice')
+                flask_app.tts_getProperty('tts_volume')
             except ValueError:
                 send_message(f'{message.author}, error converting to float! [{message.parts[2]}]')
         elif message.parts[1] == 'rate':
