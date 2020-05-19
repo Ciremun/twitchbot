@@ -11,7 +11,7 @@ socket.on('connect_', function(data) {
     style.appendChild(document.createTextNode(css));
     window.tts_volume = data['tts_volume'];
     window.tts_rate = data['tts_rate'];
-    window.tts_voice = data['tts_voice']
+    window.tts_voice = data['tts_voice'];
 });
 
 socket.on('tts', function(data) {
@@ -21,7 +21,7 @@ socket.on('tts', function(data) {
 socket.on('tts_setProperty', function(data) {
     window[data['attr']] = data['value'];
     if (data['response'] === 'False') {
-        return
+        return;
     }
     socket.emit('tts_PropertyResponse', {'attr': data['attr'], 'value': window[data['attr']]});
 });
