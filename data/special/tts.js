@@ -2,11 +2,11 @@ let available_voices;
 let available_voicesURI;
 
 if(window.speechSynthesis.getVoices().length === 0) {
-	window.speechSynthesis.addEventListener('voiceschanged', function() {
+    window.speechSynthesis.addEventListener('voiceschanged', function() {
         available_voices = window.speechSynthesis.getVoices();
         available_voicesURI = available_voices.map(voice => `\n${voice.voiceURI}`);
         console.log(`found voices:${available_voicesURI}`);
-	});
+    });
 } else {
     available_voices = window.speechSynthesis.getVoices();
     available_voicesURI = available_voices.map(voice => `\n${voice.voiceURI}`);
@@ -20,11 +20,11 @@ function prepareTextToSpeechMsg(data) {
         return console.log(`voice is undefined, found voices:${available_voicesURI}`);
     }
 
-	let utter = new SpeechSynthesisUtterance();
-	utter.rate = window.tts_rate;
+    let utter = new SpeechSynthesisUtterance();
+    utter.rate = window.tts_rate;
     utter.volume = window.tts_volume;
-	utter.text = data['message'];
-	utter.voice = voice;
+    utter.text = data['message'];
+    utter.voice = voice;
 
     return utter;
 }
