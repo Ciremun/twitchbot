@@ -1,7 +1,7 @@
 let available_voices;
 let available_voicesURI;
 
-if(window.speechSynthesis.getVoices().length == 0) {
+if(window.speechSynthesis.getVoices().length === 0) {
 	window.speechSynthesis.addEventListener('voiceschanged', function() {
         available_voices = window.speechSynthesis.getVoices();
         available_voicesURI = available_voices.map(voice => `\n${voice.voiceURI}`);
