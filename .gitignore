@@ -2,9 +2,9 @@
 start.bat
 modules/*
 data/*
-data/special/tokens
+tokens.json
 !modules/*.py
 !data/*.db
 !data/custom/git.keep
 !data/*.keep
-!data/special/
+!data/template/

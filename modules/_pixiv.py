@@ -121,7 +121,7 @@ class ThreadPixiv(threading.Thread):
     def pixiv_init(self):
         try:
             self.allranking *= 0
-            self.client.authenticate(g.px_token)
+            self.client.authenticate(g.tokens['PixivToken'])
             print('pixiv auth √')
             rank_offset = 30
             ranking1 = self.client.fetch_illustrations_ranking(

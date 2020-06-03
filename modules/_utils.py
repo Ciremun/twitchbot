@@ -20,7 +20,6 @@ from _regex import re, regex, timecode_re, youtube_id_re, youtube_link_re, pixiv
 from _pixiv import Pixiv
 from _picture import flask_app
 
-
 def get_tts_vc_key(vc):
     for k, v in g.tts_voices.items():
         if v == vc:
@@ -81,7 +80,7 @@ def imgur_utils_wrap(message):
 
 def imgur_upload_image(byte):
     result = requests.post('https://api.imgur.com/3/upload',
-                           headers={'Authorization': f'Client-ID {g.imgur_client_id}'}, data={'image': byte}).json()
+                           headers={'Authorization': f'Client-ID {g.tokens["ImgurClientID"]}'}, data={'image': byte}).json()
     success = result.get('success')
     status_code = result.get('status')
     if success and status_code == 200:
@@ -447,8 +446,14 @@ def ban_mod_commands(message, str1, str2, check_func, db_call, check_func_result
 
 
 def change_stream_settings(message, setting):
-    channel_info = requests.get(f"https://api.twitch.tv/kraken/channels/{g.channel_id}",
-                                headers={"Client-ID": g.client_id,
+    if not g.tokens.get('ChannelID'):
+        response = requests.get(f'https://api.twitch.tv/helix/users?login={g.CHANNEL}', 
+                                    headers={'Client-ID': g.tokens["Client-ID"], 
+                                                'Authorization': f'Bearer {g.tokens["ClientOAuth"]}'}).json()
+        g.tokens['ChannelID'] = response['data'][0]['id']
+        print(f'ChannelID = {g.tokens["ChannelID"]}')
+    channel_info = requests.get(f"https://api.twitch.tv/kraken/channels/{g.tokens['ChannelID']}",
+                                headers={"Client-ID": g.tokens['Client-ID'],
                                          "Accept": "application/vnd.twitchtv.v5+json"}).json()
     if setting == 'title':
         set_title = " ".join(message.parts[1:])
@@ -465,10 +470,10 @@ def change_stream_settings(message, setting):
 
 
 def change_status_game(channel_status, channel_game, username):
-    requests.put(f"https://api.twitch.tv/kraken/channels/{g.channel_id}",
-                 headers={"Client-ID": g.client_id,
+    requests.put(f"https://api.twitch.tv/kraken/channels/{g.tokens['ChannelID']}",
+                 headers={"Client-ID": g.tokens['Client-ID'],
                           "Accept": "application/vnd.twitchtv.v5+json",
-                          "Authorization": g.client_auth},
+                          "Authorization": f'OAuth {g.tokens["ClientOAuth"]}'},
                  data={"channel[status]": channel_status,
                        "channel[game]": channel_game})
     send_message(f'{username}, done')
@@ -701,7 +706,7 @@ def download_clip(url: str, username: str, user_duration=None, ytsearch=False, s
     else:
         query = requests.utils.quote(url)
         result = requests.get('https://www.googleapis.com/youtube/v3/search?'
-                              f'part=snippet&maxResults=1&type=video&q={query}&key={g.google_key}',
+                              f'part=snippet&maxResults=1&type=video&q={query}&key={g.tokens["GoogleKey"]}',
                               headers={'Accept': 'application/json'}).json()
         items = result.get("items")
         if not items:

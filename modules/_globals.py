@@ -1,5 +1,6 @@
 import vlc
 import socket
+import json
 import _database
 
 from pixivapi import Size
@@ -50,5 +51,5 @@ px_download_queue = RunInThread('pixivdl')
 main_queue = RunInThread('main')
 utils_queue = RunInThread('utils')
 commands_dict = {}
-PASS, px_token, channel_id, client_id, client_auth, google_key, imgur_client_id = [' '.join(token.split()[1:]) for token in open('data/special/tokens')]
+tokens = json.load(open('tokens.json'))
 Main = None

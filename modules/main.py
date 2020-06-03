@@ -89,13 +89,13 @@ class ThreadMain(threading.Thread):
 
 
 if __name__ == '__main__':
-    pafy.set_api_key(g.google_key)
+    pafy.set_api_key(g.tokens['GoogleKey'])
     g.max_duration = timecode_convert(g.max_duration)  # to seconds
     g.sr_cooldown = timecode_convert(g.sr_cooldown)
     g.s.connect((g.HOST, g.PORT))
-    g.s.send(bytes("PASS " + g.PASS + "\r\n", "UTF-8"))
-    g.s.send(bytes("NICK " + g.BOT + "\r\n", "UTF-8"))
-    g.s.send(bytes("JOIN #" + g.CHANNEL + " \r\n", "UTF-8"))
+    g.s.send(bytes(f"PASS {g.tokens['BotOAuth']}\r\n", "UTF-8"))
+    g.s.send(bytes(f"NICK {g.BOT}\r\n", "UTF-8"))
+    g.s.send(bytes(f"JOIN #{g.CHANNEL}\r\n", "UTF-8"))
 
     g.Main = ThreadMain("ThreadMain")
 

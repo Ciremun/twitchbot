@@ -10,7 +10,7 @@ from PIL import Image, UnidentifiedImageError
 
 class FlaskImageApp(threading.Thread):
 
-    app = Flask(__name__, static_folder='../data', template_folder='../data/special')
+    app = Flask(__name__, static_folder='../data', template_folder='../data/template')
     socketio = SocketIO(app)
     log = logging.getLogger('werkzeug')
     log.disabled = True
