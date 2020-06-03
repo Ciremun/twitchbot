@@ -83,11 +83,11 @@ flask app running on `localhost:5000`
 `srq [page]` - current queue  
 `srf [page]` - your favorites list  
 `srfa [url] [timecode]` - favorite a song, optional timecode, no url - add now playing song  
-`srfd <word/index> [word/index]..` - remove from favorites by word/list index  
+`srfd <name/index> [name/index]..` - remove from favorites by name/list index  
 `srfp <name/index> [name/index]..` - play songs from favorites (srf)  
-`srfl <index1> [index]..` - get song link(s)  
+`srfl <name/index> [index]..` - get song link(s)  
 `np` - get current song link, name, time, duration  
-`skip [name/index] [name/index]..` - skip your songrequest(s) by playlist index or word, no args - skip now playing song, bot moderators skip any song  
+`skip [name/index] [name/index]..` - skip your songrequest(s) by playlist index or name, no args - skip now playing song, bot moderators skip any song  
 `tts [vc:name] [msg]` - message text-to-speech, vc:name to change voice dynamically, no args - get voices  
 `info` - bot uptime  
 `pipe <command> | <command>..` - run commands in chain, transfer result from one command to another, last command gives complete result, supported commands: sql, info, help, tts, notify  
@@ -108,7 +108,7 @@ flask app running on `localhost:5000`
 `ttscfg [vol/rate/vc/toggle] [value]` - get/change tts volume/speech rate/voice, toggle tts, no args - current tts config  
 `sr` - enable/disable songrequests  
 `src` - clear current playlist  
-`srt` - set time for current song  
+`srt <timecode>` - set time for current song  
 `srv [value]` - get/change volume  
 `srp` - play/pause  
 
