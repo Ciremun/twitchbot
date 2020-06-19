@@ -492,6 +492,7 @@ def try_timecode(message, url, timecode_pos, save=False, ytsearch=False):
             raise IndexError
         timecode = message.parts[timecode_pos]
         if re.match(timecode_re, timecode):
+            timecode = timecode_re.sub(r'\2', timecode)
             g.sr_download_queue.new_task(download_clip, url, message.author, user_duration=timecode, ytsearch=ytsearch, save=save)
             return
         send_message(f'{message.author}, timecode error')

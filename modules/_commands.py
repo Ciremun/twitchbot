@@ -258,7 +258,8 @@ def sr_command(message):
         if not match:
             if re.match(timecode_re, message.parts[-1]):
                 query = ' '.join(message.parts[1:-1])
-                g.sr_download_queue.new_task(download_clip, query, message.author, user_duration=message.parts[-1], ytsearch=True)
+                g.sr_download_queue.new_task(download_clip, query, message.author, 
+                                                user_duration=timecode_re.sub(r'\2', message.parts[-1]), ytsearch=True)
             else:
                 query = ' '.join(message.parts[1:])
                 g.sr_download_queue.new_task(download_clip, query, message.author, user_duration=None, ytsearch=True)

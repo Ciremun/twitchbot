@@ -2,7 +2,7 @@ import re
 
 regex = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')  # links
 
-timecode_re = re.compile(r'^(?:(?:(\d+):)?(\d+):)?(\d+)$')
+timecode_re = re.compile(r'^(t:)((?:(?:(\d+):)?(\d+):)?(\d+))$')
 
 youtube_link_re = re.compile(
     r'http(?:s?)://(?:www\.)?youtu(?:be\.com/watch\?v=|\.be/)([\w\-_]*)(&(amp;)?‌​[\w?‌​=]*)?')
