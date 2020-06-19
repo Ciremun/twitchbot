@@ -79,10 +79,10 @@ flask app running on `localhost:5000`
 `link [file] [file]..` - get saved pic link, no args - last random pic link, filename  
 `ren <file> <new filename>` - change saved pic filename  
 `del <file> [file]..` - delete saved pic(s)  
-`sr [link] [timecode]` - play music with youtube link/id/search, optional start time  
+`sr [link] [t:timecode]` - play music with youtube link/id/search, optional timecode  
 `srq [page]` - current queue  
 `srf [page]` - your favorites list  
-`srfa [url] [timecode]` - favorite a song, optional timecode, no url - add now playing song  
+`srfa [url] [t:timecode]` - favorite a song, optional timecode, no url - add now playing song  
 `srfd <name/index> [name/index]..` - remove from favorites by name/list index  
 `srfp <name/index> [name/index]..` - play songs from favorites (srf)  
 `srfl <name/index> [index]..` - get song link(s)  
