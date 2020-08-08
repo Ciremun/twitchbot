@@ -9,10 +9,10 @@ from _utils import RunInThread
 CHANNEL = "ciremun"
 BOT = "shtcd"
 admin = "ciremun"
-screenwidth = 430
-screenheight = 440
+screenwidth = 385
+screenheight = 560
 pixiv_artratio = 1.3
-prefix = '$'
+prefix = '!'
 banned_tags = ['Pokémon', 'how to draw', 'oshinagaki', 'subarashikihokkorinosekai', 'catalog']
 pixiv_size = Size.MEDIUM
 clear_folders = ['data/pixiv/', 'data/images/']
