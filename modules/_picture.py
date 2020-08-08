@@ -6,17 +6,20 @@ import _globals as g
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 from PIL import Image, UnidentifiedImageError
+from gevent.pywsgi import WSGIServer
 
 
 class FlaskImageApp(threading.Thread):
 
     app = Flask(__name__, static_folder='../data', template_folder='../data/template')
     socketio = SocketIO(app)
-    log = logging.getLogger('werkzeug')
-    log.disabled = True
 
     def __init__(self):
         threading.Thread.__init__(self) 
+
+    def run(self):
+        http_server = WSGIServer(('127.0.0.1', 5000), self.app, log=None)
+        http_server.serve_forever()
 
     @staticmethod
     @app.route('/')
@@ -39,9 +42,6 @@ class FlaskImageApp(threading.Thread):
     def tts_getConfigResponse(data):
         voice = u.get_tts_vc_key(data['vc'])
         u.send_message(f"{data['vol_rate']}, vc={voice}")
-
-    def run(self):
-        self.socketio.run(self.app)
 
     def set_image(self, folder, filename):
         try:
