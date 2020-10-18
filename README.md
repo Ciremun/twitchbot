@@ -1,6 +1,6 @@
 # shtcd twitch bot
   
-let viewers set images on stream, songrequests, tts, random pixiv arts  
+set images, songrequests, tts, random pixiv arts  
 change twitch stream title, game, upload images to imgur  
 set image: any image link, pixiv links  
 songrequests: youtube link/id/search  
@@ -24,43 +24,43 @@ songrequests: youtube link/id/search
 
 create `keys.json`  
 
-`BotOAuth` (str): bot user OAuth token [twitchapps tmi](https://twitchapps.com/tmi/) helps obtain  
-`ClientOAuth` (str): user OAuth token with `channel_editor` scope, [twitchapps tokengen](https://twitchapps.com/tokengen/) helps obtain  
-`Client-ID` (str): twitch application Client ID, create app in [Twitch Developer Console](https://dev.twitch.tv/console/apps)  
-`GoogleKey` (str): [Google API](https://console.developers.google.com/apis/credentials) key for YouTube search  
+`BotOAuth`      (str): bot user OAuth token [twitchapps tmi](https://twitchapps.com/tmi/) helps obtain  
+`ClientOAuth`   (str): user OAuth token with `channel_editor` scope, [twitchapps tokengen](https://twitchapps.com/tokengen/) helps obtain  
+`Client-ID`     (str): twitch application Client ID, create app in [Twitch Developer Console](https://dev.twitch.tv/console/apps)  
+`GoogleKey`     (str): [Google API](https://console.developers.google.com/apis/credentials) key for YouTube search  
 `ImgurClientID` (str): [Imgur Client-ID](https://api.imgur.com/oauth2/addclient) for Imgur uploads  
-`PixivToken` (str): [Pixiv token](https://pixiv-api.readthedocs.io/en/latest/) for Pixiv arts  
-`ChannelID` (int): twitch channel id, optional  
+`PixivToken`    (str): [Pixiv token](https://pixiv-api.readthedocs.io/en/latest/) for Pixiv arts  
+`ChannelID`     (int): twitch channel id, optional  
 
-#### images, text-to-speech
+#### images, text-to-speech, songrequests
 
 flask app running on `localhost:5000`  
 `Chromium`: allow page Sound or click anywhere for tts and songrequests  
 `window.speechSynthesis.getVoices()` returns all the available voice URI  
 
-### globals.py @@@ config.json
+### config.json
 
-`CHANNEL` (str): twitch username to listen  
-`BOT` (str): twitch bot username  
-`admin` (str): bot admin, twitch username  
-`tts` (bool): toggle tts  
-`tts_voices` (dict): dictionary of tts voices, keys are aliases, values are voiceURI  
-`tts_vc` (str): startup tts voice, voiceURI  
-`tts_volume` (numeric): startup tts volume in percent (0-1)  
-`tts_rate` (numeric): startup tts rate (1-normal)  
-`logs` (bool): toggle chat logging  
-`sr` (bool): toggle songrequests  
-`screenwidth` (int): pic window width in px  
-`screenheight` (int): pic window height in px  
-`prefix` (str): chat command prefix  
-`banned_tags` (list of strings): exclude pixiv tags you dont want to see  
-`pixiv_size` (pixivapi.Size): pixiv download size  
-`pixiv_artratio` (numeric): max pixiv art width/height ratio  
-`clear_folders` (list of strings): clear folders on !exit  
-`player_last_vol` (int): startup songrequests volume (0-100)  
-`max_duration` (str): songrequests non-mod max song duration, timecode string (ex. 10:00)  
-`sr_cooldown` (str): songrequests non-mod cooldown, timecode string  
-`sr_max_per_request` (int): max number of songs per request (ex. using srfp command)  
+`channel`                  (str): twitch username to listen  
+`bot`                      (str): twitch bot username  
+`prefix`                   (str): chat command prefix  
+`admin`                    (str): bot admin, twitch username  
+`width`                    (int): image frame width in px  
+`height`                   (int): image frame height in px  
+`clear_folders`            (list of strings): clear folders on !exit  
+`chat_log`                 (bool): toggle chat logging  
+`pixiv_max_art_ratio`      (numeric): max pixiv art width/height ratio  
+`pixiv_banned_tags`        (list of strings): exclude pixiv tags you dont want to see  
+`tts`                      (bool): toggle tts  
+`tts_vc`                   (str): startup tts voice, voiceURI  
+`tts_voices`               (dict): dictionary of tts voices, keys are aliases, values are voiceURI  
+`tts_volume`               (numeric): startup tts volume (0-1)  
+`tts_rate`                 (numeric): startup tts rate (1-normal)  
+`sr`                       (bool): toggle songrequests  
+`sr_volume`                (int): startup songrequests volume (0-1)  
+`sr_max_song_duration`     (str): songrequests non-mod max song duration, timecode string (ex. 10:00)  
+`sr_user_cooldown`         (str): songrequests non-mod cooldown, timecode string  
+`sr_max_songs_per_request` (int): max number of songs per request (ex. using srfp command)  
+`flaskPort`                (int): flask app port  
 
 ## Commands
 

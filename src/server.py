@@ -2,8 +2,9 @@ import logging
 import time
 import sys
 import re
+import os
 
-from flask import Flask, render_template, Blueprint
+from flask import Flask, render_template, send_from_directory
 from PIL import Image, UnidentifiedImageError
 from flask_socketio import SocketIO
 
@@ -15,6 +16,11 @@ from .classes import Message
 module = sys.modules[__name__]
 app = Flask(__name__, static_folder='../flask', template_folder='../flask/templates')
 sio = SocketIO(app)
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
 @app.route('/')

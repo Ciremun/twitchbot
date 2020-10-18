@@ -8,4 +8,3 @@ if __name__ == '__main__':
     g.sr_user_cooldown = timecode_convert(g.cfg['sr_user_cooldown'])
     ChatThread('chat').start()
     server.run()
-    

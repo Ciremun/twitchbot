@@ -21,6 +21,7 @@ from .config import cfg, keys
 from .classes import Song, Message
 from .pixiv import Pixiv
 from .server import set_image, Player
+from .log import logger
 
 link_re = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
 timecode_re = re.compile(r'^(t:)((?:(?:(\d+):)?(\d+):)?(\d+))$')
@@ -652,12 +653,17 @@ def download_clip(url: str, username: str, user_duration=None, ytsearch=False, s
         return
     audio_link = info['formats'][0]['url']
     if audio_link.startswith('https://manifest.googlevideo.com/api/manifest/dash/'):
-        audio_link = re.match(r'(.*)<\/BaseURL>', requests.get(audio_link).text.split('<BaseURL>')[1]).group(1)
+        try:
+            audio_link = re.match(r'(.*)<\/BaseURL>', requests.get(audio_link).text.split('<BaseURL>')[1]).group(1)
+        except Exception as e:
+            send_message(f'{username}, unsupported url')
+            logger.exception(e)
+            return
     title = info['title']
     duration = info['duration']
     url = f"https://youtu.be/{info['id']}"
     if save:
-        if user_duration is None: # @@@ refactor db
+        if user_duration is None:
             db.add_srfavs(title, duration, 0, url, username)
             send_message(f'{username}, {title} - {url} - added to favorites')
         else:
