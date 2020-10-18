@@ -12,7 +12,8 @@ socket.on('connect_', function(message) {
     window.tts_volume = message.tts_volume;
     window.tts_rate = message.tts_rate;
     window.tts_voice = message.tts_vc;
-    console.log('js connect');
+    window.player_volume = message.player_volume;
+    console.log('socket connect');
     socket.emit('connect_');
 });
 
@@ -22,7 +23,7 @@ socket.on('tts', function(message) {
 
 socket.on('tts_set_attr', function(message) {
     window[message.attr] = message.value;
-    if (!message['response'])
+    if (!message.response)
         return;
     socket.emit('tts_attr_response', {'attr': message.attr, 
                                       'value': window[message.attr]});
@@ -39,47 +40,61 @@ socket.on('tts_get_cfg', function() {
                                 'tts_vc': window.tts_voice});
 });
 
-socket.on('player_get_state', function() {
-    let player_state;
-    if (!window.player_media)
-        player_state = 'State.Nothing'
-    else if (window.player_media.paused)
-        if (window.player_media.currentTime == 0)
-            player_state = 'State.Stopped'
-        else
-            player_state = 'State.Paused'
-    else
-        player_state = 'State.Playing'
-    socket.emit('player_get_attr', {'player_state': player_state})
-})
-
 socket.on('player_get_time', function() {
-    socket.emit('player_get_attr', 
-               {'player_time': Math.floor(window.player_media.currentTime)})
+    if (!window.player_media)
+    {
+        socket.emit('player_get_attr', {'time': 0});
+        socket.emit('player_end');
+        return;
+    }
+    socket.emit('player_get_attr', {'time': Math.floor(window.player_media.currentTime)});
 })
 
-socket.on('player_set_media', function(message) {
+socket.on('player_set_media', async function(message) {
     window.player_media = new Audio(message.url);
+    window.player_media.volume = window.player_volume;
 });
 
 socket.on('player_set_volume', function(message) {
-    window.player_media.volume = message.sr_volume;
+    window.player_volume = message.sr_volume;
+    if (!window.player_media)
+    {
+        socket.emit('player_end');
+        return;
+    }
+    window.player_media.volume = window.player_volume;
 });
 
 socket.on('player_set_time', function(message) {
+    if (!window.player_media)
+    {
+        socket.emit('player_end');
+        return;
+    }
     window.player_media.currentTime = message.seconds;
 });
 
 socket.on('player_play', function() {
     window.player_media.play()
-                       .catch((error) => { console.log(error); window.player_media = undefined; });
+                       .catch((error) => { console.log(error); socket.emit('player_end'); });
+    socket.emit('player_play');
+    window.player_media.onended = () => { socket.emit('player_end'); };
 });
 
 socket.on('player_pause', function() {
+    if (!window.player_media)
+    {
+        socket.emit('player_end');
+        return;
+    }
     window.player_media.pause();
+    socket.emit('player_pause');
 });
 
 socket.on('player_stop', function() {
+    socket.emit('player_stop');
+    if (!window.player_media)
+        return;
     window.player_media.pause();
     window.player_media.currentTime = 0;
 });

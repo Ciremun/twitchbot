@@ -1,51 +1,55 @@
 # shtcd twitch bot
   
 let viewers set images on stream, songrequests, tts, random pixiv arts  
-extra: change twitch stream title&game, upload images to imgur  
+change twitch stream title, game, upload images to imgur  
 set image: any image link, pixiv links  
-songrequests: youtube link/id/query
+songrequests: youtube link/id/search  
 
 ## Install
 
 ### requirements
 
-Python 3
+#### Python 3
 
     Pillow>=8.0.0
-    pixiv-api>=0.3.5
+    pixiv-api>=0.3.6
     requests>=2.24.0
     youtube-dl>=2020.9.20
+    Flask>=1.1.2
+    Flask-SocketIO>=4.3.1
+    gevent>=20.9.0
+    gevent-websocket>=0.10.1
 
-### keys.json
+#### keys.json
 
 create `keys.json`  
 
 `BotOAuth` (str): bot user OAuth token [twitchapps tmi](https://twitchapps.com/tmi/) helps obtain  
 `ClientOAuth` (str): user OAuth token with `channel_editor` scope, [twitchapps tokengen](https://twitchapps.com/tokengen/) helps obtain  
 `Client-ID` (str): twitch application Client ID, create app in [Twitch Developer Console](https://dev.twitch.tv/console/apps)  
+`GoogleKey` (str): [Google API](https://console.developers.google.com/apis/credentials) key for YouTube search  
+`ImgurClientID` (str): [Imgur Client-ID](https://api.imgur.com/oauth2/addclient) for Imgur uploads  
+`PixivToken` (str): [Pixiv token](https://pixiv-api.readthedocs.io/en/latest/) for Pixiv arts  
 `ChannelID` (int): twitch channel id, optional  
-`GoogleKey` (str): generate [Google API](https://console.developers.google.com/apis/credentials) key for YouTube search  
-`ImgurClientID` (str): [Register Imgur Application](https://api.imgur.com/oauth2/addclient) for Imgur uploads  
-`PixivToken` (str): [Get Pixiv Token](https://pixiv-api.readthedocs.io/en/latest/) for Pixiv arts  
 
-### images, text-to-speech
+#### images, text-to-speech
 
 flask app running on `localhost:5000`  
-`Chromium`: allow page Sound or click anywhere for tts  
-`window.speechSynthesis.getVoices()` returns all the available voices  
+`Chromium`: allow page Sound or click anywhere for tts and songrequests  
+`window.speechSynthesis.getVoices()` returns all the available voice URI  
 
 ### globals.py @@@ config.json
 
 `CHANNEL` (str): twitch username to listen  
 `BOT` (str): twitch bot username  
 `admin` (str): bot admin, twitch username  
-`tts` (bool): enable/disable tts  
+`tts` (bool): toggle tts  
 `tts_voices` (dict): dictionary of tts voices, keys are aliases, values are voiceURI  
 `tts_vc` (str): startup tts voice, voiceURI  
 `tts_volume` (numeric): startup tts volume in percent (0-1)  
 `tts_rate` (numeric): startup tts rate (1-normal)  
-`logs` (bool): enable/disable chat logging  
-`sr` (bool): enable/disable songrequests  
+`logs` (bool): toggle chat logging  
+`sr` (bool): toggle songrequests  
 `screenwidth` (int): pic window width in px  
 `screenheight` (int): pic window height in px  
 `prefix` (str): chat command prefix  
@@ -101,7 +105,7 @@ flask app running on `localhost:5000`
 `title [query]` - change stream title, no args - get current title  
 `game [query]` - change stream game, no args - get current game  
 `ttscfg [vol/rate/vc/toggle] [value]` - get/change tts volume/speech rate/voice, toggle tts, no args - current tts config  
-`sr` - enable/disable songrequests  
+`sr` - toggle songrequests  
 `src` - clear current playlist  
 `srt <timecode>` - set time for current song  
 `srv [value]` - get/change volume  
@@ -109,6 +113,6 @@ flask app running on `localhost:5000`
 
 ### bot admin
 
-`log` - enable/disable chat logging  
+`log` - toggle chat logging  
 `mod/unmod` - remove/add user to bot modlist  
 `exit` - clear folders, exit bot  

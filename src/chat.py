@@ -54,6 +54,6 @@ class ChatThread(Thread):
                     utils_queue.new_task(check_chat_notify, message.author)
 
                 if message.content.startswith(cfg['prefix']):
-                    command = commands.get(message.parts[0][len(cfg['prefix']):])
+                    command = commands.get(message.parts[0][g.prefix_len:])
                     if command:
                         main_queue.new_task(command, message)

@@ -603,6 +603,13 @@ def send_message(message: str, pipe=False):
     g.twitch_socket.send(bytes(f"PRIVMSG #{g.cfg['channel']} :{message}\r\n", "UTF-8"))
 
 
+def player_start_playing():
+    for _ in range(1500):
+        if Player.active_state():
+            return
+        time.sleep(0.01)
+
+
 def playmusic():
     if not g.playlist:
         return
@@ -612,8 +619,8 @@ def playmusic():
     g.np, g.np_duration, g.sr_url, g.sr_user = song.title, song.duration, song.link, song.username
     if song.user_duration is not None:
         Player.set_time(song.user_duration)
+    player_start_playing()
     while Player.active_state():
-        print('active state')
         time.sleep(2)
 
 
@@ -644,6 +651,8 @@ def download_clip(url: str, username: str, user_duration=None, ytsearch=False, s
         send_message(f'{username}, unsupported url')
         return
     audio_link = info['formats'][0]['url']
+    if audio_link.startswith('https://manifest.googlevideo.com/api/manifest/dash/'):
+        audio_link = re.match(r'(.*)<\/BaseURL>', requests.get(audio_link).text.split('<BaseURL>')[1]).group(1)
     title = info['title']
     duration = info['duration']
     url = f"https://youtu.be/{info['id']}"

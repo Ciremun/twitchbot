@@ -15,17 +15,6 @@ from .classes import Message
 module = sys.modules[__name__]
 app = Flask(__name__, static_folder='../flask', template_folder='../flask/templates')
 sio = SocketIO(app)
-player_state = None
-player_time = None
-connected = False
-
-
-def socket_connected(func):
-    def wrapper(*args, **kwargs):
-        if connected:
-            return func(*args, **kwargs)
-        print('socket not connected')
-    return wrapper
 
 
 @app.route('/')
@@ -35,14 +24,17 @@ def hello_world():
 
 @sio.on('connect')
 def connect_():
-    sio.emit('connect_', {'width': cfg['width'], 'height': cfg['height'], 
-            'tts_volume': cfg['tts_volume'], 'tts_rate': cfg['tts_rate'], 'tts_vc': cfg['tts_vc']})
+    sio.emit('connect_', {'width': cfg['width'], 
+                          'height': cfg['height'], 
+                          'tts_volume': g.tts_volume, 
+                          'tts_rate': g.tts_rate, 
+                          'tts_vc': g.tts_vc,
+                          'player_volume': g.sr_volume})
 
 
 @sio.on('connect_')
 def client_connect():
-    global connected
-    connected = True
+    print('socket connect')
 
 
 @sio.on('tts_attr_response')
@@ -60,9 +52,29 @@ def tts_cfg_response(message):
 
 
 @sio.on('player_get_attr')
-def player_get_state_response(message):
+def player_get_attr(message):
     for key, value in message.items():
-        setattr(module, key, value)
+        setattr(Player, key, value)
+
+
+@sio.on('player_end')
+def player_end():
+    Player.state = 'State.Ended'
+
+
+@sio.on('player_play')
+def player_play():
+    Player.state = 'State.Playing'
+
+
+@sio.on('player_pause')
+def player_pause():
+    Player.state = 'State.Paused'
+
+
+@sio.on('player_stop')
+def player_stop():
+    Player.state = 'State.Stopped'
 
 
 def set_image(folder, filename):
@@ -75,33 +87,25 @@ def set_image(folder, filename):
     sio.emit('setimage', {'width': width, 'height': height, 'src': f'images/{folder}{filename}'})
 
 
-def getattr_sync(attr: str):
-    while True:
-        value = getattr(module, attr)
-        if value is None:
-            time.sleep(0.01)
-            continue
-        setattr(module, attr, None)
-        return value
-
-
 def run():
     sio.run(app, host='127.0.0.1', port=cfg['flaskPort'])
 
 
 class Player:
 
-    @staticmethod
-    @socket_connected
-    def get_state():
-        sio.emit('player_get_state')
-        return getattr_sync('player_state')
+    state = None
+    time = None
 
     @staticmethod
-    @socket_connected
     def get_time():
         sio.emit('player_get_time')
-        return getattr_sync('player_time')
+        for _ in range(1500):
+            if Player.time is not None:
+                player_time = Player.time
+                Player.time = None
+                return player_time
+            time.sleep(0.01)
+        return 0
 
     @staticmethod
     def set_time(seconds: int):
@@ -129,8 +133,7 @@ class Player:
 
     @staticmethod
     def active_state():
-        player_state = Player.get_state()
-        return any(player_state == x for x in ['State.Playing', 'State.Paused'])
+        return any(Player.state == x for x in ['State.Playing', 'State.Paused'])
 
 
 class TextToSpeech:

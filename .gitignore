@@ -2,8 +2,8 @@ __pycache__/
 .vscode/
 flask/images/
 log/
-package-lock.json
 __init__.py
 cookies.txt
+start.bat
 keys.json
 bot.db

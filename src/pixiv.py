@@ -24,8 +24,7 @@ class ThreadPixiv(Thread):
         self.start()
 
     def run(self):
-        pass # @@@ broken
-        # self.pixiv_init()
+        self.pixiv_init()
 
     def download_art(self, obj, size, filename):
         obj.download(directory=self.artpath,

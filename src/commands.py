@@ -39,7 +39,7 @@ def log_command(message):
 def np_command(message):
     if not Player.active_state():
         send_message(f'{message.author}, nothing is playing')
-    elif Player.get_state() == 'State.Paused':
+    elif Player.state == 'State.Paused':
         np_response('Paused')
     else:
         np_response('Now playing')
@@ -51,11 +51,8 @@ def srv_command(message):
         value = float(message.parts[1])
         if not 0 <= value <= 1:
             raise ValueError
-        if Player.active_state():
-            g.sr_volume = value
-            Player.set_volume(g.sr_volume)
-            return
-        send_message(f'{message.author}, nothing is playing')
+        g.sr_volume = value
+        Player.set_volume(g.sr_volume)
     except IndexError:
         send_message(f'sr vol: {g.sr_volume}')
     except ValueError:
@@ -86,10 +83,9 @@ def src_command(message):
 
 @bot_command(name='srp', check_func=is_mod)
 def srp_command(message):
-    player_state = Player.get_state()
-    if player_state == 'State.Playing':
+    if Player.state == 'State.Playing':
         Player.pause()
-    elif player_state == 'State.Paused':
+    elif Player.state == 'State.Paused':
         Player.play()
     else:
         send_message(f'{message.author}, nothing is playing')

@@ -1,5 +1,5 @@
 Pillow>=8.0.0
-pixiv-api>=0.3.5
+pixiv-api>=0.3.6
 requests>=2.24.0
 youtube-dl>=2020.9.20
 Flask>=1.1.2
