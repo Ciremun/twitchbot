@@ -1,0 +1,33 @@
+{
+    "channel": "ciremun",
+    "bot": "shtcd",
+    "prefix": "!",
+    "admin": "ciremun",
+    "width": 328,
+    "height": 640,
+    "clear_folders": ["flask/images/pixiv/", "flask/images/temp/"],
+    "chat_log": false,
+    "pixiv_max_art_ratio": 1.3,
+    "pixiv_banned_tags": ["Pokémon", "how to draw", "oshinagaki", "subarashikihokkorinosekai", "catalog"],
+    "tts": true,
+    "tts_vc": "IVONA 2 Ivy OEM",
+    "tts_voices": {
+        "ivy": "IVONA 2 Ivy OEM",
+        "pl": "Google polski"
+    },
+    "tts_volume": 0.07,
+    "tts_rate": 1.3,
+    "sr": true,
+    "sr_volume": 0.3,
+    "sr_max_song_duration": "10:00",
+    "sr_user_cooldown": "60",
+    "sr_max_songs_per_request": 5,
+    "ydl_opts": {
+        "format": "bestaudio",
+        "cookiefile": "cookies.txt",
+        "cachedir": false,
+        "quiet": true,
+        "noplaylist": true
+    },
+    "flaskPort": 5000
+}

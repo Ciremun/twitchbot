@@ -1,29 +1,31 @@
-import threading
 import random
-import os
 import time
-import _utils as u
-import _globals as g
-
-from pixivapi import Client
-from pixivapi import RankingMode
-from pixivapi import BadApiResponse
+import os
+from os.path import isfile, join
+from threading import Thread
 from pathlib import Path
 from os import listdir
-from os.path import isfile, join
 
+from pixivapi import Client, RankingMode, BadApiResponse
 
-class ThreadPixiv(threading.Thread):
+import src.db as db
+import src.utils as u
+import src.config as g
+from .server import set_image
+
+class ThreadPixiv(Thread):
 
     def __init__(self, name):
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
         self.name = name
         self.client = Client()
         self.allranking = []
-        self.artpath = Path('data/pixiv/')
+        self.artpath = Path('flask/images/pixiv/')
+        self.start()
 
     def run(self):
-        self.pixiv_init()
+        pass # @@@ broken
+        # self.pixiv_init()
 
     def download_art(self, obj, size, filename):
         obj.download(directory=self.artpath,
@@ -48,12 +50,12 @@ class ThreadPixiv(threading.Thread):
             artid = illustration.id
             g.lastlink = f'https://www.pixiv.net/en/artworks/{artid}'
             g.last_rand_img = f'{artid}.png'
-            art = Path(f'data/pixiv/{artid}.png')
+            art = Path(f'flask/images/pixiv/{artid}.png')
             if not art.is_file():
                 self.download_art(illustration, g.pixiv_size, artid)
                 if not art.is_file():
-                    os.rename(f'data/pixiv/{artid}.jpg', f'data/pixiv/{artid}.png')
-            u.call_draw('pixiv/', f'{artid}.png')
+                    os.rename(f'flask/images/pixiv/{artid}.jpg', f'flask/images/pixiv/{artid}.png')
+            set_image('pixiv/', f'{artid}.png')
         except BadApiResponse as pixiv_exception:  # reconnect
             if 'Status code: 400' in str(pixiv_exception):
                 self.pixiv_init()
@@ -62,7 +64,7 @@ class ThreadPixiv(threading.Thread):
             if 'RemoteDisconnected' in str(e):
                 self.random_pixiv_art()
 
-    def save_pixiv_art(self, namesave, owner, artid, folder='custom/', setpic=False, save=False, save_msg=False):
+    def save_pixiv_art(self, namesave, owner, artid, folder='user/', setpic=False, save=False, save_msg=False):
         """
         save pixiv art by art id
         :param save_msg: whether send <image saved> message
@@ -79,31 +81,31 @@ class ThreadPixiv(threading.Thread):
             namesave = u.while_is_file(folder, namesave, '_p0.png')
             savedart = self.client.fetch_illustration(int(artid))
             self.download_art(savedart, g.pixiv_size, namesave)
-            if os.path.isdir('data/pixiv/' + namesave):
-                mypath2 = 'data/pixiv/' + namesave
+            if os.path.isdir('flask/images/pixiv/' + namesave):
+                mypath2 = 'flask/images/pixiv/' + namesave
                 onlyfiles = [f for f in listdir(mypath2) if isfile(join(mypath2, f))]
                 for i in onlyfiles:
-                    os.rename(f'data/pixiv/{namesave}/{i}', f'data/{folder}{namesave}{i[8:-4]}.png')
+                    os.rename(f'flask/images/pixiv/{namesave}/{i}', f'flask/images/{folder}{namesave}{i[8:-4]}.png')
                     if save:
-                        g.db.add_link(f'https://www.pixiv.net/en/artworks/{artid}', f'{namesave}{i[8:-4]}.png')
-                        g.db.add_owner(f'{namesave}{i[8:-4]}.png', owner)
+                        db.add_link(f'https://www.pixiv.net/en/artworks/{artid}', f'{namesave}{i[8:-4]}.png')
+                        db.add_owner(f'{namesave}{i[8:-4]}.png', owner)
                     if setpic:
-                        u.call_draw(folder, f'{namesave}{i[8:-4]}.png')
+                        set_image(folder, f'{namesave}{i[8:-4]}.png')
                         time.sleep(1.5)
-                os.rmdir(f'data/pixiv/{namesave}')
+                os.rmdir(f'flask/images/pixiv/{namesave}')
                 if save_msg:
                     u.send_message(f'{owner}, {namesave}.png saved')
                 return
-            art = Path(f'data/pixiv/{namesave}.png')
-            filepath = f'data/pixiv/{namesave}.png'
+            art = Path(f'flask/images/pixiv/{namesave}.png')
+            filepath = f'flask/images/pixiv/{namesave}.png'
             if not art.is_file():
-                filepath = f'data/pixiv/{namesave}.jpg'
-            os.rename(filepath, f'data/{folder}{namesave}.png')
+                filepath = f'flask/images/pixiv/{namesave}.jpg'
+            os.rename(filepath, f'flask/images/{folder}{namesave}.png')
             if save:
-                g.db.add_link(f'https://www.pixiv.net/en/artworks/{artid}', f'{namesave}.png')
-                g.db.add_owner(f'{namesave}.png', owner)
+                db.add_link(f'https://www.pixiv.net/en/artworks/{artid}', f'{namesave}.png')
+                db.add_owner(f'{namesave}.png', owner)
             if setpic:
-                u.call_draw(folder, f'{namesave}.png')
+                set_image(folder, f'{namesave}.png')
             if save_msg:
                 u.send_message(f'{owner}, {namesave}.png saved')
         except BadApiResponse as pixiv_exception:  # reconnect
@@ -121,7 +123,7 @@ class ThreadPixiv(threading.Thread):
     def pixiv_init(self):
         try:
             self.allranking *= 0
-            self.client.authenticate(g.tokens['PixivToken'])
+            self.client.authenticate(g.keys['PixivToken'])
             print('pixiv auth √')
             rank_offset = 30
             ranking1 = self.client.fetch_illustrations_ranking(
@@ -137,6 +139,5 @@ class ThreadPixiv(threading.Thread):
         except BadApiResponse:
             time.sleep(30)
             self.run()
-
 
 Pixiv = ThreadPixiv("ThreadPixiv")

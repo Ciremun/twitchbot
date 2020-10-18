@@ -7,24 +7,18 @@ songrequests: youtube link/id/query
 
 ## Install
 
-### req
+### requirements
 
-    ffmpeg>=1.4
-    Pillow>=7.2.0
+Python 3
+
+    Pillow>=8.0.0
     pixiv-api>=0.3.5
-    python-vlc>=3.0.11115
     requests>=2.24.0
-    youtube-dl>=2020.7.28
-    pafy>=0.5.5
-    Flask>=1.1.2
-    Flask-SocketIO>=4.3.1
-    gevent>=20.6.2
+    youtube-dl>=2020.9.20
 
-requires ffmpeg and vlc, tested: Python 3.7.5, 3.8.5
+### keys.json
 
-### tokens
-
-create `tokens.json`  
+create `keys.json`  
 
 `BotOAuth` (str): bot user OAuth token [twitchapps tmi](https://twitchapps.com/tmi/) helps obtain  
 `ClientOAuth` (str): user OAuth token with `channel_editor` scope, [twitchapps tokengen](https://twitchapps.com/tokengen/) helps obtain  
@@ -32,7 +26,7 @@ create `tokens.json`
 `ChannelID` (int): twitch channel id, optional  
 `GoogleKey` (str): generate [Google API](https://console.developers.google.com/apis/credentials) key for YouTube search  
 `ImgurClientID` (str): [Register Imgur Application](https://api.imgur.com/oauth2/addclient) for Imgur uploads  
-`PixivToken` (str): [Get Pixiv Token](https://pixiv-api.readthedocs.io/en/latest/)  
+`PixivToken` (str): [Get Pixiv Token](https://pixiv-api.readthedocs.io/en/latest/) for Pixiv arts  
 
 ### images, text-to-speech
 
@@ -40,14 +34,14 @@ flask app running on `localhost:5000`
 `Chromium`: allow page Sound or click anywhere for tts  
 `window.speechSynthesis.getVoices()` returns all the available voices  
 
-### globals.py
+### globals.py @@@ config.json
 
 `CHANNEL` (str): twitch username to listen  
 `BOT` (str): twitch bot username  
 `admin` (str): bot admin, twitch username  
 `tts` (bool): enable/disable tts  
 `tts_voices` (dict): dictionary of tts voices, keys are aliases, values are voiceURI  
-`tts_default_vc` (str): startup tts voice, voiceURI  
+`tts_vc` (str): startup tts voice, voiceURI  
 `tts_volume` (numeric): startup tts volume in percent (0-1)  
 `tts_rate` (numeric): startup tts rate (1-normal)  
 `logs` (bool): enable/disable chat logging  

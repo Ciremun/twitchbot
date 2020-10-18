@@ -1,30 +1,35 @@
-import pafy
-import time
-import requests
 import threading
-import os
 import random
-import typing
-import queue
-import io
 import base64
-import _globals as g
-
-from math import floor
-from pathlib import Path
-from datetime import datetime
-from os import listdir
+import queue
+import time
+import os
+import io
+import re
 from os.path import isfile, join
+from pathlib import Path
+from math import floor
+
+import requests
 from PIL import Image
-from _regex import re, regex, timecode_re, youtube_id_re, youtube_link_re, pixiv_re, pixiv_src_re
-from _pixiv import Pixiv
-from _picture import flask_app
+from youtube_dl import DownloadError
 
-def get_tts_vc_key(vc):
-    for k, v in g.tts_voices.items():
-        if v == vc:
-            return k
+import src.db as db
+import src.config as g
+from .qthreads import sr_download_queue, px_download_queue, sr_queue
+from .config import cfg, keys
+from .classes import Song, Message
+from .pixiv import Pixiv
+from .server import set_image, Player
 
+link_re = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+timecode_re = re.compile(r'^(t:)((?:(?:(\d+):)?(\d+):)?(\d+))$')
+youtube_link_re = re.compile(r'http(?:s?)://(?:www\.)?youtu(?:be\.com/watch\?v=|\.be/)([\w\-_]*)(&(amp;)?‌​[\w?‌​=]*)?')
+youtube_id_re = re.compile(r'^([/]?watch\?v)?=([\w-]{11})$')
+pixiv_re = re.compile(r'^(https://)?(www.)?pixiv\.net/(en)?(artworks)?/(\d+)?(artworks)?(/(\d+)?)?$')
+pixiv_src_re = re.compile(r'^(https://)?(www.)?i\.pximg\.net/[\w\-]+/\w+/\d+/\d+/\d+/\d+/\d+/\d+/(('
+                          r'\d+)_p\d+\w+\.\w+)?((\d+)_p\d+\.\w+)?$')
+chat_msg_re = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
 
 def lookahead(iterable):
     """Pass through all values from the given iterable, augmented by the
@@ -39,48 +44,28 @@ def lookahead(iterable):
     yield last, True
 
 
-class Message:
-
-    def __init__(self, message, author):
-        self.content = message
-        self.parts = message.split()
-        self.author = author
-    
-    def __str__(self):
-        return self.content
-
-
-class Song(typing.NamedTuple):
-    vlc_link: str
-    title: str
-    duration: str
-    user_duration: int
-    link: str
-    username: str
-
-
 def imgur_utils_wrap(message):
     filename = message.parts[1]
-    db_link = g.db.get_link(filename)
+    db_link = db.get_link(filename)
     if db_link:
         if is_mod(message.author):
-            g.db.remove_link([(filename,)])
+            db.remove_link([(filename,)])
             return imgur_utils_wrap(message)
         return send_message(f'{message.author}, {filename} - {db_link[0][0]}')
-    path = f'data/custom/{filename}'
+    path = f'flask/images/user/{filename}'
     if not Path(path).is_file():
         return send_message(f'{message.author}, file {filename} not found')
     encoded_file = imgur_convert_image(path)
     link = imgur_upload_image(encoded_file)
-    if not re.match(regex, link):
+    if not re.match(link_re, link):
         return send_message(f'{message.author}, file upload error [{link}]')
     send_message(f'{message.author}, {filename} - {link}')
-    g.db.add_link(link, filename)
+    db.add_link(link, filename)
 
 
 def imgur_upload_image(byte):
-    result = requests.post('https://api.imgur.com/3/upload',
-                           headers={'Authorization': f'Client-ID {g.tokens["ImgurClientID"]}'}, data={'image': byte}).json()
+    result = requests.post('https://api.imgur.com/3/image',
+                           headers={'Authorization': f'Client-ID {keys["ImgurClientID"]}'}, data={'image': byte}).json()
     success = result.get('success')
     status_code = result.get('status')
     if success and status_code == 200:
@@ -120,21 +105,19 @@ def resizeimg(ri, rs, imgwidth, imgheight , screenwidth, screenheight):  # resiz
         return imgwidth, imgheight
 
 
-def is_mod(username):  # check if user is mod
-    if username == g.admin:
+def is_mod(username):
+    if username == cfg['admin']:
         return True
-    result = g.db.check_if_mod(username)
+    result = db.check_if_mod(username)
     if result:
         return True
     return False
 
 
-def no_ban(username):  # check if user is bad
-    if username == g.admin:
-        return True
+def no_ban(username):
     if is_mod(username):
         return True
-    result = g.db.check_if_banned(username)
+    result = db.check_if_banned(username)
     if result:
         return False
     return True
@@ -205,8 +188,8 @@ def sort_pixiv_arts(arts_list, result_list):
     for i in arts_list:
         artratio = i.width / i.height
         if i.page_count > 1 or 'ContentType.MANGA' in str(
-                i.type) or artratio > g.pixiv_artratio or \
-                any(x in str(i.tags) for x in g.banned_tags):
+                i.type) or artratio > g.pixiv_max_art_ratio or \
+                any(x in str(i.tags) for x in g.pixiv_banned_tags):
             continue
         result_list.append(i)
     return result_list
@@ -218,7 +201,7 @@ def rename_command(message):  # rename function for image owners
         newimagename = fixname(message.parts[2].lower())
         moderator = is_mod(message.author)
         if not moderator and not check_owner(message.author, imagename):
-            onlyfiles = [f for f in listdir('data/custom/') if isfile(join('data/custom/', f))]
+            onlyfiles = [f for f in os.listdir('flask/images/user/') if isfile(join('flask/images/user/', f))]
             words = onlyfiles
             if imagename not in words:
                 send_message(f'{message.author}, file not found')
@@ -227,7 +210,7 @@ def rename_command(message):  # rename function for image owners
                 if element == imagename:
                     send_message(f'{message.author}, access denied')
         else:
-            my_file = Path("data/custom/" + newimagename)
+            my_file = Path("flask/images/user/" + newimagename)
             if my_file.is_file():
                 send_message(f"{message.author}, {newimagename} already exists")
                 return
@@ -235,14 +218,14 @@ def rename_command(message):  # rename function for image owners
                 send_message(f"{message.author}, sowwy, format change isn't allowed")
                 return
             try:
-                os.rename('data/custom/' + imagename, 'data/custom/' + newimagename)
-                g.db.update_link_filename(imagename, newimagename)
-                g.db.update_owner_filename(imagename, newimagename)
+                os.rename('flask/images/user/' + imagename, 'flask/images/user/' + newimagename)
+                db.update_link_filename(imagename, newimagename)
+                db.update_owner_filename(imagename, newimagename)
                 send_message(f'{message.author}, {imagename} --> {newimagename}')
             except:
                 send_message(f'{message.author}, file not found')
     except IndexError:
-        send_message(f'{message.author}, {g.prefix}ren <filename> <new filename>')
+        send_message(f'{message.author}, {cfg["prefix"]}ren <filename> <new filename>')
 
 
 def send_list(message, list_str, list_arr, list_page_pos, list_type):
@@ -303,9 +286,9 @@ def fixname(name):  # fix filename for OS Windows
 
 
 def checkifnolink(act):
-    mypath = 'data/custom/'
-    onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-    result = g.db.get_links_filenames()
+    mypath = 'flask/images/user/'
+    onlyfiles = [f for f in os.listdir(mypath) if isfile(join(mypath, f))]
+    result = db.get_links_filenames()
     lst_result = [i[0] for i in result]
     words = [x if set(x.split()).intersection(lst_result) else x + '*' for x in onlyfiles]
     if act == '!search':
@@ -314,13 +297,8 @@ def checkifnolink(act):
     return words, linkwords
 
 
-def get_current_date():
-    nowdate = datetime.now()
-    return nowdate
-
-
 def check_owner(message, imagename):  # check if user owns image
-    result = g.db.check_owner(imagename, message.author)
+    result = db.check_owner(imagename, message.author)
     if result:
         return True
     return False
@@ -359,7 +337,7 @@ def sr_favs_del(message, songs):
                         remove_song.append(remove_tup)
             if not song_found:
                 target_not_found.append(message.parts[i])
-    g.db.remove_srfavs(remove_song)
+    db.remove_srfavs(remove_song)
     if song_removed_response:
         response.append(f'Favorites removed: {", ".join(song_removed_response)}')
     if target_not_found:
@@ -384,7 +362,7 @@ def del_chat_command(message):
     for i in message.parts[1:]:
         imagename = i.lower()
         if not moderator and not check_owner(message.author, imagename):
-            words = [f for f in listdir('data/custom/') if isfile(join('data/custom/', f))]
+            words = [f for f in os.listdir('flask/images/user/') if isfile(join('flask/images/user/', f))]
             if not set(imagename.split()).intersection(words):
                 response_not_found.append(imagename)
                 continue
@@ -392,7 +370,7 @@ def del_chat_command(message):
                 response_denied.append(imagename)
         else:
             try:
-                os.remove('data/custom/' + imagename)
+                os.remove('flask/images/user/' + imagename)
                 remove_links.append((imagename,))
                 remove_owners.append((imagename,))
                 response_deleted.append(imagename)
@@ -401,8 +379,8 @@ def del_chat_command(message):
                 response_not_found.append(i.lower())
     response = []
     if file_deleted:
-        g.db.remove_link(remove_links)
-        g.db.remove_owner(remove_owners)
+        db.remove_link(remove_links)
+        db.remove_owner(remove_owners)
         response.append(f"Deleted: {', '.join(response_deleted)}")
     if response_denied:
         response.append(f"Access denied: {', '.join(response_denied)}")
@@ -446,14 +424,14 @@ def ban_mod_commands(message, str1, str2, check_func, db_call, check_func_result
 
 
 def change_stream_settings(message, setting):
-    if not g.tokens.get('ChannelID'):
-        response = requests.get(f'https://api.twitch.tv/helix/users?login={g.CHANNEL}', 
-                                    headers={'Client-ID': g.tokens["Client-ID"], 
-                                                'Authorization': f'Bearer {g.tokens["ClientOAuth"]}'}).json()
-        g.tokens['ChannelID'] = response['data'][0]['id']
-        print(f'ChannelID = {g.tokens["ChannelID"]}')
-    channel_info = requests.get(f"https://api.twitch.tv/kraken/channels/{g.tokens['ChannelID']}",
-                                headers={"Client-ID": g.tokens['Client-ID'],
+    if not g.keys.get('ChannelID'):
+        response = requests.get(f'https://api.twitch.tv/helix/users?login={g.cfg["channel"]}', 
+                                    headers={'Client-ID': g.keys["Client-ID"], 
+                                                'Authorization': f'Bearer {g.keys["ClientOAuth"]}'}).json()
+        g.keys['ChannelID'] = response['data'][0]['id']
+        print(f'ChannelID = {g.keys["ChannelID"]}')
+    channel_info = requests.get(f"https://api.twitch.tv/kraken/channels/{g.keys['ChannelID']}",
+                                headers={"Client-ID": g.keys['Client-ID'],
                                          "Accept": "application/vnd.twitchtv.v5+json"}).json()
     if setting == 'title':
         set_title = " ".join(message.parts[1:])
@@ -470,18 +448,17 @@ def change_stream_settings(message, setting):
 
 
 def change_status_game(channel_status, channel_game, username):
-    requests.put(f"https://api.twitch.tv/kraken/channels/{g.tokens['ChannelID']}",
-                 headers={"Client-ID": g.tokens['Client-ID'],
+    requests.put(f"https://api.twitch.tv/kraken/channels/{g.keys['ChannelID']}",
+                 headers={"Client-ID": g.keys['Client-ID'],
                           "Accept": "application/vnd.twitchtv.v5+json",
-                          "Authorization": f'OAuth {g.tokens["ClientOAuth"]}'},
+                          "Authorization": f'OAuth {g.keys["ClientOAuth"]}'},
                  data={"channel[status]": channel_status,
                        "channel[game]": channel_game})
     send_message(f'{username}, done')
 
 
 def np_response(mode):
-    current_time_ms = g.Player.get_time()
-    current_time = floor(current_time_ms / 1000)
+    current_time = Player.get_time()
     current_time = seconds_convert(current_time)
     send_message(f'{mode}: {g.np} - {g.sr_url} - {current_time}/{g.np_duration}')
 
@@ -493,11 +470,11 @@ def try_timecode(message, url, timecode_pos, save=False, ytsearch=False):
         timecode = message.parts[timecode_pos]
         if re.match(timecode_re, timecode):
             timecode = timecode_re.sub(r'\2', timecode)
-            g.sr_download_queue.new_task(download_clip, url, message.author, user_duration=timecode, ytsearch=ytsearch, save=save)
+            sr_download_queue.new_task(download_clip, url, message.author, user_duration=timecode, ytsearch=ytsearch, save=save)
             return
         send_message(f'{message.author}, timecode error')
     except IndexError:
-        g.sr_download_queue.new_task(download_clip, url, message.author, ytsearch=ytsearch, save=save)
+        sr_download_queue.new_task(download_clip, url, message.author, ytsearch=ytsearch, save=save)
 
 
 def clear_folder(path):
@@ -516,14 +493,14 @@ def change_pixiv(message, pattern, group, group2, url):
             pxid = int(pattern.sub(group, url))
         except ValueError:
             pxid = int(pattern.sub(group2, url))
-        g.px_download_queue.new_task(Pixiv.save_pixiv_art, imagename, message.author, pxid, setpic=True, save=True)
+        px_download_queue.new_task(Pixiv.save_pixiv_art, imagename, message.author, pxid, setpic=True, save=True)
     except IndexError:
         try:
             pxid = int(pattern.sub(group, url))
         except ValueError:
             pxid = int(pattern.sub(group2, url))
-        g.px_download_queue.new_task(Pixiv.save_pixiv_art, g.db.numba, message.author, pxid, 'data/images/', setpic=True)
-        g.db.update_imgcount(int(g.db.numba) + 1)
+        px_download_queue.new_task(Pixiv.save_pixiv_art, db.numba, message.author, pxid, 'flask/images/temp/', setpic=True)
+        db.update_imgcount(int(db.numba) + 1)
 
 
 def save_pixiv(message, pattern, group, group2, url):
@@ -533,7 +510,7 @@ def save_pixiv(message, pattern, group, group2, url):
             pxid = int(pattern.sub(group, url))
         except ValueError:
             pxid = int(pattern.sub(group2, url))
-        g.px_download_queue.new_task(Pixiv.save_pixiv_art, imagename, message.author, pxid, save=True, save_msg=True)
+        px_download_queue.new_task(Pixiv.save_pixiv_art, imagename, message.author, pxid, save=True, save_msg=True)
     except IndexError:
         pass
 
@@ -551,7 +528,7 @@ def sr_download(message, url, timecode_pos, save=False):
 
 
 def get_srfavs_dictlist(username):
-    result = g.db.check_srfavs_list(username)
+    result = db.check_srfavs_list(username)
     if not result:
         return False
     return [Song(None, song[0], seconds_convert(song[1]), (None if song[2] == 0 else song[2]), song[3], username)
@@ -565,7 +542,7 @@ def set_random_pic(lst, response):
     selected = random.choice(lst)
     g.last_rand_img = selected
     g.lastlink = None
-    call_draw('custom/', selected)
+    set_image('user/', selected)
 
 
 def change_save_command(message, do_draw=False, do_save=False, do_save_response=False):
@@ -580,7 +557,7 @@ def change_save_command(message, do_draw=False, do_save=False, do_save_response=
             change_pixiv(message, pixiv_src_re, r'\4', r'\6', url)
         else:
             save_pixiv(message, pixiv_src_re, r'\4', r'\6', url)
-    elif re.match(regex, url):
+    elif re.match(link_re, url):
         try:
             content_type = requests.head(url, allow_redirects=True).headers.get('content-type').split('/')
         except requests.exceptions.ConnectionError:
@@ -595,23 +572,23 @@ def change_save_command(message, do_draw=False, do_save=False, do_save_response=
             file_format = f'.{content_type[1]}'
         r = requests.get(url)
         try:
-            folder = 'custom/'
+            folder = 'user/'
             imagename = while_is_file(folder, fixname(message.parts[2].lower()), f'{file_format}')
             do_save = True
         except IndexError:
-            folder = 'images/'
-            imagename = g.db.numba
-            g.db.update_imgcount(int(g.db.numba) + 1)
-        filepath = f'data/{folder}{imagename}{file_format}'
+            folder = 'temp/'
+            imagename = db.numba
+            db.update_imgcount(int(db.numba) + 1)
+        filepath = f'flask/images/{folder}{imagename}{file_format}'
         with open(filepath, 'wb') as download:
             download.write(r.content)
         if Path(filepath).is_file():
             image = f'{imagename}{file_format}'
             if do_draw:
-                call_draw(folder, image)
+                set_image(folder, image)
             if do_save:
-                g.db.add_link(url, image)
-                g.db.add_owner(image, message.author)
+                db.add_link(url, image)
+                db.add_owner(image, message.author)
             if do_save_response:
                 send_message(f'{message.author}, {image} saved')
         else:
@@ -620,127 +597,70 @@ def change_save_command(message, do_draw=False, do_save=False, do_save_response=
         send_message(f"{message.author}, no link")
 
 
-def send_message(message: str, pipe=False):  # bot message to twitch chat
+def send_message(message: str, pipe=False):
     if pipe:
         return message.split()
-    g.s.send(bytes(f"PRIVMSG #{g.CHANNEL} :{message}\r\n", "UTF-8"))
+    g.twitch_socket.send(bytes(f"PRIVMSG #{g.cfg['channel']} :{message}\r\n", "UTF-8"))
 
 
-def call_draw(folder: str, filename: str):  # change image
-    flask_app.set_image(folder, filename)
-
-
-def sr_start_playing():  # wait for vlc player to start
-    while not player_good_state():
-        time.sleep(0.01)
-
-
-def player_good_state():
-    return any(str(g.Player.get_state()) == x for x in ['State.Playing', 'State.Paused'])
-
-
-def fix_pafy_url(pafy_url: str, pafy_obj):
-    if 'videoplayback' in pafy_url:
-        return pafy_url
-    return pafy_obj.getbest().url
-
-
-def playmusic():  # play song from playlist
+def playmusic():
     if not g.playlist:
         return
     song = g.playlist.pop(0)
-    media = g.PlayerInstance.media_new(song.vlc_link)
-    media.get_mrl()
-    g.Player.set_media(media)
-    g.Player.play()
+    Player.set_media(song.audio_link)
+    Player.play()
     g.np, g.np_duration, g.sr_url, g.sr_user = song.title, song.duration, song.link, song.username
     if song.user_duration is not None:
-        g.Player.set_time(song.user_duration * 1000)
-    sr_start_playing()
-    while player_good_state():
+        Player.set_time(song.user_duration)
+    while Player.active_state():
+        print('active state')
         time.sleep(2)
-
-
-def get_pafy_obj(url: str):
-    pafy_obj = None
-    i = 0
-    while not pafy_obj:
-        try:
-            pafy_obj = pafy.new(url)
-        except OSError as e:
-            if 'This video is unavailable.' in str(e):
-                send_message(f'{url} is unavailable.')
-                return
-            i += 1
-            if i > 5:
-                return
-            print('OSError (pafy bug?) in get_pafy_obj, retrying..')
-    return pafy_obj
 
 
 def download_clip(url: str, username: str, user_duration=None, ytsearch=False, save=False):
     """
     add song to playlist/favorites
-    :param url: youtube link/id or search query
-    :param username: twitch username
-    :param user_duration: timecode (song start time)
-    :param ytsearch: youtube search query
-    :param save: add to favorites
+    url: youtube link/id or search query
+    username: twitch username
+    user_duration: timecode (song start time)
+    ytsearch: youtube search query
+    save: add to favorites
     """
     if not is_mod(username):
-        g.Main.sr_cooldowns[username] = time.time()
-    if not ytsearch:
-        pafy_obj = get_pafy_obj(url)
-        if not pafy_obj:
-            return
-        duration = pafy_obj.length
-        user_duration = check_sr_req(user_duration, duration, username)
-        if user_duration is False:
-            return
-        pafy_url = pafy_obj.getbestaudio()
-        if not pafy_url:
-            send_message(f'no audio for {url}')
-            return
-        vlc_link = fix_pafy_url(pafy_url.url, pafy_obj)
-        title = pafy_obj.title
-        url = f'https://youtu.be/{pafy_obj.videoid}'
-    else:
+        g.sr_cooldowns[username] = time.time()
+    if ytsearch:
         query = requests.utils.quote(url)
         result = requests.get('https://www.googleapis.com/youtube/v3/search?'
-                              f'part=snippet&maxResults=1&type=video&q={query}&key={g.tokens["GoogleKey"]}',
+                              f'part=snippet&maxResults=1&type=video&q={query}&key={g.keys["GoogleKey"]}',
                               headers={'Accept': 'application/json'}).json()
         items = result.get("items")
         if not items:
             send_message(f'{username}, no results')
             return
         url = f'https://youtu.be/{items[0]["id"]["videoId"]}'
-        pafy_obj = get_pafy_obj(url)
-        if not pafy_obj:
-            return
-        duration = pafy_obj.length
-        user_duration = check_sr_req(user_duration, duration, username)
-        if user_duration is False:
-            return
-        pafy_url = pafy_obj.getbestaudio()
-        if not pafy_url:
-            send_message(f'no audio for {url}')
-            return
-        vlc_link = fix_pafy_url(pafy_url.url, pafy_obj)
-        title = pafy_obj.title
+    try:
+        info = g.ydl.extract_info(url, download=False)
+    except DownloadError:
+        send_message(f'{username}, unsupported url')
+        return
+    audio_link = info['formats'][0]['url']
+    title = info['title']
+    duration = info['duration']
+    url = f"https://youtu.be/{info['id']}"
     if save:
-        if user_duration is None:
-            g.db.add_srfavs(title, duration, 0, url, username)
+        if user_duration is None: # @@@ refactor db
+            db.add_srfavs(title, duration, 0, url, username)
             send_message(f'{username}, {title} - {url} - added to favorites')
         else:
-            g.db.add_srfavs(title, duration, user_duration, url, username)
+            db.add_srfavs(title, duration, user_duration, url, username)
             send_message(f'{username}, {title} [{seconds_convert(user_duration)}] - {url} - added to favorites')
         return
     duration = seconds_convert(duration)
-    song = Song(vlc_link, title, duration, user_duration, url, username)
+    song = Song(audio_link, title, duration, user_duration, url, username)
     g.playlist.append(song)
     response = new_song_response([], song)
     send_message(f'+ {response[0]}')
-    g.sr_queue.new_task(playmusic)
+    sr_queue.new_task(playmusic)
 
 
 def check_sr_req(user_duration, duration, username):
@@ -750,9 +670,9 @@ def check_sr_req(user_duration, duration, username):
         if user_duration > duration:
             send_message(f'{username}, time exceeds duration! [{seconds_convert(duration)}]')
             return False
-    if duration > g.max_duration and not is_mod(username):
+    if duration > g.sr_max_song_duration and not is_mod(username):
         send_message(f'{username}, '
-                     f'{seconds_convert(duration)} > max duration[{seconds_convert(g.max_duration)}]')
+                     f'{seconds_convert(duration)} > max duration[{seconds_convert(g.sr_max_song_duration)}]')
         return False
     return user_duration
 
@@ -764,24 +684,23 @@ def sr(username):
 
 
 def sr_user_cooldown(username):
-    sr_cooldown = g.sr_cooldown
+    sr_cooldown = g.sr_user_cooldown
     if not sr_cooldown:
         return False
-    user_cooldown = g.Main.sr_cooldowns.get(username, None)
+    user_cooldown = g.sr_cooldowns.get(username)
     if not user_cooldown:
         return False
     time_diff = time.time() - user_cooldown
     if time_diff < sr_cooldown:
         send_message(f'{username}, your cooldown is {seconds_convert(sr_cooldown - time_diff, explicit=True)}')
         return True
-    del g.Main.sr_cooldowns[username]
+    del g.sr_cooldowns[username]
     return False
 
 
 def next_song_in():
-    if player_good_state():
-        current_time_ms = g.Player.get_time()
-        current_time = floor(current_time_ms / 1000)
+    if Player.active_state():
+        current_time = Player.get_time()
         np_duration = timecode_convert(g.np_duration)
         return np_duration - current_time
     return 0
@@ -789,7 +708,7 @@ def next_song_in():
 
 def new_song_response(response: list, song: Song):
     next_in = next_song_in()
-    if not next_in and g.sr_queue.q.empty():
+    if not next_in and sr_queue.q.empty():
         response.append(
             f'{song.title} '
             f'{"" if song.user_duration is None else f"[{seconds_convert(song.user_duration)}]"}'
@@ -808,19 +727,25 @@ def new_song_response(response: list, song: Song):
     return response
 
 
-class RunInThread(threading.Thread):
+def no_args(message: Message, command: str):
+    return message.content[g.prefix_len:] == command
 
-    def __init__(self, name):
-        threading.Thread.__init__(self)
-        self.name = name
-        self.q = queue.Queue()
-        self.start()
 
-    def run(self):
-        while True:
-            task = self.q.get(block=True)
-            task['func'](*task['args'], **task['kwargs'])
-            self.q.task_done()
-
-    def new_task(self, func, *args, **kwargs):
-        self.q.put({'func': func, 'args': args, 'kwargs': kwargs})
+def check_chat_notify(username: str):
+            if any(d['recipient'] == username for d in g.notify_list):
+                g.notify_in_progress.append(username)
+                response = []
+                for i in g.notify_list:
+                    if i['recipient'] == username:
+                        response.append(f'{i["sender"]}: {i["message"]} '
+                                        f'[{seconds_convert(time.time() - i["date"], explicit=True)} ago]')
+                if response:
+                    response_str = f'{username}, {"; ".join(response)}'
+                    if len(response_str) > 480:
+                        for i in divide_chunks(response_str, 480, response, joinparam='; '):
+                            send_message(i)
+                            time.sleep(1)
+                    else:
+                        send_message(response_str)
+                g.notify_list = [d for d in g.notify_list if d['recipient'] != username]
+                g.notify_in_progress.remove(username)

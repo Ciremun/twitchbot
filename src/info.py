@@ -1,4 +1,6 @@
-from _globals import prefix
+from src.config import cfg
+
+prefix = cfg['prefix']
 
 commands_list = [prefix + x for x in
                  ['change', 'save', 'set', 'setrand', 'list', 'search', 'link', 'sr', 'srq', 'srf', 'srfa', 'srfd',
