@@ -60,6 +60,7 @@ flask app running on `localhost:5000`
 `sr_max_song_duration`     (str): songrequests non-mod max song duration, timecode string (ex. 10:00)  
 `sr_user_cooldown`         (str): songrequests non-mod cooldown, timecode string  
 `sr_max_songs_per_request` (int): max number of songs per request (ex. using srfp command)  
+`ydl_opts:cookiefile`      (str): youtube session HTTP cookie file, optional  
 `flaskPort`                (int): flask app port  
 
 ## Commands
