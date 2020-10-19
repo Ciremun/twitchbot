@@ -108,7 +108,7 @@ flask app running on `localhost:5000`
 `ttscfg [vol/rate/vc/toggle] [value]` - get/change tts volume/speech rate/voice, toggle tts, no args - current tts config  
 `sr` - toggle songrequests  
 `src` - clear current playlist  
-`srt <timecode>` - set time for current song  
+`srt <t:timecode>` - set time for current song  
 `srv [value]` - get/change volume  
 `srp` - play/pause  
 
