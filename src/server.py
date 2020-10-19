@@ -23,8 +23,13 @@ def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
+@app.route('/tts')
+def tts_page():
+    return render_template('tts.html')
+
+
 @app.route('/')
-def hello_world():
+def index_page():
     return render_template('index.html')
 
 

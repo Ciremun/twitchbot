@@ -34,8 +34,9 @@ create `keys.json`
 
 #### images, text-to-speech, songrequests
 
-flask app running on `localhost:5000`  
-`Chromium`: allow page Sound or click anywhere for tts and songrequests  
+server running on `localhost:5000`  
+text-to-speech is not working inside OBS, use `localhost:5000/tts`  
+`Chromium`: allow page Sound or click anywhere for tts  
 `window.speechSynthesis.getVoices()` returns all the available voice URI  
 
 ### config.json

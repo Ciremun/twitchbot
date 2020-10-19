@@ -9,35 +9,8 @@ socket.on('connect_', function(message) {
         style = document.createElement('style');
     head.appendChild(style);
     style.appendChild(document.createTextNode(css));
-    window.tts_volume = message.tts_volume;
-    window.tts_rate = message.tts_rate;
-    window.tts_voice = message.tts_vc;
     window.player_volume = message.player_volume;
-    console.log('socket connect');
     socket.emit('connect_');
-});
-
-socket.on('tts', function(message) {
-    sayMessage(message);
-});
-
-socket.on('tts_set_attr', function(message) {
-    window[message.attr] = message.value;
-    if (!message.response)
-        return;
-    socket.emit('tts_attr_response', {'attr': message.attr, 
-                                      'value': window[message.attr]});
-});
-
-socket.on('tts_get_attr', function(message) {
-    socket.emit('tts_attr_response', {'attr': message.attr, 
-                                      'value': window[message.attr]});
-});
-
-socket.on('tts_get_cfg', function() {
-    socket.emit('tts_get_cfg', {'tts_vol': window.tts_volume,
-                                'tts_rate': window.tts_rate,
-                                'tts_vc': window.tts_voice});
 });
 
 socket.on('player_get_time', function() {
