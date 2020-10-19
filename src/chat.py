@@ -44,7 +44,6 @@ class ChatThread(Thread):
                     continue
 
                 message = Message(chat_msg_re.sub("", line), re.search(r"\w+", line).group(0))
-
                 if cfg['chat_log']:
                     logger.info(f"{message.author}: {message}")
 

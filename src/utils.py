@@ -298,8 +298,8 @@ def checkifnolink(act):
     return words, linkwords
 
 
-def check_owner(message, imagename):  # check if user owns image
-    result = db.check_owner(imagename, message.author)
+def check_owner(message_author, imagename):  # check if user owns image
+    result = db.check_owner(imagename, message_author)
     if result:
         return True
     return False
@@ -500,7 +500,7 @@ def change_pixiv(message, pattern, group, group2, url):
             pxid = int(pattern.sub(group, url))
         except ValueError:
             pxid = int(pattern.sub(group2, url))
-        px_download_queue.new_task(Pixiv.save_pixiv_art, db.numba, message.author, pxid, 'flask/images/temp/', setpic=True)
+        px_download_queue.new_task(Pixiv.save_pixiv_art, db.numba, message.author, pxid, 'temp/', setpic=True)
         db.update_imgcount(int(db.numba) + 1)
 
 
@@ -542,7 +542,10 @@ def set_random_pic(lst, response):
         return
     selected = random.choice(lst)
     g.last_rand_img = selected
-    g.lastlink = None
+    g.last_link = ''
+    link = db.get_link(selected)
+    if link:
+        g.last_link = link[0][0]
     set_image('user/', selected)
 
 
@@ -634,7 +637,7 @@ def download_clip(url: str, username: str, user_duration=None, ytsearch=False, s
     ytsearch: youtube search query
     save: add to favorites
     """
-    if not is_mod(username):
+    if not save and not is_mod(username):
         g.sr_cooldowns[username] = time.time()
     if ytsearch:
         query = requests.utils.quote(url)
@@ -661,6 +664,10 @@ def download_clip(url: str, username: str, user_duration=None, ytsearch=False, s
             return
     title = info['title']
     duration = info['duration']
+    user_duration = check_sr_req(user_duration, duration, username)
+    if user_duration is False:
+        del g.sr_cooldowns[username]
+        return
     url = f"https://youtu.be/{info['id']}"
     if save:
         if user_duration is None:

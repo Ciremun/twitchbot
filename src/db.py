@@ -128,7 +128,7 @@ numba = get_imgcount()
 if not numba:
     c.execute('INSERT INTO imgcount (count) VALUES (1)')
     numba = get_imgcount()
-numba = numba[0]
+numba = str(numba[0])
 
 @acquireLock
 def update_imgcount(count):

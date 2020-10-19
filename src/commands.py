@@ -99,6 +99,7 @@ def srt_command(message):
     try:
         timecode = message.parts[1]
         if re.match(timecode_re, timecode):
+            timecode = timecode[2:]
             seconds = timecode_convert(timecode)
             if seconds > timecode_convert(g.np_duration):
                 send_message(f'{message.author}, time exceeds duration! [{g.np_duration}]')
@@ -112,28 +113,30 @@ def srt_command(message):
 
 @bot_command(name='srfa')
 def srfa_command(message):
-    if not sr_user_cooldown(message.author):
-        try:
-            url_or_timecode = message.parts[1]
-            if re.match(timecode_re, url_or_timecode):
-                message.parts.append(url_or_timecode)
-                sr_download(message, g.sr_url, 2, save=True)
-                return
-            match = sr_download(message, url_or_timecode, 2, save=True)
-            if not match:
-                timecode_pos = None
-                if re.match(timecode_re, message.parts[-1]):
-                    timecode_pos = len(message.parts) - 1
-                    message.parts[1] = ' '.join(message.parts[1:-1])
-                else:
-                    message.parts[1] = ' '.join(message.parts[1:])
-                try_timecode(message, message.parts[1], timecode_pos, save=True, ytsearch=True)
-        except IndexError:
-            if not Player.active_state():
+    try:
+        url_or_timecode = message.parts[1]
+        if re.match(timecode_re, url_or_timecode):
+            if not g.sr_url:
                 send_message(f'{message.author}, nothing is playing')
+                return
+            message.parts.append(url_or_timecode)
+            sr_download(message, g.sr_url, 2, save=True)
+            return
+        match = sr_download(message, url_or_timecode, 2, save=True)
+        if not match:
+            timecode_pos = None
+            if re.match(timecode_re, message.parts[-1]):
+                timecode_pos = len(message.parts) - 1
+                message.parts[1] = ' '.join(message.parts[1:-1])
             else:
-                message.parts.append(g.sr_url)
-                sr_download(message, message.parts[1], 2, save=True)
+                message.parts[1] = ' '.join(message.parts[1:])
+            try_timecode(message, message.parts[1], timecode_pos, save=True, ytsearch=True)
+    except IndexError:
+        if not Player.active_state():
+            send_message(f'{message.author}, nothing is playing')
+        else:
+            message.parts.append(g.sr_url)
+            sr_download(message, message.parts[1], 2, save=True)
 
 
 @bot_command(name='srfd')
@@ -311,7 +314,7 @@ def skip_command(message):
                 playlist_not_found.append(f'{target}')
                 continue
             song = g.playlist[target - 1]
-            if song not in skip_index + skip_title and (moderator or message.author == song.message.author):
+            if song not in skip_index + skip_title and (moderator or message.author == song.username):
                 skip_index.append(song)
                 playlist_cancelled.append(f'{song.title}'
                                           f'{"" if song.user_duration is None else f"  [{seconds_convert(song.user_duration)}]"}')
@@ -321,7 +324,7 @@ def skip_command(message):
             song_cancelled_title = False
             target = message.parts[i]
             for song in g.playlist:
-                if song not in skip_title + skip_index and target.lower() in song.title.lower() and (moderator or message.author == song.message.author):
+                if song not in skip_title + skip_index and target.lower() in song.title.lower() and (moderator or message.author == song.username):
                     playlist_cancelled.append(f'{song.title}'
                                               f'{"" if song.user_duration is None else f"  [{seconds_convert(song.user_duration)}]"}')
                     skip_title.append(song)
@@ -462,7 +465,7 @@ def link_command(message):
             send_message(f'{message.author}, nothing here')
             return
         link = db.get_link(g.last_rand_img)
-        response = f'{link[0][0]} - {g.last_rand_img}' if link else f'{g.lastlink} - {g.last_rand_img}' if g.lastlink else f'no link for {g.last_rand_img}'
+        response = f'{link[0][0]} - {g.last_rand_img}' if link else f'{g.last_link} - {g.last_rand_img}' if g.last_link else f'no link for {g.last_rand_img}'
         send_message(f'{message.author}, {response}')
     elif len(message.parts) > 2:
         links_filenames = [{'link': j[0], 'filename': j[1]} for j in db.get_links_and_filenames()]
@@ -500,8 +503,8 @@ def link_command(message):
 @bot_command(name='save')
 def save_command(message):
     if no_args(message, 'save'):
-        if re.match(link_re, g.lastlink):
-            message.parts.append(g.lastlink)
+        if re.match(link_re, g.last_link):
+            message.parts.append(g.last_link)
             message.parts.append(''.join(random.choices(
                 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM' + '1234567890', k=10)))
             change_save_command(message, do_save_response=True)
@@ -564,7 +567,10 @@ def orand_command(message):
     except IndexError:
         selected = random.choice(result)
         g.last_rand_img = selected
-        g.lastlink = None
+        g.last_link = ''
+        link = db.get_link(selected)
+        if link:
+            g.last_link = link[0][0]
         set_image('user/', selected)
 
 

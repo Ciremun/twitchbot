@@ -47,7 +47,7 @@ class ThreadPixiv(Thread):
                 illustration = ranking
             print(f'art id: {illustration.id}')
             artid = illustration.id
-            g.lastlink = f'https://www.pixiv.net/en/artworks/{artid}'
+            g.last_link = f'https://www.pixiv.net/en/artworks/{artid}'
             g.last_rand_img = f'{artid}.png'
             art = Path(f'flask/images/pixiv/{artid}.png')
             if not art.is_file():
