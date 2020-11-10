@@ -754,20 +754,22 @@ def no_args(message: Message, command: str):
 
 
 def check_chat_notify(username: str):
-            if any(d['recipient'] == username for d in g.notify_list):
-                g.notify_in_progress.append(username)
-                response = []
-                for i in g.notify_list:
-                    if i['recipient'] == username:
-                        response.append(f'{i["sender"]}: {i["message"]} '
-                                        f'[{seconds_convert(time.time() - i["date"], explicit=True)} ago]')
-                if response:
-                    response_str = f'{username}, {"; ".join(response)}'
-                    if len(response_str) > 480:
-                        for i in divide_chunks(response_str, 480, response, joinparam='; '):
-                            send_message(i)
-                            time.sleep(1)
-                    else:
-                        send_message(response_str)
-                g.notify_list = [d for d in g.notify_list if d['recipient'] != username]
-                g.notify_in_progress.remove(username)
+    if any(x == username for x in g.notify_in_progress):
+        return
+    if any(d['recipient'] == username for d in g.notify_list):
+        g.notify_in_progress.append(username)
+        response = []
+        for i in g.notify_list:
+            if i['recipient'] == username:
+                response.append(f'{i["sender"]}: {i["message"]} '
+                                f'[{seconds_convert(time.time() - i["date"], explicit=True)} ago]')
+        if response:
+            response_str = f'{username}, {"; ".join(response)}'
+            if len(response_str) > 480:
+                for i in divide_chunks(response_str, 480, response, joinparam='; '):
+                    send_message(i)
+                    time.sleep(1)
+            else:
+                send_message(response_str)
+        g.notify_list = [d for d in g.notify_list if d['recipient'] != username]
+        g.notify_in_progress.remove(username)

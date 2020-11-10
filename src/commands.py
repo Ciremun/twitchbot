@@ -631,10 +631,10 @@ def change_command(message):
         utils_queue.new_task(change_save_command, message, do_draw=True)
 
 
-@bot_command(name='pipe')
 def pipe_command(message):
     if not no_args(message, 'pipe'):
-        pipesplit = " ".join(message.parts[1:]).split(' | ')
+        message.parts[0] = message.parts[0][g.prefix_len:]
+        pipesplit = " ".join(message.parts).split(' | ')
         if len(pipesplit) < 2:
             send_message(f'{message.author}, you need at least two commands')
             return

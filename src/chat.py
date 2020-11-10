@@ -6,7 +6,7 @@ import src.config as g
 from .utils import timecode_convert, seconds_convert, divide_chunks, send_message, chat_msg_re, check_chat_notify
 from .config import keys, cfg, twitch_host, twitch_port, twitch_socket
 from .qthreads import main_queue, utils_queue
-from .commands import commands
+from .commands import commands, pipe_command
 from .classes import Message
 from .pixiv import Pixiv
 from .log import logger
@@ -49,10 +49,12 @@ class ChatThread(Thread):
 
                 print(f"{message.author}: {message}")
 
-                if all(x != message.author for x in g.notify_in_progress):
-                    utils_queue.new_task(check_chat_notify, message.author)
+                utils_queue.new_task(check_chat_notify, message.author)
 
                 if message.content.startswith(cfg['prefix']):
+                    if '|' in message.content:
+                        main_queue.new_task(pipe_command, message)
+                        continue
                     command = commands.get(message.parts[0][g.prefix_len:])
                     if command:
                         main_queue.new_task(command, message)
