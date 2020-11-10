@@ -91,7 +91,7 @@ text-to-speech is not working inside OBS, use `localhost:5000/tts`
 `skip [name/index] [name/index]..` - skip your songrequest(s) by playlist index or name, no args - skip now playing song, bot moderators skip any song  
 `tts [vc:name] [msg]` - message text-to-speech, vc:name to change voice dynamically, no args - get voices  
 `info` - bot uptime  
-`pipe <command> | <command>..` - run commands in chain, transfer result from one command to another, last command gives complete result, supported commands: sql, info, help, tts, notify  
+`<command> | <command>..` - pipe, run commands in chain, transfer result from one command to another, last command gives complete result, supported commands: sql, info, help, tts, notify  
 `help [command]` - view bot commands help, no args - commands list, wrap command in quotes for startswith search  
 `notify <username> <message>` - notify twitch user when they next type in chat  
 `when [name]` - check when requested song is going to play (up to 5)  
