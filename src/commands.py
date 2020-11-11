@@ -774,8 +774,8 @@ def cfg_command(message):
             return
         value = ' '.join(message.parts[2:])
         if not value:
-            send_message(f'{message.author}, {name}: {attribute}')
+            send_message(f'{message.author}, {name}{type(attribute)}: {attribute}')
             return
         value = convert_type(value)
         setattr(g, name, value)
-        send_message(f'{message.author}, {name}: {value}')
+        send_message(f'{message.author}, {name}{type(value)}: {value}')
