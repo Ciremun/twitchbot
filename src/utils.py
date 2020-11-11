@@ -17,7 +17,6 @@ from youtube_dl import DownloadError
 import src.db as db
 import src.config as g
 from .qthreads import sr_download_queue, px_download_queue, sr_queue
-from .config import cfg, keys
 from .classes import Song, Message
 from .pixiv import Pixiv
 from .server import set_image, Player
@@ -66,7 +65,7 @@ def imgur_utils_wrap(message):
 
 def imgur_upload_image(byte):
     result = requests.post('https://api.imgur.com/3/image',
-                           headers={'Authorization': f'Client-ID {keys["ImgurClientID"]}'}, data={'image': byte}).json()
+                           headers={'Authorization': f'Client-ID {g.ImgurClientID}'}, data={'image': byte}).json()
     success = result.get('success')
     status_code = result.get('status')
     if success and status_code == 200:
@@ -107,7 +106,7 @@ def resizeimg(ri, rs, imgwidth, imgheight , screenwidth, screenheight):  # resiz
 
 
 def is_mod(username):
-    if username == cfg['admin']:
+    if username == g.admin:
         return True
     result = db.check_if_mod(username)
     if result:
@@ -226,7 +225,7 @@ def rename_command(message):  # rename function for image owners
             except:
                 send_message(f'{message.author}, file not found')
     except IndexError:
-        send_message(f'{message.author}, {cfg["prefix"]}ren <filename> <new filename>')
+        send_message(f'{message.author}, {g.prefix}ren <filename> <new filename>')
 
 
 def send_list(message, list_str, list_arr, list_page_pos, list_type):
@@ -426,13 +425,13 @@ def ban_mod_commands(message, str1, str2, check_func, db_call, check_func_result
 
 def change_stream_settings(message, setting):
     if not g.keys.get('ChannelID'):
-        response = requests.get(f'https://api.twitch.tv/helix/users?login={g.cfg["channel"]}', 
-                                    headers={'Client-ID': g.keys["Client-ID"], 
-                                                'Authorization': f'Bearer {g.keys["ClientOAuth"]}'}).json()
-        g.keys['ChannelID'] = response['data'][0]['id']
-        print(f'ChannelID = {g.keys["ChannelID"]}')
-    channel_info = requests.get(f"https://api.twitch.tv/kraken/channels/{g.keys['ChannelID']}",
-                                headers={"Client-ID": g.keys['Client-ID'],
+        response = requests.get(f'https://api.twitch.tv/helix/users?login={g.channel}', 
+                                    headers={'Client-ID': g.ClientID, 
+                                                'Authorization': f'Bearer {g.ClientOAuth}'}).json()
+        g.ChannelID = response['data'][0]['id']
+        print(f'ChannelID = {g.ChannelID}')
+    channel_info = requests.get(f"https://api.twitch.tv/kraken/channels/{g.ChannelID}",
+                                headers={"Client-ID": g.ClientID,
                                          "Accept": "application/vnd.twitchtv.v5+json"}).json()
     if setting == 'title':
         set_title = " ".join(message.parts[1:])
@@ -449,10 +448,10 @@ def change_stream_settings(message, setting):
 
 
 def change_status_game(channel_status, channel_game, username):
-    requests.put(f"https://api.twitch.tv/kraken/channels/{g.keys['ChannelID']}",
-                 headers={"Client-ID": g.keys['Client-ID'],
+    requests.put(f"https://api.twitch.tv/kraken/channels/{g.ChannelID}",
+                 headers={"Client-ID": g.ClientID,
                           "Accept": "application/vnd.twitchtv.v5+json",
-                          "Authorization": f'OAuth {g.keys["ClientOAuth"]}'},
+                          "Authorization": f'OAuth {g.ClientOAuth}'},
                  data={"channel[status]": channel_status,
                        "channel[game]": channel_game})
     send_message(f'{username}, done')
@@ -604,7 +603,7 @@ def change_save_command(message, do_draw=False, do_save=False, do_save_response=
 def send_message(message: str, pipe=False):
     if pipe:
         return message.split()
-    g.twitch_socket.send(bytes(f"PRIVMSG #{g.cfg['channel']} :{message}\r\n", "UTF-8"))
+    g.twitch_socket.send(bytes(f"PRIVMSG #{g.channel} :{message}\r\n", "UTF-8"))
 
 
 def player_start_playing():
@@ -642,7 +641,7 @@ def download_clip(url: str, username: str, user_duration=None, ytsearch=False, s
     if ytsearch:
         query = requests.utils.quote(url)
         result = requests.get('https://www.googleapis.com/youtube/v3/search?'
-                              f'part=snippet&maxResults=1&type=video&q={query}&key={g.keys["GoogleKey"]}',
+                              f'part=snippet&maxResults=1&type=video&q={query}&key={g.GoogleKey}',
                               headers={'Accept': 'application/json'}).json()
         items = result.get("items")
         if not items:

@@ -10,7 +10,6 @@ from flask_socketio import SocketIO
 
 import src.utils as u
 import src.config as g
-from .config import cfg
 from .classes import Message
 
 module = sys.modules[__name__]
@@ -35,8 +34,8 @@ def index_page():
 
 @sio.on('connect')
 def connect_():
-    sio.emit('connect_', {'width': cfg['width'], 
-                          'height': cfg['height'], 
+    sio.emit('connect_', {'width': g.width, 
+                          'height': g.height, 
                           'tts_volume': g.tts_volume, 
                           'tts_rate': g.tts_rate, 
                           'tts_vc': g.tts_vc,
@@ -93,13 +92,13 @@ def set_image(folder, filename):
         img = Image.open(f'flask/images/{folder}{filename}')
     except UnidentifiedImageError:
         return print(f'UnidentifiedImageError - flask/images/{folder}{filename}')
-    ri, rs = img.width / img.height, cfg['width'] / cfg['height']
-    width, height = u.resizeimg(ri, rs, img.width, img.height, cfg['width'], cfg['height'])
+    ri, rs = img.width / img.height, g.width / g.height
+    width, height = u.resizeimg(ri, rs, img.width, img.height, g.width, g.height)
     sio.emit('setimage', {'width': width, 'height': height, 'src': f'images/{folder}{filename}'})
 
 
 def run():
-    sio.run(app, host='127.0.0.1', port=cfg['flaskPort'])
+    sio.run(app, host='127.0.0.1', port=g.flaskPort)
 
 
 class Player:

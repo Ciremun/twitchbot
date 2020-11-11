@@ -26,7 +26,7 @@ create `keys.json`
 
 `BotOAuth`      (str): bot user OAuth token [twitchapps tmi](https://twitchapps.com/tmi/) helps obtain  
 `ClientOAuth`   (str): user OAuth token with `channel_editor` scope, [twitchapps tokengen](https://twitchapps.com/tokengen/) helps obtain  
-`Client-ID`     (str): twitch application Client ID, create app in [Twitch Developer Console](https://dev.twitch.tv/console/apps)  
+`ClientID`      (str): twitch application Client ID, create app in [Twitch Developer Console](https://dev.twitch.tv/console/apps)  
 `GoogleKey`     (str): [Google API](https://console.developers.google.com/apis/credentials) key for YouTube search  
 `ImgurClientID` (str): [Imgur Client-ID](https://api.imgur.com/oauth2/addclient) for Imgur uploads  
 `PixivToken`    (str): [Pixiv token](https://pixiv-api.readthedocs.io/en/latest/) for Pixiv arts  

@@ -1,6 +1,7 @@
 import socket
 import json
 import time
+import sys
 from pathlib import Path
 
 from pixivapi import Size
@@ -8,21 +9,42 @@ from youtube_dl import YoutubeDL
 
 start_time = time.time()
 
-cfg = json.load(open('config.json'))
-sr_volume = cfg['sr_volume']
-pixiv_max_art_ratio = cfg['pixiv_max_art_ratio']
-pixiv_banned_tags = cfg['pixiv_banned_tags']
-tts = cfg['tts']
-tts_vc = cfg['tts_vc']
-tts_volume = cfg['tts_volume']
-tts_rate = cfg['tts_rate']
-sr = cfg['sr']
-sr_volume = cfg['sr_volume']
-tts_voices = cfg['tts_voices']
-sr_max_song_duration = ''
-sr_user_cooldown = ''
+channel = None
+bot = None
+prefix = None
+admin = None
+width = None
+height = None
+clear_folders = []
+chat_log = None
+pixiv_max_art_ratio = None
+pixiv_banned_tags = []
+tts = None
+tts_vc = None
+tts_voices = {}
+tts_volume = None
+tts_rate = None
+sr = None
+sr_volume = None
+sr_max_song_duration = None
+sr_user_cooldown = None
+sr_max_songs_per_request = None
+ydl_opts = {}
+flaskPort = None
+BotOAuth = None
+ClientOAuth = None
+ClientID = None
+ChannelID = None
+GoogleKey = None
+ImgurClientID = None
+PixivToken = None
 
+cfg = json.load(open('config.json'))
 keys = json.load(open('keys.json'))
+
+for p, value in {**cfg, **keys}.items():
+    setattr(sys.modules[__name__], p, value)
+
 twitch_host = "irc.twitch.tv"
 twitch_port = 6667
 twitch_socket = socket.socket()
@@ -37,9 +59,9 @@ playlist = []
 sr_cooldowns = {}
 notify_in_progress = []
 notify_list = []
-prefix_len = len(cfg['prefix'])
+prefix_len = len(prefix)
 
-ydl = YoutubeDL(cfg['ydl_opts'])
+ydl = YoutubeDL(ydl_opts)
 
 for folder in ['flask/images/', 'flask/images/pixiv/', 'flask/images/temp/', 'flask/images/user/']:
     Path(folder).mkdir(exist_ok=True)

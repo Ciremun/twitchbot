@@ -22,15 +22,15 @@ def bot_command(*, name, check_func=no_ban):
 
 @bot_command(name='exit')
 def exit_command(message):
-    if message.author == cfg['admin']:
-        for folder in cfg['clear_folders']:
+    if message.author == g.admin:
+        for folder in g.clear_folders:
             clear_folder(folder)
         os._exit(0)
 
 
 @bot_command(name='log')
 def log_command(message):
-    if message.author == cfg['admin']:
+    if message.author == g.admin:
         g.logs = not g.logs
         send_message(f'chat log: {g.logs}')
 
@@ -175,11 +175,11 @@ def srfp_command(message):
                         title_found = True
                         sr_download_queue.new_task(download_clip, song.link, message.author, user_duration=song.user_duration)
                         response_added += 1
-                    if response_added >= cfg['sr_max_songs_per_request']:
+                    if response_added >= g.sr_max_songs_per_request:
                         break
                 if not title_found:
                     target_not_found.append(title)
-            if response_added >= cfg['sr_max_songs_per_request']:
+            if response_added >= g.sr_max_songs_per_request:
                 break
         if response_added:
             if not is_mod(message.author):
@@ -233,7 +233,7 @@ def srfl_command(message):
                 else:
                     send_message(' ; '.join(response))
     except IndexError:
-        send_message(f'{message.author}, {cfg["prefix"]}srfl <word/index>')
+        send_message(f'{message.author}, {g.prefix}srfl <word/index>')
 
 
 @bot_command(name='srf')
@@ -369,14 +369,14 @@ def unban_command(message):
 
 @bot_command(name='mod')
 def mod_command(message):
-    if not no_args(message, 'mod') and message.author == cfg['admin']:
+    if not no_args(message, 'mod') and message.author == g.admin:
         utils_queue.new_task(ban_mod_commands, message, 'users modded', 'already modded',
                                is_mod, db.add_mod, False)
 
 
 @bot_command(name='unmod')
 def unmod_command(message):
-    if not no_args(message, 'unmod') and message.author == cfg['admin']:
+    if not no_args(message, 'unmod') and message.author == g.admin:
         utils_queue.new_task(ban_mod_commands, message, 'users unmodded', f'not in the list',
                                is_mod, db.remove_mod, True)
 
@@ -400,7 +400,7 @@ def setrand_command(message):
     try:
         randsrc = message.parts[1]
         if not any(x == randsrc for x in ['png', 'gif', 'pixiv']):
-            send_message(f'{message.author}, {cfg["prefix"]}setrand [png/gif/pixiv]')
+            send_message(f'{message.author}, {g.prefix}setrand [png/gif/pixiv]')
         elif randsrc == 'gif':
             onlygif = [f for f in os.listdir('flask/images/user/') if f.endswith('.gif')]
             set_random_pic(onlygif, f'{message.author}, gif not found')
@@ -411,7 +411,7 @@ def setrand_command(message):
             px_download_queue.new_task(Pixiv.random_pixiv_art)
     except IndexError:
         onlyfiles = [f for f in os.listdir('flask/images/user/') if isfile(join('flask/images/user/', f))]
-        set_random_pic(onlyfiles, f'{message.author}, {cfg["prefix"]}list is empty')
+        set_random_pic(onlyfiles, f'{message.author}, {g.prefix}list is empty')
 
 
 @bot_command(name='search')
@@ -638,7 +638,7 @@ def pipe_command(message):
         if len(pipesplit) < 2:
             send_message(f'{message.author}, you need at least two commands')
             return
-        pipesplit = [f'{cfg["prefix"]}{i}' for i in pipesplit]
+        pipesplit = [f'{g.prefix}{i}' for i in pipesplit]
         result = pipesplit[0].split()[1:]
         pipe = True
         for i, last_item in lookahead(pipesplit):
