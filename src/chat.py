@@ -54,6 +54,6 @@ class ChatThread(Thread):
                     if '|' in message.content:
                         main_queue.new_task(pipe_command, message)
                         continue
-                    command = commands.get(message.parts[0][g.prefix_len:])
+                    command = commands.get(message.parts[0][len(g.prefix):])
                     if command:
                         main_queue.new_task(command, message)

@@ -436,7 +436,7 @@ def list_command(message):
     allpages = divide_chunks(str1, 470)
     try:
         int(message.parts[2])
-        if message.parts[0][g.prefix_len:] == "list" and message.parts[1] == "links":
+        if message.parts[0][len(g.prefix):] == "list" and message.parts[1] == "links":
             send_list(message, linkstr1, linkallpages, 2, "list")
     except IndexError:
         try:
@@ -586,8 +586,8 @@ def help_command(message, pipe=False):
             help_command = help_command[1:-1]
             help_command_quoted = True
         if not set(command.split()).intersection(commands_list + mod_commands_list +
-                                                 [i[g.prefix_len:] for i in commands_list] +
-                                                 [i[g.prefix_len:] for i in mod_commands_list]):
+                                                 [i[len(g.prefix):] for i in commands_list] +
+                                                 [i[len(g.prefix):] for i in mod_commands_list]):
             return send_message(f'{message.author}, unknown command', pipe=pipe)
         response = []
         if help_command_quoted:
@@ -611,8 +611,8 @@ def help_command(message, pipe=False):
         else:
             return send_message(f'{message.author}, no results', pipe=pipe)
     except IndexError:
-        return send_message(f'Public command list: {", ".join(i[g.prefix_len:] for i in commands_list)}; '
-                     f'Mod: {", ".join(i[g.prefix_len:] for i in mod_commands_list)}', pipe=pipe)
+        return send_message(f'Public command list: {", ".join(i[len(g.prefix):] for i in commands_list)}; '
+                     f'Mod: {", ".join(i[len(g.prefix):] for i in mod_commands_list)}', pipe=pipe)
 
 
 @bot_command(name='title', check_func=is_mod)
@@ -633,7 +633,7 @@ def change_command(message):
 
 def pipe_command(message):
     if not no_args(message, 'pipe'):
-        message.parts[0] = message.parts[0][g.prefix_len:]
+        message.parts[0] = message.parts[0][len(g.prefix):]
         pipesplit = " ".join(message.parts).split(' | ')
         if len(pipesplit) < 2:
             send_message(f'{message.author}, you need at least two commands')
@@ -649,24 +649,24 @@ def pipe_command(message):
                     for last_arg in i[:0:-1]:
                         result.insert(0, last_arg)
             try:
-                if all(i[0][g.prefix_len:] != x for x in info.pipe_commands):
+                if all(i[0][len(g.prefix):] != x for x in info.pipe_commands):
                     raise TypeError
-                command = commands[i[0][g.prefix_len:]]
+                command = commands[i[0][len(g.prefix):]]
                 result.insert(0, i[0])
                 message.parts = result
                 message.content = " ".join(result)
                 result = command(message, pipe=pipe)
                 if not last_item:
                     if result is False:
-                        send_message(f'{message.author}, {i[0][g.prefix_len:]} - mod command')
+                        send_message(f'{message.author}, {i[0][len(g.prefix):]} - mod command')
                         return
                     elif result is None:
                         return
             except TypeError:
-                send_message(f'{message.author}, {i[0][g.prefix_len:]} - unsupported command')
+                send_message(f'{message.author}, {i[0][len(g.prefix):]} - unsupported command')
                 return
             except KeyError:
-                send_message(f'{message.author}, {i[0][g.prefix_len:]} - unknown command')
+                send_message(f'{message.author}, {i[0][len(g.prefix):]} - unknown command')
                 return
 
 
@@ -761,3 +761,21 @@ def when_command(message):
 def imgur_command(message):
     if not no_args(message, 'imgur'):
         utils_queue.new_task(imgur_utils_wrap, message)
+
+
+@bot_command(name='cfg', check_func=is_admin)
+def cfg_command(message):
+    if not no_args(message, 'cfg'):
+        name = message.parts[1]
+        try:
+            attribute = getattr(g, name)
+        except AttributeError:
+            send_message(f'{message.author}, config has no attribute {name}')
+            return
+        value = ' '.join(message.parts[2:])
+        if not value:
+            send_message(f'{message.author}, {name}: {attribute}')
+            return
+        value = convert_type(value)
+        setattr(g, name, value)
+        send_message(f'{message.author}, {name}: {value}')

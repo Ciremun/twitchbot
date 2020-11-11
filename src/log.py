@@ -1,4 +1,5 @@
 import traceback
+import threading
 import logging
 import sys
 from logging.handlers import RotatingFileHandler
@@ -18,3 +19,4 @@ def uncaughtExceptionHandler(etype, value, tb):
     logger.error(f"Uncaught exception: {formatted_exception}")
 
 sys.excepthook = uncaughtExceptionHandler
+threading.excepthook = uncaughtExceptionHandler

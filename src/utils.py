@@ -2,6 +2,7 @@ import threading
 import random
 import base64
 import queue
+import json
 import time
 import os
 import io
@@ -9,6 +10,7 @@ import re
 from os.path import isfile, join
 from pathlib import Path
 from math import floor
+from json.decoder import JSONDecodeError
 
 import requests
 from PIL import Image
@@ -103,6 +105,10 @@ def resizeimg(ri, rs, imgwidth, imgheight , screenwidth, screenheight):  # resiz
         imgwidth *= imagescale
         imgheight *= imagescale
         return imgwidth, imgheight
+
+
+def is_admin(username):
+    return username == g.admin
 
 
 def is_mod(username):
@@ -645,6 +651,7 @@ def download_clip(url: str, username: str, user_duration=None, ytsearch=False, s
                               headers={'Accept': 'application/json'}).json()
         items = result.get("items")
         if not items:
+            logger.error(result)
             send_message(f'{username}, no results')
             return
         url = f'https://youtu.be/{items[0]["id"]["videoId"]}'
@@ -749,7 +756,7 @@ def new_song_response(response: list, song: Song):
 
 
 def no_args(message: Message, command: str):
-    return message.content[g.prefix_len:] == command
+    return message.content[len(g.prefix):] == command
 
 
 def check_chat_notify(username: str):
@@ -772,3 +779,25 @@ def check_chat_notify(username: str):
                 send_message(response_str)
         g.notify_list = [d for d in g.notify_list if d['recipient'] != username]
         g.notify_in_progress.remove(username)
+
+
+def convert_type(string: str):
+    if string.isdigit():
+        return int(string)
+    try:
+        return float(string)
+    except ValueError:
+        pass
+    lower_string = string.lower()
+    if lower_string == 'none':
+        return None
+    elif lower_string == 'true':
+        return True
+    elif lower_string == 'false':
+        return False
+    elif string.startswith('{'):
+        try:
+            return json.loads(string)
+        except JSONDecodeError:
+            pass
+    return string
