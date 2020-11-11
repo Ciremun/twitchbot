@@ -436,7 +436,7 @@ def list_command(message):
     allpages = divide_chunks(str1, 470)
     try:
         int(message.parts[2])
-        if message.parts[0][1:] == "list" and message.parts[1] == "links":
+        if message.parts[0][g.prefix_len:] == "list" and message.parts[1] == "links":
             send_list(message, linkstr1, linkallpages, 2, "list")
     except IndexError:
         try:
@@ -586,8 +586,8 @@ def help_command(message, pipe=False):
             help_command = help_command[1:-1]
             help_command_quoted = True
         if not set(command.split()).intersection(commands_list + mod_commands_list +
-                                                 [i[1:] for i in commands_list] +
-                                                 [i[1:] for i in mod_commands_list]):
+                                                 [i[g.prefix_len:] for i in commands_list] +
+                                                 [i[g.prefix_len:] for i in mod_commands_list]):
             return send_message(f'{message.author}, unknown command', pipe=pipe)
         response = []
         if help_command_quoted:
@@ -611,8 +611,8 @@ def help_command(message, pipe=False):
         else:
             return send_message(f'{message.author}, no results', pipe=pipe)
     except IndexError:
-        return send_message(f'Public command list: {", ".join(i[1:] for i in commands_list)}; '
-                     f'Mod: {", ".join(i[1:] for i in mod_commands_list)}', pipe=pipe)
+        return send_message(f'Public command list: {", ".join(i[g.prefix_len:] for i in commands_list)}; '
+                     f'Mod: {", ".join(i[g.prefix_len:] for i in mod_commands_list)}', pipe=pipe)
 
 
 @bot_command(name='title', check_func=is_mod)
@@ -649,24 +649,24 @@ def pipe_command(message):
                     for last_arg in i[:0:-1]:
                         result.insert(0, last_arg)
             try:
-                if all(i[0][1:] != x for x in info.pipe_commands):
+                if all(i[0][g.prefix_len:] != x for x in info.pipe_commands):
                     raise TypeError
-                command = commands[i[0][1:]]
+                command = commands[i[0][g.prefix_len:]]
                 result.insert(0, i[0])
                 message.parts = result
                 message.content = " ".join(result)
                 result = command(message, pipe=pipe)
                 if not last_item:
                     if result is False:
-                        send_message(f'{message.author}, {i[0][1:]} - mod command')
+                        send_message(f'{message.author}, {i[0][g.prefix_len:]} - mod command')
                         return
                     elif result is None:
                         return
             except TypeError:
-                send_message(f'{message.author}, {i[0][1:]} - unsupported command')
+                send_message(f'{message.author}, {i[0][g.prefix_len:]} - unsupported command')
                 return
             except KeyError:
-                send_message(f'{message.author}, {i[0][1:]} - unknown command')
+                send_message(f'{message.author}, {i[0][g.prefix_len:]} - unknown command')
                 return
 
 
