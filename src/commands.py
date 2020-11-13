@@ -767,15 +767,14 @@ def imgur_command(message):
 def cfg_command(message):
     if not no_args(message, 'cfg'):
         name = message.parts[1]
-        try:
-            attribute = getattr(g, name)
-        except AttributeError:
+        if not hasattr(g, name):
             send_message(f'{message.author}, config has no attribute {name}')
             return
         value = ' '.join(message.parts[2:])
         if not value:
-            send_message(f'{message.author}, {name}{type(attribute)}: {attribute}')
+            attr = getattr(g, name)
+            send_message(f'{message.author}, {name} ({type(attr).__name__}): {attr}')
             return
         value = convert_type(value)
         setattr(g, name, value)
-        send_message(f'{message.author}, {name}{type(value)}: {value}')
+        send_message(f'{message.author}, {name} ({type(value).__name__}): {value}')
