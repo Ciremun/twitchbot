@@ -2,7 +2,6 @@ __pycache__/
 .vscode/
 flask/images/
 log/
-__init__.py
 cookies.txt
 start.bat
 keys.json
