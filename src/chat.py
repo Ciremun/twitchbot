@@ -14,7 +14,7 @@ from .log import logger
 class ChatThread(Thread):
 
     def __init__(self, name):
-        Thread.__init__(self)
+        Thread.__init__(self, daemon=True)
         self.name = name
         g.twitch_socket.connect((g.twitch_host, g.twitch_port))
         g.twitch_socket.send(bytes(f"PASS {g.BotOAuth}\r\n", "UTF-8"))

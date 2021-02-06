@@ -16,7 +16,7 @@ from .server import set_image
 class ThreadPixiv(Thread):
 
     def __init__(self, name):
-        Thread.__init__(self)
+        Thread.__init__(self, daemon=True)
         self.name = name
         self.client = Client()
         self.allranking = []

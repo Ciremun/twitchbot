@@ -2,8 +2,12 @@ import socket
 import json
 import time
 import sys
+import os
 from pathlib import Path
+from os.path import join, dirname
 
+
+from dotenv import load_dotenv
 from pixivapi import Size
 from youtube_dl import YoutubeDL
 
@@ -40,7 +44,17 @@ ImgurClientID = None
 PixivToken = None
 
 cfg = json.load(open('config.json'))
-keys = json.load(open('keys.json'))
+
+load_dotenv(join(dirname(__name__), '.env'))
+keys = {
+    "BotOAuth":      os.environ.get('BotOAuth'),
+    "ClientOAuth":   os.environ.get('ClientOAuth'),
+    "ClientID":      os.environ.get('ClientID'),
+    "ChannelID":     os.environ.get('ChannelID'),
+    "GoogleKey":     os.environ.get('GoogleKey'),
+    "ImgurClientID": os.environ.get('ImgurClientID'),
+    "PixivToken":    os.environ.get('PixivToken')
+}
 
 for p, value in {**cfg, **keys}.items():
     setattr(sys.modules[__name__], p, value)

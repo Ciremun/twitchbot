@@ -23,7 +23,7 @@ class Song(NamedTuple):
 class QueueThread(Thread):
 
     def __init__(self, name):
-        Thread.__init__(self)
+        Thread.__init__(self, daemon=True)
         self.name = name
         self.q = queue.Queue()
         self.start()

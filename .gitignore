@@ -1,8 +1,8 @@
 __pycache__/
 .vscode/
+.venv/
+.env
 flask/images/
 log/
 cookies.txt
-start.bat
-keys.json
 bot.db

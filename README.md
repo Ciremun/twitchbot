@@ -7,32 +7,19 @@ songrequests: youtube link/id/search
 
 ## Install
 
-### requirements
+[Python 3](https://www.python.org/)  
 
-#### Python 3
-
-    Pillow>=8.0.0
-    pixiv-api>=0.3.6
-    requests>=2.24.0
-    youtube-dl>=2020.9.20
-    Flask>=1.1.2
-    Flask-SocketIO>=4.3.1
-    gevent>=20.9.0
-    gevent-websocket>=0.10.1
-
-#### keys.json
-
-create `keys.json`  
+### env
 
 `BotOAuth`      (str): bot user OAuth token [twitchapps tmi](https://twitchapps.com/tmi/) helps obtain  
 `ClientOAuth`   (str): user OAuth token with `channel_editor` scope, [twitchapps tokengen](https://twitchapps.com/tokengen/) helps obtain  
 `ClientID`      (str): twitch application Client ID, create app in [Twitch Developer Console](https://dev.twitch.tv/console/apps)  
-`GoogleKey`     (str): [Google API](https://console.developers.google.com/apis/credentials) key for YouTube search  
+`GoogleKey`     (str): [Google API](https://console.developers.google.com/apis/credentials) key for YouTube search, enable YouTube API for the key  
 `ImgurClientID` (str): [Imgur Client-ID](https://api.imgur.com/oauth2/addclient) for Imgur uploads  
 `PixivToken`    (str): [Pixiv token](https://pixiv-api.readthedocs.io/en/latest/) for Pixiv arts  
 `ChannelID`     (int): twitch channel id, optional  
 
-#### images, text-to-speech, songrequests
+### images, text-to-speech, songrequests
 
 server running on `localhost:5000`  
 text-to-speech is not working inside OBS, use `localhost:5000/tts`  

@@ -1,8 +1,0 @@
-Pillow>=8.0.0
-pixiv-api>=0.3.6
-requests>=2.24.0
-youtube-dl>=2020.9.20
-Flask>=1.1.2
-Flask-SocketIO>=4.3.1
-gevent>=20.9.0
-gevent-websocket>=0.10.1
