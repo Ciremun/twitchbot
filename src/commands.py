@@ -249,7 +249,7 @@ def srf_command(message):
     songs_arr = divide_chunks(songs_str, 470, lst=songs_arr, joinparam=', ')
     send_list(message, songs_str, songs_arr, 1, "list")
 
-
+# TODO(#1): soundcloud support
 @bot_command(name='sr')
 def sr_command(message):
     if no_args(message, 'sr'):
