@@ -1,4 +1,4 @@
-
+// TODO(#2): pixiv api broke
 if __name__ == '__main__':
     from src.utils import timecode_convert
     from src.chat import ChatThread
