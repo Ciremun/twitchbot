@@ -18,7 +18,7 @@ class ThreadPixiv(Thread):
     def __init__(self, name):
         Thread.__init__(self, daemon=True)
         self.name = name
-        self.client = Client()
+        self.client = Client(client_id=g.PixivClientID, client_secret=g.PixivClientSecret)
         self.allranking = []
         self.artpath = Path('flask/images/pixiv/')
         self.start()

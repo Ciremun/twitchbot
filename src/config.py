@@ -53,7 +53,9 @@ keys = {
     "ChannelID":     os.environ.get('ChannelID'),
     "GoogleKey":     os.environ.get('GoogleKey'),
     "ImgurClientID": os.environ.get('ImgurClientID'),
-    "PixivToken":    os.environ.get('PixivToken')
+    "PixivToken":    os.environ.get('PixivToken'),
+    "PixivClientID": os.environ.get('PixivClientID'),
+    "PixivClientSecret": os.environ.get('PixivClientSecret')
 }
 
 for p, value in {**cfg, **keys}.items():
